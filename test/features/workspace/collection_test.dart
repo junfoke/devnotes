@@ -36,7 +36,7 @@ void main() {
       expect(restored.id, collection.id);
       expect(restored.name, collection.name);
       expect(restored.icon.codePoint, collection.icon.codePoint);
-      expect(restored.color.value, collection.color.value);
+      expect(restored.color.toARGB32(), collection.color.toARGB32());
       expect(restored.sortOrder, collection.sortOrder);
     });
 
@@ -49,7 +49,7 @@ void main() {
     test('toJson serialises Color as int value', () {
       final json = collection.toJson();
       expect(json['color'], isA<int>());
-      expect(json['color'], Colors.blue.value);
+      expect(json['color'], Colors.blue.toARGB32());
     });
 
     test('equality is based on id', () {

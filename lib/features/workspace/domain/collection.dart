@@ -48,7 +48,7 @@ class Collection extends Equatable {
   /// Serialise to a JSON-compatible map.
   ///
   /// [IconData] is stored as [IconData.codePoint] (int).
-  /// [Color] is stored as [Color.value] (int).
+  /// [Color] is stored as [Color.toARGB32()] (int).
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,7 +56,7 @@ class Collection extends Equatable {
       'icon': icon.codePoint,
       'iconFontFamily': icon.fontFamily,
       'iconFontPackage': icon.fontPackage,
-      'color': color.value,
+      'color': color.toARGB32(),
       'sortOrder': sortOrder,
     };
   }
