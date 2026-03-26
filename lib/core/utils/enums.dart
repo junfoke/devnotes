@@ -4,6 +4,12 @@ enum SyncStatus {
   syncing,
   success,
   error,
+  /// File has local changes not yet pushed to remote.
+  pending,
+  /// File is in sync with remote.
+  synced,
+  /// File has a merge conflict requiring resolution.
+  conflict,
 }
 
 /// Action taken during a sync log entry.
