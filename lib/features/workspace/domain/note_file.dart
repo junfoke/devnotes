@@ -1,26 +1,43 @@
 import 'package:equatable/equatable.dart';
+import 'package:devnotes/core/utils/enums.dart';
 
 /// Represents a single Markdown note file on the filesystem.
 class NoteFile extends Equatable {
   const NoteFile({
     required this.filePath,
-    required this.fileName,
     required this.title,
-    required this.lastModified,
+    required this.tags,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.syncStatus,
+    required this.content,
+    this.conflictRef,
     this.collectionId,
   });
 
   /// Absolute path to the file on the local filesystem.
   final String filePath;
 
-  /// Base filename including extension (e.g. "hello.md").
-  final String fileName;
-
   /// Derived display title of the note.
   final String title;
 
-  /// Timestamp of the last filesystem modification.
-  final DateTime lastModified;
+  /// Tags associated with the note.
+  final List<String> tags;
+
+  /// Timestamp when the note was created.
+  final DateTime createdAt;
+
+  /// Timestamp of the last update.
+  final DateTime updatedAt;
+
+  /// Sync status of this note.
+  final SyncStatus syncStatus;
+
+  /// The Markdown body of the note (without frontmatter).
+  final String content;
+
+  /// Reference to a conflicting version, if any.
+  final String? conflictRef;
 
   /// ID of the [Collection] this note belongs to, or null if uncategorised.
   final String? collectionId;
@@ -31,16 +48,26 @@ class NoteFile extends Equatable {
 
   NoteFile copyWith({
     String? filePath,
-    String? fileName,
     String? title,
-    DateTime? lastModified,
+    List<String>? tags,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    SyncStatus? syncStatus,
+    String? content,
+    Object? conflictRef = _sentinel,
     Object? collectionId = _sentinel,
   }) {
     return NoteFile(
       filePath: filePath ?? this.filePath,
-      fileName: fileName ?? this.fileName,
       title: title ?? this.title,
-      lastModified: lastModified ?? this.lastModified,
+      tags: tags ?? this.tags,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      content: content ?? this.content,
+      conflictRef: conflictRef == _sentinel
+          ? this.conflictRef
+          : conflictRef as String?,
       collectionId: collectionId == _sentinel
           ? this.collectionId
           : collectionId as String?,
