@@ -111,8 +111,14 @@ class Git2dartClient implements GitClient {
       final remote = Remote.lookup(repo: repo, name: 'origin');
       final stats = remote.fetch(callbacks: creds);
 
-      // 2. Find remote tracking branch
-      final branch = repo.head.name.replaceFirst('refs/heads/', '');
+      // 2. Find local branch — handle unborn/missing HEAD gracefully
+      String branch;
+      try {
+        branch = repo.head.name.replaceFirst('refs/heads/', '');
+      } catch (_) {
+        // HEAD ref not found (unborn branch) — try common defaults
+        branch = 'main';
+      }
       final remoteRefName = 'refs/remotes/origin/$branch';
       final Oid theirHead;
       try {
@@ -272,8 +278,17 @@ class Git2dartClient implements GitClient {
         File('$repoPath/${entry.key}').writeAsBytesSync(entry.value);
       }
 
-      // Init fresh repo
+      // Init fresh repo with 'main' as default branch (matches GitHub default)
       final repo = Repository.init(path: repoPath);
+
+      // Set HEAD to point to main instead of master (matches GitHub default)
+      Reference.create(
+        repo: repo,
+        name: 'HEAD',
+        target: 'refs/heads/main',
+        force: true,
+      );
+
       Remote.create(repo: repo, name: 'origin', url: remoteUrl);
 
       final statusMap = repo.status;
