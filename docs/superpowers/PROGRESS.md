@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 3 of 10 complete
+## Project Status: Phase 4 of 10 complete
 
-**46 tests pass. 0 analyzer errors. 13 commits.**
+**46 tests pass. 0 analyzer errors. 15 commits.**
 
 ---
 
@@ -38,13 +38,16 @@
 | 10 | CreateNoteDialog, RenameNoteDialog, delete confirmation, provider wiring | `488ecea` |
 | - | Wire rename flow via context menu, await delete future, fix Dismissible | `04ea0c4` |
 
+### Phase 4: Markdown Editor (Tasks 11-12)
+
+| Task | What | Commit |
+|------|------|--------|
+| 11 | Editor screen with Edit/Preview swipe, auto-save, save status indicator | `05b65c0` |
+| 12 | Scrollable Markdown toolbar with all syntax actions | `aa758cb` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 4: Markdown Editor (Tasks 11-12)
-- Task 11: Editor screen with Edit/Preview swipe, auto-save, save status indicator
-- Task 12: Scrollable Markdown toolbar with all syntax actions
 
 ### Phase 5: Full-text Search (Tasks 13-14)
 - Task 13: SQLite FTS5 search engine (index/search/remove)
@@ -95,5 +98,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 4: Markdown Editor** (Tasks 11-12)
+3. Continue with **Phase 5: Full-text Search** (Tasks 13-14)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
