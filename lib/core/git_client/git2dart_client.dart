@@ -47,11 +47,20 @@ class Git2dartClient implements GitClient {
   Future<bool> hasChanges() async {
     final repo = Repository.open(repoPath);
     try {
-      // On unborn branch, any .md file in workspace is a new change
-      if (repo.isBranchUnborn) {
-        return _workspaceFiles().isNotEmpty;
+      // Always stage all workspace .md files first — repo.status unreliable
+      // for untracked files in libgit2 on Android
+      final files = _workspaceFiles();
+      if (files.isNotEmpty) {
+        repo.index.addAll(files);
+        repo.index.write();
       }
-      return repo.status.isNotEmpty;
+
+      if (repo.isBranchUnborn) return files.isNotEmpty;
+
+      // Compare staged tree with HEAD — if different, there are changes
+      final newTreeOid = repo.index.writeTree();
+      final headCommit = Commit.lookup(repo: repo, oid: repo.head.target);
+      return headCommit.tree.oid != newTreeOid;
     } finally {
       repo.free();
     }
@@ -61,21 +70,20 @@ class Git2dartClient implements GitClient {
   Future<void> commitAll(String message) async {
     final repo = Repository.open(repoPath);
     try {
-      // On unborn branch, repo.status may not detect untracked files properly.
-      // Manually add all .md files from workspace.
-      if (repo.isBranchUnborn) {
-        final files = _workspaceFiles();
-        if (files.isEmpty) return;
-        repo.index.addAll(files);
-        repo.index.write();
-      } else {
-        final statusMap = repo.status;
-        if (statusMap.isEmpty) return;
-        repo.index.addAll(statusMap.keys.toList());
-        repo.index.write();
-      }
+      // Always stage all workspace .md files — ensures new/modified files are included
+      final files = _workspaceFiles();
+      if (files.isEmpty) return;
+      repo.index.addAll(files);
+      repo.index.write();
 
       final treeOid = repo.index.writeTree();
+
+      // Skip commit if tree is identical to HEAD (nothing actually changed)
+      if (!repo.isBranchUnborn) {
+        final headCommit = Commit.lookup(repo: repo, oid: repo.head.target);
+        if (headCommit.tree.oid == treeOid) return;
+      }
+
       final tree = Tree.lookup(repo: repo, oid: treeOid);
 
       final signature = Signature.create(
