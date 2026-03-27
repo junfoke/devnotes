@@ -33,7 +33,10 @@ class NoteListItem extends StatelessWidget {
       case SyncStatus.pending:
         return colors.warning;
       case SyncStatus.conflict:
+      case SyncStatus.error:
         return colors.error;
+      case SyncStatus.success:
+        return colors.success;
       default:
         return colors.textMuted;
     }
