@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 5 of 10 complete
+## Project Status: Phase 6 of 10 complete
 
-**54 tests pass. 0 analyzer errors. 18 commits.**
+**57 tests pass. 0 analyzer errors. 20 commits.**
 
 ---
 
@@ -52,12 +52,15 @@
 | 13 | SQLite FTS5 search engine (index/search/remove) — 8 tests | `2ecde79` |
 | 14 | Search UI integration: providers, SearchResultsList, workspace wiring | `9155339` |
 
+### Phase 6: Collections (Task 15)
+
+| Task | What | Commit |
+|------|------|--------|
+| 15 | Collections JSON repo, providers, CreateCollectionDialog, workspace filtering | `47d5661` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 6: Collections (Task 15)
-- Task 15: Collections JSON repository, providers, UI integration
 
 ### Phase 7: Git Sync (Tasks 16-19)
 - Task 16: Abstract GitClient interface + libgit2dart stub
@@ -101,5 +104,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 6: Collections** (Task 15)
+3. Continue with **Phase 7: Git Sync** (Tasks 16-19)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
