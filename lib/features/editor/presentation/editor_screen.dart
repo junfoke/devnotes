@@ -118,7 +118,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 if (context.mounted) context.pop();
               },
               onMore: () {
-                // TODO: Task 14 — more menu
+                // TODO: editor more menu (share, info, delete)
               },
             ),
             Expanded(
