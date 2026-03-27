@@ -52,15 +52,24 @@ void main() {
       expect(json['color'], Colors.blue.toARGB32());
     });
 
-    test('equality is based on id', () {
-      final sameId = Collection(
+    test('equality compares all fields', () {
+      final identical = Collection(
+        id: 'col-1',
+        name: 'My Notes',
+        icon: Icons.folder,
+        color: Colors.blue,
+        sortOrder: 0,
+      );
+      expect(collection, equals(identical));
+
+      final different = Collection(
         id: 'col-1',
         name: 'Different Name',
         icon: Icons.star,
         color: Colors.red,
         sortOrder: 99,
       );
-      expect(collection, equals(sameId));
+      expect(collection, isNot(equals(different)));
     });
 
     test('inequality when id differs', () {

@@ -14,6 +14,10 @@ import 'package:devnotes/features/workspace/presentation/widgets/create_note_dia
 import 'package:devnotes/features/workspace/presentation/widgets/rename_note_dialog.dart';
 import 'package:devnotes/features/workspace/application/search_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/search_results_list.dart';
+import 'package:devnotes/features/workspace/application/collections_providers.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/create_collection_dialog.dart';
+import 'package:devnotes/features/workspace/domain/collection.dart';
+import 'package:uuid/uuid.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -32,6 +36,26 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     _searchController.dispose();
     ref.read(searchQueryProvider.notifier).state = '';
     super.dispose();
+  }
+
+  void _createCollection() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const CreateCollectionDialog(),
+    );
+    if (result == null) return;
+    final existing = await ref.read(collectionsProvider.future);
+    final repo = await ref.read(collectionsRepositoryProvider.future);
+    final newCol = Collection(
+      id: const Uuid().v4(),
+      name: result['name'] as String,
+      filterTags: result['tags'] as List<String>,
+      icon: Icons.folder,
+      color: Colors.blue,
+      sortOrder: existing.length,
+    );
+    await repo.saveCollections([...existing, newCol]);
+    ref.invalidate(collectionsProvider);
   }
 
   void _createNote() async {
@@ -138,11 +162,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               onTap: () {},
             ),
             CollectionsRow(
-              collections: const [],
+              collections: ref.watch(collectionsProvider).valueOrNull ?? [],
               selectedId: ref.watch(selectedCollectionProvider),
               onSelect: (id) =>
                   ref.read(selectedCollectionProvider.notifier).state = id,
-              onAdd: () {},
+              onAdd: _createCollection,
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -171,7 +195,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 }
                 return notesAsync.when(
                   data: (notes) {
-                    if (notes.isEmpty) {
+                    var displayNotes = notes;
+                    final selectedId = ref.watch(selectedCollectionProvider);
+                    if (selectedId != null) {
+                      final collections = ref.watch(collectionsProvider).valueOrNull ?? [];
+                      final selected = collections.where((c) => c.id == selectedId).firstOrNull;
+                      if (selected != null && selected.filterTags.isNotEmpty) {
+                        displayNotes = notes.where((note) =>
+                          note.tags.any((tag) => selected.filterTags.contains(tag))
+                        ).toList();
+                      }
+                    }
+                    if (displayNotes.isEmpty) {
                       return EmptyState(onCreateFirst: _createNote);
                     }
                     return RefreshIndicator(
@@ -179,7 +214,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         ref.invalidate(noteListProvider);
                       },
                       child: ListView.separated(
-                        itemCount: notes.length,
+                        itemCount: displayNotes.length,
                         separatorBuilder: (_, __) => Divider(
                           color: colors.border,
                           height: 1,
@@ -187,7 +222,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                           endIndent: 20,
                         ),
                         itemBuilder: (context, index) {
-                          final note = notes[index];
+                          final note = displayNotes[index];
                           return NoteListItem(
                             note: note,
                             onTap: () => context.push(

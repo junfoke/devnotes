@@ -8,6 +8,7 @@ class Collection extends Equatable {
     required this.name,
     required this.icon,
     required this.color,
+    this.filterTags = const [],
     this.sortOrder = 0,
   });
 
@@ -23,17 +24,21 @@ class Collection extends Equatable {
   /// Accent colour used for the collection badge.
   final Color color;
 
+  /// Tags used to filter notes into this collection.
+  final List<String> filterTags;
+
   /// Position in the sidebar list (lower = higher in the list).
   final int sortOrder;
 
   @override
-  List<Object?> get props => [id];
+  List<Object?> get props => [id, name, icon, color, sortOrder, filterTags];
 
   Collection copyWith({
     String? id,
     String? name,
     IconData? icon,
     Color? color,
+    List<String>? filterTags,
     int? sortOrder,
   }) {
     return Collection(
@@ -41,6 +46,7 @@ class Collection extends Equatable {
       name: name ?? this.name,
       icon: icon ?? this.icon,
       color: color ?? this.color,
+      filterTags: filterTags ?? this.filterTags,
       sortOrder: sortOrder ?? this.sortOrder,
     );
   }
@@ -57,6 +63,7 @@ class Collection extends Equatable {
       'iconFontFamily': icon.fontFamily,
       'iconFontPackage': icon.fontPackage,
       'color': color.toARGB32(),
+      'filterTags': filterTags,
       'sortOrder': sortOrder,
     };
   }
@@ -72,6 +79,7 @@ class Collection extends Equatable {
         fontPackage: json['iconFontPackage'] as String?,
       ),
       color: Color(json['color'] as int),
+      filterTags: (json['filterTags'] as List?)?.cast<String>() ?? [],
       sortOrder: json['sortOrder'] as int? ?? 0,
     );
   }
