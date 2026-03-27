@@ -1,10 +1,10 @@
 # DevNotes — Progress Report
 
-> Last updated: 2026-03-26
+> Last updated: 2026-03-27
 
-## Project Status: Phase 2 of 10 complete
+## Project Status: Phase 3 of 10 complete
 
-**46 tests pass. 0 analyzer errors. 9 commits.**
+**46 tests pass. 0 analyzer errors. 13 commits.**
 
 ---
 
@@ -29,13 +29,18 @@
 | 7 | SQLite MetadataDatabase (sync status, conflict ref, sync log) — 6 tests | `a56c980` |
 | 8 | Riverpod providers: noteList, create, delete, rename, selectedCollection | `cd3d8e2` |
 
+### Phase 3: Workspace Explorer UI (Tasks 9-10)
+
+| Task | What | Commit |
+|------|------|--------|
+| 9 | Workspace screen shell: WorkspaceAppBar, WorkspaceSearchBar, CollectionsRow, NoteListItem, EmptyState | `5c64cb5` |
+| - | Fix SyncStatus.error mapping to red in NoteListItem sync dot | `e1449ab` |
+| 10 | CreateNoteDialog, RenameNoteDialog, delete confirmation, provider wiring | `488ecea` |
+| - | Wire rename flow via context menu, await delete future, fix Dismissible | `04ea0c4` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 3: Workspace Explorer UI (Tasks 9-10)
-- Task 9: Workspace screen shell (AppBar, SearchBar, CollectionsRow, NoteListItem, EmptyState widgets)
-- Task 10: Create/Delete/Rename note flows with dialogs and providers wiring
 
 ### Phase 4: Markdown Editor (Tasks 11-12)
 - Task 11: Editor screen with Edit/Preview swipe, auto-save, save status indicator
@@ -90,5 +95,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 3: Workspace Explorer UI** (Tasks 9-10)
+3. Continue with **Phase 4: Markdown Editor** (Tasks 11-12)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
