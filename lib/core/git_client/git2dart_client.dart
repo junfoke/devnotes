@@ -84,8 +84,17 @@ class Git2dartClient implements GitClient {
   Future<void> push({String? username, String? password}) async {
     final repo = Repository.open(repoPath);
     try {
+      // Ensure push refspec is set for current branch
+      String branch;
+      try {
+        branch = repo.head.name.replaceFirst('refs/heads/', '');
+      } catch (_) {
+        branch = 'main';
+      }
+
       final remote = Remote.lookup(repo: repo, name: 'origin');
       remote.push(
+        refspecs: ['refs/heads/$branch:refs/heads/$branch'],
         callbacks: Callbacks(
           credentials: (username != null && password != null)
               ? UserPass(username: username, password: password)
@@ -111,12 +120,20 @@ class Git2dartClient implements GitClient {
       final remote = Remote.lookup(repo: repo, name: 'origin');
       final stats = remote.fetch(callbacks: creds);
 
-      // 2. Find local branch — handle unborn/missing HEAD gracefully
+      // 2. Handle unborn branch (no commits yet) — nothing to merge
+      if (repo.isBranchUnborn) {
+        return PullResult(
+          success: true,
+          filesChanged: stats.receivedObjects,
+          conflicts: [],
+        );
+      }
+
+      // 3. Find local branch
       String branch;
       try {
         branch = repo.head.name.replaceFirst('refs/heads/', '');
       } catch (_) {
-        // HEAD ref not found (unborn branch) — try common defaults
         branch = 'main';
       }
       final remoteRefName = 'refs/remotes/origin/$branch';
@@ -278,7 +295,7 @@ class Git2dartClient implements GitClient {
         File('$repoPath/${entry.key}').writeAsBytesSync(entry.value);
       }
 
-      // Init fresh repo with 'main' as default branch (matches GitHub default)
+      // Init fresh repo — only setup, no commit (sync() handles that)
       final repo = Repository.init(path: repoPath);
 
       // Set HEAD to point to main instead of master (matches GitHub default)
@@ -290,43 +307,6 @@ class Git2dartClient implements GitClient {
       );
 
       Remote.create(repo: repo, name: 'origin', url: remoteUrl);
-
-      final statusMap = repo.status;
-      if (statusMap.isNotEmpty) {
-        repo.index.addAll(statusMap.keys.toList());
-        repo.index.write();
-
-        final treeOid = repo.index.writeTree();
-        final tree = Tree.lookup(repo: repo, oid: treeOid);
-        final signature = Signature.create(
-          name: 'DevNotes',
-          email: 'devnotes@local',
-        );
-
-        Commit.create(
-          repo: repo,
-          updateRef: 'HEAD',
-          author: signature,
-          committer: signature,
-          message: 'Initial commit from DevNotes\n',
-          tree: tree,
-          parents: [],
-        );
-
-        try {
-          final remote = Remote.lookup(repo: repo, name: 'origin');
-          remote.push(
-            callbacks: Callbacks(
-              credentials: (username != null && password != null)
-                  ? UserPass(username: username, password: password)
-                  : null,
-            ),
-          );
-        } catch (_) {
-          // Push may fail if remote doesn't accept pushes yet
-        }
-      }
-
       repo.free();
     }
   }
