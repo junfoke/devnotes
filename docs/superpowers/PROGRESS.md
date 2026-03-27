@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 6 of 10 complete
+## Project Status: Phase 7 of 10 complete
 
-**57 tests pass. 0 analyzer errors. 20 commits.**
+**62 tests pass. 0 analyzer errors. 25 commits.**
 
 ---
 
@@ -58,15 +58,18 @@
 |------|------|--------|
 | 15 | Collections JSON repo, providers, CreateCollectionDialog, workspace filtering | `47d5661` |
 
+### Phase 7: Git Sync (Tasks 16-19)
+
+| Task | What | Commit |
+|------|------|--------|
+| 16 | Abstract GitClient interface + libgit2dart stub — 1 test | `8eaf3aa` |
+| 17 | Git Setup screen with secure storage, git providers | `f99a40e` |
+| 18 | SyncService, Sync History bottom sheet, workspace wiring | `b4ca9eb` |
+| 19 | ConflictParser + Conflict Resolution screen — 4 tests | `426e17a` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 7: Git Sync (Tasks 16-19)
-- Task 16: Abstract GitClient interface + libgit2dart stub
-- Task 17: Git Setup screen with secure storage
-- Task 18: Sync engine + Sync History bottom sheet
-- Task 19: Conflict resolution (parser + screen)
 
 ### Phase 8: Settings (Task 20)
 - Task 20: Settings screen (git, sync, editor, appearance, data, collections, about)
@@ -104,5 +107,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 7: Git Sync** (Tasks 16-19)
+3. Continue with **Phase 8: Settings** (Task 20)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
