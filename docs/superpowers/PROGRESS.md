@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 7 of 10 complete
+## Project Status: Phase 8 of 10 complete
 
-**62 tests pass. 0 analyzer errors. 25 commits.**
+**62 tests pass. 0 analyzer errors. 27 commits.**
 
 ---
 
@@ -67,12 +67,15 @@
 | 18 | SyncService, Sync History bottom sheet, workspace wiring | `b4ca9eb` |
 | 19 | ConflictParser + Conflict Resolution screen — 4 tests | `426e17a` |
 
+### Phase 8: Settings (Task 20)
+
+| Task | What | Commit |
+|------|------|--------|
+| 20 | Settings screen: theme picker, git, editor, data, about sections + preferences repo | `9c18cea` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 8: Settings (Task 20)
-- Task 20: Settings screen (git, sync, editor, appearance, data, collections, about)
 
 ### Phase 9: Onboarding (Tasks 21-22)
 - Task 21: Welcome wizard (swipeable cards, git setup, sample first note)
@@ -107,5 +110,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 8: Settings** (Task 20)
+3. Continue with **Phase 9: Onboarding** (Tasks 21-22)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
