@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
+import 'package:devnotes/features/editor/presentation/widgets/markdown_toolbar.dart';
+import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
@@ -158,7 +160,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ],
               ),
             ),
-            // TODO: Task 12 — Markdown Toolbar goes here
+            if (_currentPage == 0)
+              MarkdownToolbar(
+                textController: _textController,
+                visibleItemIds: EditorPreferences.defaultToolbarItems,
+              ),
           ],
         ),
       ),
