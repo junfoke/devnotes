@@ -6,6 +6,7 @@ class WorkspaceAppBar extends StatelessWidget {
   final VoidCallback onGitStatusTap;
   final VoidCallback onSettingsTap;
   final Color gitStatusColor;
+  final bool isSyncing;
 
   const WorkspaceAppBar({
     super.key,
@@ -13,6 +14,7 @@ class WorkspaceAppBar extends StatelessWidget {
     required this.onGitStatusTap,
     required this.onSettingsTap,
     required this.gitStatusColor,
+    this.isSyncing = false,
   });
 
   @override
@@ -55,30 +57,39 @@ class WorkspaceAppBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: onSyncTap,
+                  onTap: isSyncing ? null : onSyncTap,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: colors.accent,
+                      color: isSyncing ? colors.bgSurface : colors.accent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.sync, size: 16, color: colors.textOnAccent),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Sync Now',
-                          style: TextStyle(
-                            color: colors.textOnAccent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                    child: isSyncing
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.accent,
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Icon(Icons.sync, size: 16, color: colors.textOnAccent),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Sync Now',
+                                style: TextStyle(
+                                  color: colors.textOnAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),

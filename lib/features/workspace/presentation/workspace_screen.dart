@@ -18,6 +18,7 @@ import 'package:devnotes/features/workspace/application/collections_providers.da
 import 'package:devnotes/features/workspace/presentation/widgets/create_collection_dialog.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
+import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
 import 'package:devnotes/features/git_sync/presentation/widgets/sync_history_sheet.dart';
 import 'package:devnotes/features/onboarding/application/tooltip_service.dart';
@@ -184,6 +185,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           children: [
             WorkspaceAppBar(
               key: _syncKey,
+              isSyncing: ref.watch(syncStateProvider).status == SyncStatus.syncing,
               onSyncTap: () async {
                 final config = await ref.read(gitConfigProvider.future);
                 if (!context.mounted) return;
@@ -191,7 +193,53 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   context.push('/settings/git');
                   return;
                 }
-                // TODO: call SyncService.sync(config) when git client is implemented
+
+                ref.read(syncStateProvider.notifier).setSyncing();
+
+                try {
+                  final gitClient = await ref.read(gitClientProvider.future);
+                  await gitClient.initializeRepo(
+                    remoteUrl: config.remoteUrl,
+                    username: config.username,
+                    password: config.pat,
+                  );
+
+                  final syncService = await ref.read(syncServiceProvider.future);
+                  final result = await syncService.sync(config);
+
+                  if (!context.mounted) return;
+
+                  if (result.conflicts.isNotEmpty) {
+                    ref.read(syncStateProvider.notifier).setError();
+                    context.push('/conflict/${Uri.encodeComponent(result.conflicts.first)}');
+                  } else if (result.success) {
+                    ref.read(syncStateProvider.notifier).setSynced();
+                    ref.invalidate(noteListProvider);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Synced — ${result.filesChanged} file(s) changed'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } else {
+                    ref.read(syncStateProvider.notifier).setError();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Sync failed: ${result.error ?? "Unknown error"}'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ref.read(syncStateProvider.notifier).setError();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Sync error: $e'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               },
               onGitStatusTap: () {
                 final syncState = ref.read(syncStateProvider);
@@ -205,9 +253,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 );
               },
               onSettingsTap: () => context.push('/settings'),
-              gitStatusColor: ref.watch(gitConfigProvider).valueOrNull != null
-                  ? colors.success
-                  : colors.textMuted,
+              gitStatusColor: () {
+                final syncStatus = ref.watch(syncStateProvider).status;
+                final hasConfig = ref.watch(gitConfigProvider).valueOrNull != null;
+                if (!hasConfig) return colors.textMuted;
+                switch (syncStatus) {
+                  case SyncStatus.synced:
+                  case SyncStatus.success:
+                    return colors.success;
+                  case SyncStatus.syncing:
+                  case SyncStatus.pending:
+                    return colors.warning;
+                  case SyncStatus.error:
+                  case SyncStatus.conflict:
+                    return colors.error;
+                  default:
+                    return colors.textMuted;
+                }
+              }(),
             ),
             WorkspaceSearchBar(
               key: _searchKey,
