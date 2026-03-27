@@ -18,6 +18,8 @@ import 'package:devnotes/features/workspace/application/collections_providers.da
 import 'package:devnotes/features/workspace/presentation/widgets/create_collection_dialog.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
+import 'package:devnotes/features/git_sync/application/git_providers.dart';
+import 'package:devnotes/features/git_sync/presentation/widgets/sync_history_sheet.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -146,8 +148,26 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         child: Column(
           children: [
             WorkspaceAppBar(
-              onSyncTap: () {},
-              onGitStatusTap: () {},
+              onSyncTap: () async {
+                final config = await ref.read(gitConfigProvider.future);
+                if (!context.mounted) return;
+                if (config == null) {
+                  context.push('/settings/git');
+                  return;
+                }
+                // TODO: call SyncService.sync(config) when git client is implemented
+              },
+              onGitStatusTap: () {
+                final syncState = ref.read(syncStateProvider);
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) => SyncHistorySheet(
+                    branchName: syncState.branchName,
+                    lastSyncAt: syncState.lastSyncAt,
+                    entries: syncState.history,
+                  ),
+                );
+              },
               gitStatusColor: colors.success,
             ),
             WorkspaceSearchBar(
