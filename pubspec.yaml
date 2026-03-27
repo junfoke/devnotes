@@ -26,6 +26,7 @@ dependencies:
   # Uncomment when platform configuration is complete.
   # libgit2dart: ^1.7.2
   tutorial_coach_mark: ^1.2.11
+  path: ^1.9.0
   shared_preferences: ^2.3.5
   intl: ^0.19.0
   share_plus: ^10.1.4

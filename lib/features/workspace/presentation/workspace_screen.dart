@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,8 @@ import 'package:devnotes/features/workspace/presentation/widgets/note_list_item.
 import 'package:devnotes/features/workspace/presentation/widgets/empty_state.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/create_note_dialog.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/rename_note_dialog.dart';
+import 'package:devnotes/features/workspace/application/search_providers.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/search_results_list.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -21,10 +24,13 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
 
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   final _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
+    ref.read(searchQueryProvider.notifier).state = '';
     super.dispose();
   }
 
@@ -122,7 +128,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             WorkspaceSearchBar(
               controller: _searchController,
-              onChanged: (q) {},
+              onChanged: (q) {
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(
+                  const Duration(milliseconds: 300),
+                  () => ref.read(searchQueryProvider.notifier).state = q,
+                );
+              },
               onTap: () {},
             ),
             CollectionsRow(
@@ -134,72 +146,97 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: notesAsync.when(
-                data: (notes) {
-                  if (notes.isEmpty) {
-                    return EmptyState(onCreateFirst: _createNote);
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      ref.invalidate(noteListProvider);
-                    },
-                    child: ListView.separated(
-                      itemCount: notes.length,
-                      separatorBuilder: (_, __) => Divider(
-                        color: colors.border,
-                        height: 1,
-                        indent: 20,
-                        endIndent: 20,
-                      ),
-                      itemBuilder: (context, index) {
-                        final note = notes[index];
-                        return NoteListItem(
-                          note: note,
-                          onTap: () => context.push(
-                            '/editor/${Uri.encodeComponent(note.filePath)}',
+              child: () {
+                final query = ref.watch(searchQueryProvider);
+                if (query.trim().isNotEmpty) {
+                  final searchAsync = ref.watch(searchResultsProvider);
+                  return searchAsync.when(
+                    data: (results) => results.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No results found',
+                              style: TextStyle(color: colors.textMuted),
+                            ),
+                          )
+                        : SearchResultsList(
+                            results: results,
+                            onTap: (filePath) => context.push(
+                                '/editor/${Uri.encodeComponent(filePath)}'),
                           ),
-                          onDelete: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('Delete Note'),
-                                content: Text(
-                                  'Delete "${note.title}"? This cannot be undone.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirm == true) {
-                              await ref.read(
-                                deleteNoteProvider(note.filePath).future,
-                              );
-                            }
-                          },
-                          onLongPress: () {
-                            _showNoteContextMenu(note);
-                          },
-                        );
-                      },
-                    ),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) =>
+                        Center(child: Text('Search error: $e')),
                   );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
-              ),
+                }
+                return notesAsync.when(
+                  data: (notes) {
+                    if (notes.isEmpty) {
+                      return EmptyState(onCreateFirst: _createNote);
+                    }
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        ref.invalidate(noteListProvider);
+                      },
+                      child: ListView.separated(
+                        itemCount: notes.length,
+                        separatorBuilder: (_, __) => Divider(
+                          color: colors.border,
+                          height: 1,
+                          indent: 20,
+                          endIndent: 20,
+                        ),
+                        itemBuilder: (context, index) {
+                          final note = notes[index];
+                          return NoteListItem(
+                            note: note,
+                            onTap: () => context.push(
+                              '/editor/${Uri.encodeComponent(note.filePath)}',
+                            ),
+                            onDelete: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Delete Note'),
+                                  content: Text(
+                                    'Delete "${note.title}"? This cannot be undone.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text(
+                                        'Delete',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await ref.read(
+                                  deleteNoteProvider(note.filePath).future,
+                                );
+                              }
+                            },
+                            onLongPress: () {
+                              _showNoteContextMenu(note);
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                );
+              }(),
             ),
           ],
         ),
