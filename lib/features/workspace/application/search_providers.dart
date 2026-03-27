@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:devnotes/core/search_engine/search_engine.dart';
 import 'package:devnotes/core/file_system/workspace_path_provider.dart';
-import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
+import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:path/path.dart' as p;
 
 final searchEngineProvider = FutureProvider<SearchEngine>((ref) async {
@@ -13,9 +13,8 @@ final searchEngineProvider = FutureProvider<SearchEngine>((ref) async {
 });
 
 final searchIndexInitProvider = FutureProvider<void>((ref) async {
-  final engine = await ref.read(searchEngineProvider.future);
-  final repo = await ref.read(noteFileRepositoryProvider.future);
-  final notes = await repo.listNotes();
+  final notes = await ref.watch(noteListProvider.future);
+  final engine = await ref.watch(searchEngineProvider.future);
   engine.rebuildIndex(notes.map((n) => <String, String>{
     'filePath': n.filePath,
     'title': n.title,
