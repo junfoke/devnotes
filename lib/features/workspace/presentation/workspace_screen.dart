@@ -205,7 +205,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 );
               },
               onSettingsTap: () => context.push('/settings'),
-              gitStatusColor: colors.success,
+              gitStatusColor: ref.watch(gitConfigProvider).valueOrNull != null
+                  ? colors.success
+                  : colors.textMuted,
             ),
             WorkspaceSearchBar(
               key: _searchKey,
