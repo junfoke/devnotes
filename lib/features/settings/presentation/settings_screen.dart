@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:devnotes/core/file_system/workspace_path_provider.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/core/theme/theme_provider.dart';
 import 'package:devnotes/core/utils/enums.dart';
+import 'package:devnotes/features/settings/data/export_import_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -54,8 +57,36 @@ class SettingsScreen extends ConsumerWidget {
                   _sectionHeader('Appearance', colors),
                   _themeTile(context, ref, colors, theme),
                   _sectionHeader('Data', colors),
-                  _tile('Export Notes', Icons.upload_file, colors, () {}),
-                  _tile('Import Notes', Icons.download, colors, () {}),
+                  _tile('Export Notes', Icons.upload_file, colors, () async {
+                    try {
+                      final path =
+                          await WorkspacePathProvider.getWorkspacePath();
+                      final service =
+                          ExportImportService(workspacePath: path);
+                      final tempDir = await getTemporaryDirectory();
+                      final zipPath = await service.exportToZip(
+                          '${tempDir.path}/devnotes_export.zip');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Exported to $zipPath')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Export failed: $e')),
+                        );
+                      }
+                    }
+                  }),
+                  _tile('Import Notes', Icons.download, colors, () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text('Import from Files app coming soon'),
+                      ),
+                    );
+                  }),
                   _tile(
                       'Rebuild Search Index', Icons.refresh, colors, () {}),
                   _sectionHeader('Collections', colors),
