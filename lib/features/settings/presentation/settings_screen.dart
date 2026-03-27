@@ -1,13 +1,130 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:devnotes/core/theme/app_theme.dart';
+import 'package:devnotes/core/theme/app_colors.dart';
+import 'package:devnotes/core/theme/theme_provider.dart';
+import 'package:devnotes/core/utils/enums.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Settings'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).appColors;
+    final theme = ref.watch(themeProvider);
+
+    return Scaffold(
+      backgroundColor: colors.bgPrimary,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                height: 56,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon:
+                          Icon(Icons.arrow_back, color: colors.textPrimary),
+                      onPressed: () => context.pop(),
+                    ),
+                    Text('Settings',
+                        style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  _sectionHeader('Git', colors),
+                  _tile('Git Repository', Icons.commit, colors,
+                      () => context.push('/settings/git')),
+                  _sectionHeader('Sync', colors),
+                  _tile('Sync Frequency', Icons.sync, colors, () {}),
+                  _sectionHeader('Editor', colors),
+                  _tile('Font & Size', Icons.text_fields, colors, () {}),
+                  _tile('Toolbar Layout', Icons.dashboard_customize,
+                      colors, () {}),
+                  _sectionHeader('Appearance', colors),
+                  _themeTile(context, ref, colors, theme),
+                  _sectionHeader('Data', colors),
+                  _tile('Export Notes', Icons.upload_file, colors, () {}),
+                  _tile('Import Notes', Icons.download, colors, () {}),
+                  _tile(
+                      'Rebuild Search Index', Icons.refresh, colors, () {}),
+                  _sectionHeader('Collections', colors),
+                  _tile('Manage Collections', Icons.folder, colors, () {}),
+                  _sectionHeader('About', colors),
+                  ListTile(
+                    leading:
+                        Icon(Icons.info_outline, color: colors.textMuted),
+                    title: Text('DevNotes v1.0.0',
+                        style: TextStyle(color: colors.textPrimary)),
+                    subtitle: Text(
+                        'Local-first Markdown notes for devs',
+                        style: TextStyle(
+                            color: colors.textMuted, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title, AppColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+      child: Text(title,
+          style: TextStyle(
+              color: colors.accentLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1)),
+    );
+  }
+
+  Widget _tile(String title, IconData icon, AppColorScheme colors,
+      VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: colors.textSecondary),
+      title: Text(title, style: TextStyle(color: colors.textPrimary)),
+      trailing: Icon(Icons.chevron_right, color: colors.textMuted),
+      onTap: onTap,
+    );
+  }
+
+  Widget _themeTile(BuildContext context, WidgetRef ref,
+      AppColorScheme colors, ThemePreference current) {
+    return ListTile(
+      leading: Icon(Icons.palette, color: colors.textSecondary),
+      title: Text('Theme', style: TextStyle(color: colors.textPrimary)),
+      trailing: DropdownButton<ThemePreference>(
+        value: current,
+        dropdownColor: colors.bgSecondary,
+        underline: const SizedBox(),
+        items: ThemePreference.values.map((t) {
+          return DropdownMenuItem(
+            value: t,
+            child: Text(
+                t.name[0].toUpperCase() + t.name.substring(1),
+                style: TextStyle(
+                    color: colors.textPrimary, fontSize: 14)),
+          );
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            ref.read(themeProvider.notifier).setTheme(value);
+          }
+        },
       ),
     );
   }

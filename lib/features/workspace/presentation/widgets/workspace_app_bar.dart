@@ -4,12 +4,14 @@ import 'package:devnotes/core/theme/app_theme.dart';
 class WorkspaceAppBar extends StatelessWidget {
   final VoidCallback onSyncTap;
   final VoidCallback onGitStatusTap;
+  final VoidCallback onSettingsTap;
   final Color gitStatusColor;
 
   const WorkspaceAppBar({
     super.key,
     required this.onSyncTap,
     required this.onGitStatusTap,
+    required this.onSettingsTap,
     required this.gitStatusColor,
   });
 
@@ -78,6 +80,11 @@ class WorkspaceAppBar extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.settings, color: colors.textSecondary),
+                  onPressed: onSettingsTap,
                 ),
               ],
             ),
