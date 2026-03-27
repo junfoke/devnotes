@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 8 of 10 complete
+## Project Status: Phase 9 of 10 complete
 
-**62 tests pass. 0 analyzer errors. 27 commits.**
+**62 tests pass. 0 analyzer errors. 30 commits.**
 
 ---
 
@@ -73,13 +73,16 @@
 |------|------|--------|
 | 20 | Settings screen: theme picker, git, editor, data, about sections + preferences repo | `9c18cea` |
 
+### Phase 9: Onboarding (Tasks 21-22)
+
+| Task | What | Commit |
+|------|------|--------|
+| 21 | Onboarding wizard: 3 swipeable cards, git setup, sample first note | `b408619` |
+| 22 | Feature tooltips for workspace and editor using tutorial_coach_mark | `e184808` |
+
 ---
 
 ## Not Yet Started
-
-### Phase 9: Onboarding (Tasks 21-22)
-- Task 21: Welcome wizard (swipeable cards, git setup, sample first note)
-- Task 22: Feature tooltips (tutorial_coach_mark)
 
 ### Phase 10: Final Integration (Tasks 23-25)
 - Task 23: Export/Import with zip archive
@@ -110,5 +113,5 @@
 
 1. Read this file for context
 2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 9: Onboarding** (Tasks 21-22)
+3. Continue with **Phase 10: Final Integration** (Tasks 23-25)
 4. Use subagent-driven-development, executing phase by phase with user review between phases
