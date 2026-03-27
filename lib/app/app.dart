@@ -9,7 +9,8 @@ class DevNotesApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeNotifier = ref.watch(themeProvider.notifier);
+    ref.watch(themeProvider);
+    final themeNotifier = ref.read(themeProvider.notifier);
     final router = ref.watch(routerProvider);
     final brightness = MediaQuery.platformBrightnessOf(context);
     final theme = themeNotifier.resolveTheme(brightness);
