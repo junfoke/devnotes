@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: Phase 9 of 10 complete
+## Project Status: ALL 10 PHASES COMPLETE
 
-**62 tests pass. 0 analyzer errors. 30 commits.**
+**64 tests pass. 0 analyzer errors. 35 commits.**
 
 ---
 
@@ -80,14 +80,13 @@
 | 21 | Onboarding wizard: 3 swipeable cards, git setup, sample first note | `b408619` |
 | 22 | Feature tooltips for workspace and editor using tutorial_coach_mark | `e184808` |
 
----
-
-## Not Yet Started
-
 ### Phase 10: Final Integration (Tasks 23-25)
-- Task 23: Export/Import with zip archive
-- Task 24: Wire all providers, init search index, apply editor preferences
-- Task 25: Final test run, cleanup, analyzer check
+
+| Task | What | Commit |
+|------|------|--------|
+| 23 | Export/Import with zip archive — 2 tests | `cd5757e` |
+| 24 | Wire all providers, init search index, apply editor preferences | `af8f1bf` |
+| 25 | Final cleanup — remove stale TODOs, verify all tests pass | `882eaf2` |
 
 ---
 
@@ -109,9 +108,14 @@
 | UI mockups | `docs/untitled.pen` (3 frames: Workspace, Editor, Git Setup) |
 | Original specs | `docs/01_project_overview.md` through `docs/05_implementation_phases.md` |
 
-## How to Resume
+## Status
 
-1. Read this file for context
-2. Read the implementation plan at `docs/superpowers/plans/2026-03-26-devnotes-implementation.md`
-3. Continue with **Phase 10: Final Integration** (Tasks 23-25)
-4. Use subagent-driven-development, executing phase by phase with user review between phases
+All 10 phases and 25 tasks are complete. The app is feature-complete per the design spec.
+
+### Next steps (future work):
+- Implement libgit2dart native bindings (Phase 7 stubs)
+- Add real font files (JetBrainsMono, FiraCode) to assets/fonts/
+- Consolidate SyncStatus enum redundancy
+- Consider migrating from flutter_markdown to flutter_markdown_plus
+- File picker for import flow
+- Share sheet for export flow
