@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
+import 'package:devnotes/features/workspace/domain/note_file.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/workspace_app_bar.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/workspace_search_bar.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/collections_row.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/note_list_item.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/empty_state.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/create_note_dialog.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/rename_note_dialog.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -38,6 +40,69 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     if (mounted) {
       context.push('/editor/${Uri.encodeComponent(note.filePath)}');
     }
+  }
+
+  void _showNoteContextMenu(NoteFile note) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Rename'),
+              onTap: () async {
+                Navigator.pop(context);
+                final newTitle = await showDialog<String>(
+                  context: context,
+                  builder: (_) =>
+                      RenameNoteDialog(currentTitle: note.title),
+                );
+                if (newTitle != null) {
+                  await ref.read(renameNoteProvider(
+                    (filePath: note.filePath, newTitle: newTitle),
+                  ).future);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete',
+                  style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.pop(context);
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Delete Note'),
+                    content: Text(
+                      'Delete "${note.title}"? This cannot be undone.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete',
+                            style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(
+                    deleteNoteProvider(note.filePath).future,
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -119,11 +184,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               ),
                             );
                             if (confirm == true) {
-                              ref.read(deleteNoteProvider(note.filePath));
+                              await ref.read(
+                                deleteNoteProvider(note.filePath).future,
+                              );
                             }
                           },
                           onLongPress: () {
-                            // TODO: Task 10 — context menu
+                            _showNoteContextMenu(note);
                           },
                         );
                       },

@@ -55,8 +55,10 @@ class NoteListItem extends StatelessWidget {
         color: colors.error,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      confirmDismiss: (_) async => true,
-      onDismissed: (_) => onDelete(),
+      confirmDismiss: (_) async {
+        onDelete();
+        return false;
+      },
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
