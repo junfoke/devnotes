@@ -1,8 +1,5 @@
-// lib/features/git_sync/application/sync_service.dart
 import 'package:devnotes/core/git_client/git_client.dart';
 import 'package:devnotes/core/file_system/metadata_database.dart';
-import 'package:devnotes/core/search_engine/search_engine.dart';
-import 'package:devnotes/core/file_system/note_file_repository.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/git_sync/domain/git_config.dart';
 
@@ -23,14 +20,10 @@ class SyncResult {
 class SyncService {
   final GitClient gitClient;
   final MetadataDatabase metadataDb;
-  final SearchEngine searchEngine;
-  final NoteFileRepository noteRepo;
 
   SyncService({
     required this.gitClient,
     required this.metadataDb,
-    required this.searchEngine,
-    required this.noteRepo,
   });
 
   Future<SyncResult> sync(GitConfig config) async {
@@ -76,15 +69,6 @@ class SyncService {
         filesChanged: totalChanged,
         success: true,
       );
-
-      // 4. Rebuild search index for changed files
-      final notes = await noteRepo.listNotes();
-      searchEngine.rebuildIndex(notes.map((n) => <String, String>{
-        'filePath': n.filePath,
-        'title': n.title,
-        'tags': n.tags.join(', '),
-        'content': n.content,
-      }).toList());
 
       return SyncResult(success: true, filesChanged: totalChanged);
     } catch (e) {

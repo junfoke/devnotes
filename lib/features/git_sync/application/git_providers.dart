@@ -24,11 +24,14 @@ class SyncStateNotifier extends StateNotifier<SyncState> {
           status: SyncStatus.synced,
         ));
 
-  void setSyncing() => state = state.copyWith(status: SyncStatus.pending);
+  void setSyncing() => state = state.copyWith(status: SyncStatus.syncing);
   void setSynced() => state = state.copyWith(
         status: SyncStatus.synced,
         lastSyncAt: DateTime.now(),
       );
-  void setError() => state = state.copyWith(status: SyncStatus.conflict);
+  void setError() => state = state.copyWith(status: SyncStatus.error);
+  void addHistory(SyncLogEntry entry) {
+    state = state.copyWith(history: [...state.history, entry]);
+  }
   void setBranch(String branch) => state = state.copyWith(branchName: branch);
 }
