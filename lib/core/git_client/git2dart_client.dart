@@ -33,10 +33,24 @@ class Git2dartClient implements GitClient {
     }
   }
 
+  /// Lists all .md files relative to repoPath for staging.
+  List<String> _workspaceFiles() {
+    return Directory(repoPath)
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.md'))
+        .map((f) => f.uri.pathSegments.last)
+        .toList();
+  }
+
   @override
   Future<bool> hasChanges() async {
     final repo = Repository.open(repoPath);
     try {
+      // On unborn branch, any .md file in workspace is a new change
+      if (repo.isBranchUnborn) {
+        return _workspaceFiles().isNotEmpty;
+      }
       return repo.status.isNotEmpty;
     } finally {
       repo.free();
@@ -47,11 +61,19 @@ class Git2dartClient implements GitClient {
   Future<void> commitAll(String message) async {
     final repo = Repository.open(repoPath);
     try {
-      final statusMap = repo.status;
-      if (statusMap.isEmpty) return;
-
-      repo.index.addAll(statusMap.keys.toList());
-      repo.index.write();
+      // On unborn branch, repo.status may not detect untracked files properly.
+      // Manually add all .md files from workspace.
+      if (repo.isBranchUnborn) {
+        final files = _workspaceFiles();
+        if (files.isEmpty) return;
+        repo.index.addAll(files);
+        repo.index.write();
+      } else {
+        final statusMap = repo.status;
+        if (statusMap.isEmpty) return;
+        repo.index.addAll(statusMap.keys.toList());
+        repo.index.write();
+      }
 
       final treeOid = repo.index.writeTree();
       final tree = Tree.lookup(repo: repo, oid: treeOid);
