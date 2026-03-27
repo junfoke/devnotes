@@ -8,6 +8,7 @@ import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_toolbar.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
+import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
@@ -99,6 +100,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final prefsAsync = ref.watch(editorPreferencesProvider);
+    final editorPrefs = prefsAsync.valueOrNull;
     final saveStatus = ref.watch(saveStatusProvider);
     final noteAsync = ref.watch(currentNoteProvider(widget.filePath));
 
@@ -135,8 +138,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       textAlignVertical: TextAlignVertical.top,
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontFamily: 'JetBrainsMono',
-                        fontSize: 14,
+                        fontFamily: editorPrefs?.fontFamily ?? 'JetBrainsMono',
+                        fontSize: editorPrefs?.fontSize ?? 14,
                         height: 1.6,
                       ),
                       decoration: const InputDecoration(
@@ -190,7 +193,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               MarkdownToolbar(
                 key: _toolbarKey,
                 textController: _textController,
-                visibleItemIds: EditorPreferences.defaultToolbarItems,
+                visibleItemIds: editorPrefs?.toolbarItems ?? EditorPreferences.defaultToolbarItems,
               ),
           ],
         ),

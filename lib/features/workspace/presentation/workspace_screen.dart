@@ -174,6 +174,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    ref.watch(searchIndexInitProvider);
     final notesAsync = ref.watch(noteListProvider);
 
     return Scaffold(
