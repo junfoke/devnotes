@@ -11,6 +11,8 @@ import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
+import 'package:devnotes/features/onboarding/application/tooltip_service.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class EditorScreen extends ConsumerStatefulWidget {
   final String filePath;
@@ -26,12 +28,35 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Timer? _debounce;
   int _currentPage = 0;
   NoteFile? _loadedNote;
+  final _toolbarKey = GlobalKey();
+  final _previewKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
     _loadNote();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TooltipService.showTooltips(
+        context: context,
+        tooltipKey: 'editor',
+        targets: [
+          TooltipService.createTarget(
+            key: _toolbarKey,
+            title: 'Markdown Toolbar',
+            description:
+                'Quick-insert Markdown syntax — headings, bold, code blocks, and more.',
+            align: ContentAlign.top,
+          ),
+          TooltipService.createTarget(
+            key: _previewKey,
+            title: 'Swipe to Preview',
+            description:
+                'Swipe left to see a rendered preview of your Markdown.',
+          ),
+        ],
+      );
+    });
   }
 
   Future<void> _loadNote() async {
@@ -95,6 +120,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ),
             Expanded(
               child: PageView(
+                key: _previewKey,
                 controller: _pageController,
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
@@ -162,6 +188,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ),
             if (_currentPage == 0)
               MarkdownToolbar(
+                key: _toolbarKey,
                 textController: _textController,
                 visibleItemIds: EditorPreferences.defaultToolbarItems,
               ),

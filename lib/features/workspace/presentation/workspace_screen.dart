@@ -20,6 +20,8 @@ import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
 import 'package:devnotes/features/git_sync/presentation/widgets/sync_history_sheet.dart';
+import 'package:devnotes/features/onboarding/application/tooltip_service.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -31,6 +33,38 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   final _searchController = TextEditingController();
   Timer? _searchDebounce;
+  final _searchKey = GlobalKey();
+  final _syncKey = GlobalKey();
+  final _fabKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TooltipService.showTooltips(
+        context: context,
+        tooltipKey: 'workspace',
+        targets: [
+          TooltipService.createTarget(
+            key: _searchKey,
+            title: 'Search',
+            description: 'Search through all your notes with full-text search.',
+          ),
+          TooltipService.createTarget(
+            key: _syncKey,
+            title: 'Sync',
+            description: 'Tap to sync your notes with your Git repository.',
+          ),
+          TooltipService.createTarget(
+            key: _fabKey,
+            title: 'New Note',
+            description: 'Create a new Markdown note.',
+            align: ContentAlign.top,
+          ),
+        ],
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -148,6 +182,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         child: Column(
           children: [
             WorkspaceAppBar(
+              key: _syncKey,
               onSyncTap: () async {
                 final config = await ref.read(gitConfigProvider.future);
                 if (!context.mounted) return;
@@ -172,6 +207,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               gitStatusColor: colors.success,
             ),
             WorkspaceSearchBar(
+              key: _searchKey,
               controller: _searchController,
               onChanged: (q) {
                 _searchDebounce?.cancel();
@@ -298,6 +334,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        key: _fabKey,
         onPressed: _createNote,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add),
