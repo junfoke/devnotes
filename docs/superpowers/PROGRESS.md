@@ -2,9 +2,9 @@
 
 > Last updated: 2026-03-27
 
-## Project Status: ALL 10 PHASES COMPLETE
+## Project Status: ALL 10 PHASES COMPLETE + Git Sync Implemented
 
-**64 tests pass. 0 analyzer errors. 35 commits.**
+**64 tests pass. 0 analyzer errors. 41 commits.**
 
 ---
 
@@ -92,10 +92,10 @@
 
 ## Known Issues / Notes
 
-1. **`libgit2dart` commented out** in pubspec.yaml — needs native platform setup before use (Phase 7)
-2. **`flutter_markdown` deprecated** — consider migrating to `flutter_markdown_plus` before production
-3. **Font files are empty placeholders** — need real JetBrainsMono and FiraCode `.ttf` files in `assets/fonts/`
-4. **SyncStatus enum has redundant values** — both `idle/syncing/success/error` (from Task 2) and `pending/synced/conflict` (from Task 7). Needs consolidation in Phase 7.
+1. **`flutter_markdown` deprecated** — consider migrating to `flutter_markdown_plus` before production
+2. **Font files are empty placeholders** — need real JetBrainsMono and FiraCode `.ttf` files in `assets/fonts/`
+3. **SyncStatus enum has redundant values** — both `idle/syncing/success/error` and `pending/synced/conflict`. Needs consolidation.
+4. **iOS Git sync not supported** — git2dart only supports Android. iOS deferred.
 
 ---
 
@@ -110,12 +110,22 @@
 
 ## Status
 
-All 10 phases and 25 tasks are complete. The app is feature-complete per the design spec.
+All 10 phases complete. Git sync implemented with git2dart (Android).
+
+### Git Sync Implementation (post-Phase 10)
+
+| Task | What | Commit |
+|------|------|--------|
+| - | Swap libgit2dart → git2dart, Android SSL init | `49a5123` |
+| - | Git2dartClient: 8 methods + Smart Init via Isolate | `c3620bf` |
+| - | Fix SyncStateNotifier enums, slim SyncService | `9117603` |
+| - | Providers: gitClient, metadataDb, syncService | `1e96f15` |
+| - | Wire real sync into workspace UI | `1e6ed69` |
 
 ### Next steps (future work):
-- Implement libgit2dart native bindings (Phase 7 stubs)
 - Add real font files (JetBrainsMono, FiraCode) to assets/fonts/
 - Consolidate SyncStatus enum redundancy
 - Consider migrating from flutter_markdown to flutter_markdown_plus
 - File picker for import flow
 - Share sheet for export flow
+- iOS Git sync (waiting for git2dart iOS support)
