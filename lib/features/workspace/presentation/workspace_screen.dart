@@ -8,6 +8,7 @@ import 'package:devnotes/features/workspace/presentation/widgets/workspace_searc
 import 'package:devnotes/features/workspace/presentation/widgets/collections_row.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/note_list_item.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/empty_state.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/create_note_dialog.dart';
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
   const WorkspaceScreen({super.key});
@@ -25,8 +26,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     super.dispose();
   }
 
-  void _createNote() {
-    // TODO: Task 10 will implement create note dialog
+  void _createNote() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const CreateNoteDialog(),
+    );
+    if (result == null) return;
+    final note = await ref.read(createNoteProvider(
+      (title: result['title'] as String, tags: result['tags'] as List<String>),
+    ).future);
+    if (mounted) {
+      context.push('/editor/${Uri.encodeComponent(note.filePath)}');
+    }
   }
 
   @override
@@ -83,7 +94,33 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                             '/editor/${Uri.encodeComponent(note.filePath)}',
                           ),
                           onDelete: () async {
-                            // TODO: Task 10 — delete with confirmation
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Delete Note'),
+                                content: Text(
+                                  'Delete "${note.title}"? This cannot be undone.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              ref.read(deleteNoteProvider(note.filePath));
+                            }
                           },
                           onLongPress: () {
                             // TODO: Task 10 — context menu
