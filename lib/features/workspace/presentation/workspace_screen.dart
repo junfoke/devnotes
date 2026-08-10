@@ -202,6 +202,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     remoteUrl: config.remoteUrl,
                     username: config.username,
                     password: config.pat,
+                    branch: config.branch,
                   );
 
                   final syncService = await ref.read(syncServiceProvider.future);

@@ -33,32 +33,44 @@ class Git2dartClient implements GitClient {
     }
   }
 
-  /// Lists all .md files relative to repoPath for staging.
-  List<String> _workspaceFiles() {
-    return Directory(repoPath)
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.md'))
-        .map((f) => f.uri.pathSegments.last)
-        .toList();
+  /// Stages all workspace .md files using a glob pathspec.
+  ///
+  /// A glob (not a literal file list) is required so that libgit2's add_all
+  /// also records DELETIONS — a file removed from the working directory matches
+  /// the pathspec and is dropped from the index. Staging is used instead of
+  /// repo.status because status is unreliable for untracked files on Android.
+  void _stageAllMarkdown(Repository repo) {
+    repo.index.addAll(['*.md']);
+    repo.index.write();
+  }
+
+  /// Converts a repo-relative path (git's native form) to an absolute
+  /// filesystem path the UI can read/write directly.
+  String _toAbsolute(String relative) => '$repoPath/$relative';
+
+  /// Converts an absolute filesystem path back to the repo-relative path
+  /// used by the git index. Accepts an already-relative path unchanged.
+  String _toRelative(String filePath) {
+    final prefix = '$repoPath/';
+    return filePath.startsWith(prefix)
+        ? filePath.substring(prefix.length)
+        : filePath;
   }
 
   @override
   Future<bool> hasChanges() async {
     final repo = Repository.open(repoPath);
     try {
-      // Always stage all workspace .md files first — repo.status unreliable
-      // for untracked files in libgit2 on Android
-      final files = _workspaceFiles();
-      if (files.isNotEmpty) {
-        repo.index.addAll(files);
-        repo.index.write();
-      }
-
-      if (repo.isBranchUnborn) return files.isNotEmpty;
+      _stageAllMarkdown(repo);
 
       // Compare staged tree with HEAD — if different, there are changes
       final newTreeOid = repo.index.writeTree();
+
+      if (repo.isBranchUnborn) {
+        // No commits yet — changes exist iff the staged tree is non-empty.
+        return Tree.lookup(repo: repo, oid: newTreeOid).length > 0;
+      }
+
       final headCommit = Commit.lookup(repo: repo, oid: repo.head.target);
       return headCommit.tree.oid != newTreeOid;
     } finally {
@@ -70,16 +82,16 @@ class Git2dartClient implements GitClient {
   Future<void> commitAll(String message) async {
     final repo = Repository.open(repoPath);
     try {
-      // Always stage all workspace .md files — ensures new/modified files are included
-      final files = _workspaceFiles();
-      if (files.isEmpty) return;
-      repo.index.addAll(files);
-      repo.index.write();
+      // Stage all workspace .md files (including deletions) before committing.
+      _stageAllMarkdown(repo);
 
       final treeOid = repo.index.writeTree();
 
-      // Skip commit if tree is identical to HEAD (nothing actually changed)
-      if (!repo.isBranchUnborn) {
+      // Skip commit if tree is identical to HEAD (nothing actually changed),
+      // or if there is nothing to commit on a fresh repo with no files.
+      if (repo.isBranchUnborn) {
+        if (Tree.lookup(repo: repo, oid: treeOid).length == 0) return;
+      } else {
         final headCommit = Commit.lookup(repo: repo, oid: repo.head.target);
         if (headCommit.tree.oid == treeOid) return;
       }
@@ -209,7 +221,8 @@ class Git2dartClient implements GitClient {
 
       // 5. Check conflicts
       if (repo.index.hasConflicts) {
-        final conflictPaths = repo.index.conflicts.keys.toList();
+        final conflictPaths =
+            repo.index.conflicts.keys.map(_toAbsolute).toList();
         return PullResult(
           success: false,
           filesChanged: stats.receivedObjects,
@@ -253,7 +266,7 @@ class Git2dartClient implements GitClient {
     final repo = Repository.open(repoPath);
     try {
       if (!repo.index.hasConflicts) return <String>[];
-      return repo.index.conflicts.keys.toList();
+      return repo.index.conflicts.keys.map(_toAbsolute).toList();
     } finally {
       repo.free();
     }
@@ -263,8 +276,9 @@ class Git2dartClient implements GitClient {
   Future<void> markResolved(String filePath) async {
     final repo = Repository.open(repoPath);
     try {
-      repo.index.add(filePath);
-      repo.index.conflicts[filePath]?.remove();
+      final relative = _toRelative(filePath);
+      repo.index.add(relative);
+      repo.index.conflicts[relative]?.remove();
       repo.index.write();
     } finally {
       repo.free();
@@ -276,6 +290,7 @@ class Git2dartClient implements GitClient {
     required String remoteUrl,
     String? username,
     String? password,
+    String branch = 'main',
   }) async {
     final gitDir = Directory('$repoPath/.git');
     if (gitDir.existsSync()) return;
@@ -300,6 +315,7 @@ class Git2dartClient implements GitClient {
       final repo = Repository.clone(
         url: remoteUrl,
         localPath: repoPath,
+        checkoutBranch: branch,
         callbacks: Callbacks(
           credentials: (username != null && password != null)
               ? UserPass(username: username, password: password)
@@ -328,11 +344,11 @@ class Git2dartClient implements GitClient {
       // Init fresh repo — only setup, no commit (sync() handles that)
       final repo = Repository.init(path: repoPath);
 
-      // Set HEAD to point to main instead of master (matches GitHub default)
+      // Set HEAD to point to configured branch
       Reference.create(
         repo: repo,
         name: 'HEAD',
-        target: 'refs/heads/main',
+        target: 'refs/heads/$branch',
         force: true,
       );
 

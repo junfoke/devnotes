@@ -17,6 +17,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   final _urlController = TextEditingController();
   final _usernameController = TextEditingController();
   final _patController = TextEditingController();
+  final _branchController = TextEditingController(text: 'main');
   bool _loading = false;
 
   @override
@@ -31,6 +32,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       _urlController.text = config.remoteUrl;
       _usernameController.text = config.username;
       _patController.text = config.pat;
+      _branchController.text = config.branch;
     }
   }
 
@@ -39,6 +41,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     _urlController.dispose();
     _usernameController.dispose();
     _patController.dispose();
+    _branchController.dispose();
     super.dispose();
   }
 
@@ -46,10 +49,16 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     final url = _urlController.text.trim();
     final username = _usernameController.text.trim();
     final pat = _patController.text.trim();
+    final branch = _branchController.text.trim();
     if (url.isEmpty || username.isEmpty || pat.isEmpty) return;
 
     setState(() => _loading = true);
-    final config = GitConfig(remoteUrl: url, username: username, pat: pat);
+    final config = GitConfig(
+      remoteUrl: url,
+      username: username,
+      pat: pat,
+      branch: branch.isEmpty ? 'main' : branch,
+    );
     await ref.read(gitConfigRepoProvider).saveConfig(config);
     ref.invalidate(gitConfigProvider);
     setState(() => _loading = false);
@@ -92,6 +101,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       _urlController.clear();
       _usernameController.clear();
       _patController.clear();
+      _branchController.text = 'main';
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Git credentials removed'),
@@ -189,6 +199,9 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
               const SizedBox(height: 20),
               _buildField('Personal Access Token (PAT)', _patController,
                   'ghp_xxxxxxxxxxxx', colors, obscure: true),
+              const SizedBox(height: 20),
+              _buildField('Branch', _branchController,
+                  'main', colors),
               const SizedBox(height: 16),
               // Security notice
               Container(

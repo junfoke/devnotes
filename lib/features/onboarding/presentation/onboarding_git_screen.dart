@@ -18,6 +18,7 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
   final _urlController = TextEditingController();
   final _usernameController = TextEditingController();
   final _patController = TextEditingController();
+  final _branchController = TextEditingController(text: 'main');
   bool _loading = false;
 
   @override
@@ -25,6 +26,7 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
     _urlController.dispose();
     _usernameController.dispose();
     _patController.dispose();
+    _branchController.dispose();
     super.dispose();
   }
 
@@ -32,11 +34,16 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
     final url = _urlController.text.trim();
     final username = _usernameController.text.trim();
     final pat = _patController.text.trim();
+    final branch = _branchController.text.trim();
     if (url.isEmpty || username.isEmpty || pat.isEmpty) return;
 
     setState(() => _loading = true);
-    final config =
-        GitConfig(remoteUrl: url, username: username, pat: pat);
+    final config = GitConfig(
+      remoteUrl: url,
+      username: username,
+      pat: pat,
+      branch: branch.isEmpty ? 'main' : branch,
+    );
     await ref.read(gitConfigRepoProvider).saveConfig(config);
     ref.invalidate(gitConfigProvider);
     setState(() => _loading = false);
@@ -118,6 +125,13 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
                 'ghp_xxxxxxxxxxxx',
                 colors,
                 obscure: true,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                'Branch',
+                _branchController,
+                'main',
+                colors,
               ),
               const SizedBox(height: 32),
               SizedBox(
