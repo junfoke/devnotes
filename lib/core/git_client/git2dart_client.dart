@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:git2dart/git2dart.dart';
 import 'package:devnotes/core/git_client/git_client.dart';
+import 'package:devnotes/core/git_client/remote_check.dart';
 
 class Git2dartClient implements GitClient {
   final String repoPath;
@@ -282,6 +283,48 @@ class Git2dartClient implements GitClient {
       repo.index.write();
     } finally {
       repo.free();
+    }
+  }
+
+  /// Checks whether [remoteUrl] is reachable with the given credentials, and
+  /// whether it has [branch].
+  ///
+  /// Runs against a throwaway repo in the system temp directory so it can be
+  /// used before anything is saved and never touches the real workspace.
+  /// `Remote.ls` only connects and lists refs — it downloads no objects.
+  Future<RemoteCheckResult> checkRemote({
+    required String remoteUrl,
+    required String username,
+    required String password,
+    required String branch,
+  }) async {
+    final probeDir =
+        Directory.systemTemp.createTempSync('devnotes_remote_probe_');
+    try {
+      final repo = Repository.init(path: probeDir.path);
+      try {
+        final remote =
+            Remote.create(repo: repo, name: 'origin', url: remoteUrl);
+        final refs = remote.ls(
+          callbacks: Callbacks(
+            credentials: UserPass(username: username, password: password),
+          ),
+        );
+        return evaluateRemoteRefs(
+          refNames: refs.map((ref) => ref.name).toList(),
+          branch: branch,
+        );
+      } finally {
+        repo.free();
+      }
+    } catch (e) {
+      final message = e.toString();
+      return RemoteCheckResult(
+        classifyRemoteError(message),
+        detail: message,
+      );
+    } finally {
+      if (probeDir.existsSync()) probeDir.deleteSync(recursive: true);
     }
   }
 
