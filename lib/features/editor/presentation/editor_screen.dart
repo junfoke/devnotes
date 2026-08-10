@@ -111,6 +111,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         child: Column(
           children: [
             EditorAppBar(
+              title: noteAsync.valueOrNull?.title,
               saveStatus: saveStatus,
               currentPage: _currentPage,
               onBack: () async {
