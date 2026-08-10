@@ -133,29 +133,46 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  static String _themeLabel(ThemePreference t) =>
+      t.name[0].toUpperCase() + t.name.substring(1);
+
+  /// Theme picker. Uses a popup menu rather than a `DropdownButton` because the
+  /// dropdown menu is laid out at the button's own width and overflowed the
+  /// right screen edge from this trailing position; the popup
+  /// route keeps itself inside the screen bounds.
   Widget _themeTile(BuildContext context, WidgetRef ref,
       AppColorScheme colors, ThemePreference current) {
     return ListTile(
       leading: Icon(Icons.palette, color: colors.textSecondary),
       title: Text('Theme', style: TextStyle(color: colors.textPrimary)),
-      trailing: DropdownButton<ThemePreference>(
-        value: current,
-        dropdownColor: colors.bgSecondary,
-        underline: const SizedBox(),
-        items: ThemePreference.values.map((t) {
-          return DropdownMenuItem(
-            value: t,
-            child: Text(
-                t.name[0].toUpperCase() + t.name.substring(1),
-                style: TextStyle(
-                    color: colors.textPrimary, fontSize: 14)),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(themeProvider.notifier).setTheme(value);
-          }
-        },
+      trailing: PopupMenuButton<ThemePreference>(
+        key: const Key('theme-selector'),
+        initialValue: current,
+        color: colors.bgSecondary,
+        tooltip: 'Chọn giao diện',
+        onSelected: (value) =>
+            ref.read(themeProvider.notifier).setTheme(value),
+        itemBuilder: (_) => ThemePreference.values
+            .map(
+              (t) => PopupMenuItem(
+                value: t,
+                child: Text(
+                  _themeLabel(t),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                ),
+              ),
+            )
+            .toList(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _themeLabel(current),
+              style: TextStyle(color: colors.textPrimary, fontSize: 14),
+            ),
+            Icon(Icons.arrow_drop_down, color: colors.textMuted),
+          ],
+        ),
       ),
     );
   }
