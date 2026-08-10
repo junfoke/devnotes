@@ -13,6 +13,9 @@ class RenameNoteDialog extends StatefulWidget {
 class _RenameNoteDialogState extends State<RenameNoteDialog> {
   late final TextEditingController _controller;
 
+  /// Validation message shown under the field, null when valid.
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -36,9 +39,13 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
         controller: _controller,
         autofocus: true,
         style: TextStyle(color: colors.textPrimary),
+        onChanged: (_) {
+          if (_error != null) setState(() => _error = null);
+        },
         decoration: InputDecoration(
           hintText: 'New title',
           hintStyle: TextStyle(color: colors.textMuted),
+          errorText: _error,
         ),
       ),
       actions: [
@@ -49,7 +56,15 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
         TextButton(
           onPressed: () {
             final newTitle = _controller.text.trim();
-            if (newTitle.isEmpty || newTitle == widget.currentTitle) return;
+            // Từ chối phải kèm lý do, không im lặng.
+            if (newTitle.isEmpty) {
+              setState(() => _error = 'Vui lòng nhập tiêu đề');
+              return;
+            }
+            if (newTitle == widget.currentTitle) {
+              setState(() => _error = 'Tiêu đề mới phải khác tiêu đề hiện tại');
+              return;
+            }
             Navigator.pop(context, newTitle);
           },
           child: Text('Rename', style: TextStyle(color: colors.accent)),

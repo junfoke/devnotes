@@ -12,6 +12,9 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
   final _titleController = TextEditingController();
   final _tagsController = TextEditingController();
 
+  /// Validation message shown under the title field, null when valid.
+  String? _titleError;
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -33,9 +36,13 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
             controller: _titleController,
             autofocus: true,
             style: TextStyle(color: colors.textPrimary),
+            onChanged: (_) {
+              if (_titleError != null) setState(() => _titleError = null);
+            },
             decoration: InputDecoration(
               hintText: 'Note title',
               hintStyle: TextStyle(color: colors.textMuted),
+              errorText: _titleError,
             ),
           ),
           const SizedBox(height: 12),
@@ -57,7 +64,11 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
         TextButton(
           onPressed: () {
             final title = _titleController.text.trim();
-            if (title.isEmpty) return;
+            // Tiêu đề rỗng phải báo lỗi rõ ràng, không im lặng.
+            if (title.isEmpty) {
+              setState(() => _titleError = 'Vui lòng nhập tiêu đề');
+              return;
+            }
             final tags = _tagsController.text
                 .split(',')
                 .map((t) => t.trim())
