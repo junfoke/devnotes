@@ -22,10 +22,11 @@ This is content.''';
       expect(result.content, '# Hello World\nThis is content.');
     });
 
+    // UC-004 BR-1: file không có frontmatter vẫn đọc được, title suy ra từ H1.
     test('parse handles file without frontmatter', () {
       const raw = '# Just Content\nNo frontmatter here.';
       final result = FrontmatterParser.parse(raw);
-      expect(result.title, '');
+      expect(result.title, 'Just Content');
       expect(result.tags, isEmpty);
       expect(result.content, raw);
     });
