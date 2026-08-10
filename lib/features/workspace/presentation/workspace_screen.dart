@@ -240,16 +240,27 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
+                } finally {
+                  // SyncService vừa ghi thêm bản ghi vào sync_log — bỏ cache để
+                  // lần mở sheet kế tiếp thấy lần sync này.
+                  ref.invalidate(syncHistoryProvider);
+                  ref.invalidate(currentBranchProvider);
                 }
               },
-              onGitStatusTap: () {
-                final syncState = ref.read(syncStateProvider);
+              onGitStatusTap: () async {
+                // Lịch sử và thời điểm sync gần nhất đọc từ SQLite nên vẫn
+                // đúng sau khi khởi động lại app.
+                final entries = await ref.read(syncHistoryProvider.future);
+                final lastSyncAt =
+                    await ref.read(lastSuccessfulSyncProvider.future);
+                final branch = await ref.read(currentBranchProvider.future);
+                if (!context.mounted) return;
                 showModalBottomSheet(
                   context: context,
                   builder: (_) => SyncHistorySheet(
-                    branchName: syncState.branchName,
-                    lastSyncAt: syncState.lastSyncAt,
-                    entries: syncState.history,
+                    branchName: branch,
+                    lastSyncAt: lastSyncAt,
+                    entries: entries,
                   ),
                 );
               },

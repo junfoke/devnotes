@@ -22,10 +22,13 @@ final syncStateProvider = StateNotifierProvider<SyncStateNotifier, SyncState>(
 );
 
 class SyncStateNotifier extends StateNotifier<SyncState> {
+  /// Starts at [SyncStatus.idle], not `synced`: nothing has been synced yet in
+  /// this session, and claiming otherwise shows a green "all good" dot to a
+  /// user whose repo may be hours out of date or failing to authenticate.
   SyncStateNotifier()
       : super(const SyncState(
           branchName: 'main',
-          status: SyncStatus.synced,
+          status: SyncStatus.idle,
         ));
 
   void setSyncing() => state = state.copyWith(status: SyncStatus.syncing);
@@ -34,11 +37,42 @@ class SyncStateNotifier extends StateNotifier<SyncState> {
         lastSyncAt: DateTime.now(),
       );
   void setError() => state = state.copyWith(status: SyncStatus.error);
-  void addHistory(SyncLogEntry entry) {
-    state = state.copyWith(history: [...state.history, entry]);
-  }
   void setBranch(String branch) => state = state.copyWith(branchName: branch);
 }
+
+/// Sync history, read from SQLite so it survives an app restart.
+///
+/// `SyncService` has always written these entries; the sheet used to read an
+/// in-memory list that nothing ever appended to, so it was permanently empty.
+final syncHistoryProvider = FutureProvider<List<SyncLogEntry>>((ref) async {
+  final db = await ref.watch(metadataDatabaseProvider.future);
+  return db.getSyncLog(limit: 20);
+});
+
+/// When the last *successful* sync happened, or null if there never was one.
+/// Entries come back newest-first, so the first success is the most recent.
+final lastSuccessfulSyncProvider = FutureProvider<DateTime?>((ref) async {
+  final entries = await ref.watch(syncHistoryProvider.future);
+  for (final entry in entries) {
+    if (entry.success) return entry.timestamp;
+  }
+  return null;
+});
+
+/// Branch actually checked out in the workspace repo.
+///
+/// Falls back to the configured branch when the repo does not exist yet or has
+/// no commits (unborn HEAD), where `Repository.open`/`head` throws.
+final currentBranchProvider = FutureProvider<String>((ref) async {
+  final config = await ref.watch(gitConfigProvider.future);
+  final fallback = config?.branch ?? 'main';
+  try {
+    final client = await ref.watch(gitClientProvider.future);
+    return await client.currentBranch();
+  } catch (_) {
+    return fallback;
+  }
+});
 
 final gitClientProvider = FutureProvider<Git2dartClient>((ref) async {
   final path = await WorkspacePathProvider.getWorkspacePath();

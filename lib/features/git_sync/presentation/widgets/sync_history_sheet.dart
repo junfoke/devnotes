@@ -24,6 +24,11 @@ class SyncHistorySheet extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(20),
+      // Sheet cao tối đa 70% màn hình; phần danh sách bên trong tự cuộn.
+      // Không có ràng buộc này thì 20 bản ghi làm vỡ layout.
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
+      ),
       decoration: BoxDecoration(
         color: colors.bgSecondary,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -92,56 +97,65 @@ class SyncHistorySheet extends StatelessWidget {
               ),
             )
           else
-            ...entries.take(20).map((entry) {
-              final icon =
-                  entry.success ? Icons.check_circle : Icons.error;
-              final iconColor =
-                  entry.success ? colors.success : colors.error;
-              final actionLabel = entry.action == SyncAction.push
-                  ? 'Push'
-                  : entry.action == SyncAction.pull
-                      ? 'Pull'
-                      : 'Conflict';
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: entries.length > 20 ? 20 : entries.length,
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  final icon =
+                      entry.success ? Icons.check_circle : Icons.error;
+                  final iconColor =
+                      entry.success ? colors.success : colors.error;
+                  final actionLabel = entry.action == SyncAction.push
+                      ? 'Push'
+                      : entry.action == SyncAction.pull
+                          ? 'Pull'
+                          : 'Conflict';
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Icon(icon, size: 18, color: iconColor),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$actionLabel — ${entry.filesChanged} file(s)',
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 13,
-                            ),
-                          ),
-                          if (entry.errorMessage != null)
-                            Text(
-                              entry.errorMessage!,
-                              style: TextStyle(
-                                color: colors.error,
-                                fontSize: 11,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, size: 18, color: iconColor),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$actionLabel — ${entry.filesChanged} file(s)',
+                                style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
+                              if (entry.errorMessage != null)
+                                Text(
+                                  entry.errorMessage!,
+                                  style: TextStyle(
+                                    color: colors.error,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          dateFormat.format(entry.timestamp),
+                          style: TextStyle(
+                            color: colors.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      dateFormat.format(entry.timestamp),
-                      style: TextStyle(
-                        color: colors.textMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
