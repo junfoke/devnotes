@@ -28,6 +28,21 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 ---
 
+## 2026-10-25 — Sync theo thứ tự commit → pull → push
+**Chốt:** Mỗi lần sync: (0) xử lý file còn đánh dấu conflict (xem mục bên dưới) → (1) có thay đổi trên máy thì commit trước (đang dở merge thì là merge commit) → (2) pull; conflict thì dừng, chưa push → (3) push. Pull fast-forward thì checkout cây đích trước rồi mới dời branch; repo chưa có commit thì lấy nguyên branch từ remote. Thay cho: "Sync theo thứ tự pull → commit → push" (phần kế thừa).
+**Vì:** Pull khi còn file sửa dở thì checkout fast-forward bị chặn giữa chừng, lần commit sau lùi mất toàn bộ thay đổi từ remote; và giải quyết conflict xong thì lần Sync kế tiếp luôn lỗi. Commit trước là cách git chuẩn: hai phía cùng sửa một note luôn thành conflict để user chọn. User chọn 2026-10-25.
+**Test:** `test/core/git_client/sync_flow_ac_test.dart`, `test/features/git_sync/sync_service_ac_test.dart`
+
+## 2026-10-25 — Editor không ghi đè thay đổi từ bên ngoài
+**Chốt:** Sync tự động hoãn khi đang có editor mở, chạy ngay khi editor cuối cùng đóng. Trước mỗi lần lưu, editor so file trên đĩa với bản nó đọc/ghi lần cuối (nội dung, tiêu đề, tags): khác thì không ghi, hỏi "Tải bản mới" hoặc "Lưu bản của tôi thành note mới" (tiêu đề thêm " (bản sửa)"). Back hệ thống và app xuống nền cũng lưu; editor chưa tải xong note thì chưa cho gõ.
+**Vì:** Sync kéo bản mới về trong lúc editor mở, autosave ghi nội dung cũ trên màn hình đè lên — bản sửa trên máy khác mất mà không có conflict nào. User chọn "hoãn sync + chặn ghi đè" 2026-10-25.
+**Test:** `test/features/editor/editor_external_change_test.dart`
+
+## 2026-10-25 — Import ZIP: note trong thư mục con đưa về thư mục gốc
+**Chốt:** `notes/a.md` trong zip được ghi thành `a.md` ở gốc workspace; trùng tên thì theo luật bản sao sẵn có. `.git` bị chặn không phân biệt hoa thường. Bổ sung cho mục 2026-10-24 "Import ZIP: trùng tên thì tạo bản sao".
+**Vì:** App chỉ liệt kê note ở thư mục gốc — note nhập vào thư mục con sẽ không hiện trong app nhưng vẫn bị commit và đẩy lên. User chọn 2026-10-25.
+**Test:** `test/features/settings/import_zip_ac_test.dart`
+
 ## 2026-10-25 — Không bao giờ commit file còn dấu conflict
 **Chốt:** Đầu mỗi lần sync, duyệt các file git còn đánh dấu conflict: file đã hết `<<<<<<<` (giải quyết qua màn hình hoặc sửa tay) → đánh dấu đã giải quyết; còn dù một file có dấu → dừng, không pull/commit/push, mở màn giải quyết. Commit khi đang dở merge luôn là merge commit (thêm `MERGE_HEAD` làm cha) rồi dọn trạng thái merge, kể cả khi cây file giống hệt HEAD. Màn conflict giải quyết xong một file thì tự sang file kế tiếp.
 **Vì:** `commitAll` stage mọi `*.md` — trước đây màn conflict chỉ mở file đầu tiên và không báo git, nên Sync có thể commit file còn nguyên dấu conflict lên remote; còn `MERGE_HEAD` sót lại làm hỏng những lần pull sau. Phát hiện khi kiểm thử chuyển branch thật trên emulator.
@@ -93,7 +108,7 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 Những mục dưới đây đã nằm trong code từ trước; ghi lại để biết **đang** theo rule nào, chứ không phải mới chốt hôm nay.
 
-- **Sync theo thứ tự pull → commit → push.** Không bao giờ push trước khi pull. Xung đột làm dừng toàn bộ flow, user phải resolve rồi sync lại. Sync **không** atomic: pull xong mà push lỗi thì commit nằm lại local, không rollback.
+- ~~**Sync theo thứ tự pull → commit → push.**~~ Đã thay bằng mục 2026-10-25 "commit → pull → push". Không bao giờ push trước khi pull. Xung đột làm dừng toàn bộ flow, user phải resolve rồi sync lại. Sync **không** atomic: pull xong mà push lỗi thì commit nằm lại local, không rollback.
 - **Chỉ file `.md` được stage/commit.** File khác trong workspace bị git bỏ qua.
 - **Giải quyết xung đột áp một chiến lược cho cả file** (Keep Mine / Keep Theirs / Keep Both), không chọn từng khối. Resolve xong không tự commit — user phải chạy Sync lại.
 - ~~**Import ZIP ghi đè note trùng tên.**~~ Đã thay bằng mục 2026-10-24 "Import ZIP: trùng tên thì tạo bản sao".
