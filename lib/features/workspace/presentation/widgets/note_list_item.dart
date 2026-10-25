@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
-import 'package:devnotes/core/utils/enums.dart';
 
 class NoteListItem extends StatelessWidget {
   final NoteFile note;
@@ -23,23 +22,6 @@ class NoteListItem extends StatelessWidget {
     if (diff.inHours > 0) return '${diff.inHours}h ago';
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'just now';
-  }
-
-  Color _syncDotColor(BuildContext context) {
-    final colors = Theme.of(context).appColors;
-    switch (note.syncStatus) {
-      case SyncStatus.synced:
-        return colors.success;
-      case SyncStatus.pending:
-        return colors.warning;
-      case SyncStatus.conflict:
-      case SyncStatus.error:
-        return colors.error;
-      case SyncStatus.success:
-        return colors.success;
-      default:
-        return colors.textMuted;
-    }
   }
 
   @override
@@ -72,15 +54,6 @@ class NoteListItem extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _syncDotColor(context),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             note.title.isEmpty ? 'Untitled' : note.title,

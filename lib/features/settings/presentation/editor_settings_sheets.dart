@@ -134,6 +134,28 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
   }
 }
 
+/// Tên dễ đọc của một nút thanh công cụ (thay cho id nội bộ như
+/// `code_inline`).
+String toolbarItemName(String id) => switch (id) {
+      'h1' => 'Tiêu đề 1',
+      'h2' => 'Tiêu đề 2',
+      'h3' => 'Tiêu đề 3',
+      'bold' => 'In đậm',
+      'italic' => 'In nghiêng',
+      'strikethrough' => 'Gạch ngang',
+      'link' => 'Liên kết',
+      'image' => 'Hình ảnh',
+      'code_inline' => 'Code trong dòng',
+      'code_block' => 'Khối code',
+      'checklist' => 'Danh sách việc',
+      'list_unordered' => 'Danh sách gạch đầu dòng',
+      'list_ordered' => 'Danh sách đánh số',
+      'quote' => 'Trích dẫn',
+      'table' => 'Bảng',
+      'hr' => 'Đường kẻ ngang',
+      _ => id,
+    };
+
 /// Bottom sheet bật/tắt và sắp xếp các nút trên thanh công cụ Markdown.
 class ToolbarLayoutSheet extends ConsumerStatefulWidget {
   const ToolbarLayoutSheet({super.key, required this.initial});
@@ -232,7 +254,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
                             ),
                           ),
                     title: Text(
-                      item.id,
+                      toolbarItemName(item.id),
                       style: TextStyle(color: colors.textPrimary),
                     ),
                   );

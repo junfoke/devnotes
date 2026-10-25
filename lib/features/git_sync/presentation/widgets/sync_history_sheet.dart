@@ -107,11 +107,12 @@ class SyncHistorySheet extends StatelessWidget {
                       entry.success ? Icons.check_circle : Icons.error;
                   final iconColor =
                       entry.success ? colors.success : colors.error;
-                  final actionLabel = entry.action == SyncAction.push
-                      ? 'Push'
-                      : entry.action == SyncAction.pull
-                          ? 'Pull'
-                          : 'Conflict';
+                  final actionLabel = switch (entry.action) {
+                    SyncAction.push => 'Push',
+                    SyncAction.pull => 'Pull',
+                    SyncAction.commit => 'Commit',
+                    SyncAction.fetch => 'Fetch',
+                  };
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
