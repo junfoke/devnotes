@@ -138,6 +138,9 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
         theme: AppTheme.light(),
         home: Builder(
           builder: (context) => Scaffold(
