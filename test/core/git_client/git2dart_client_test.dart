@@ -25,32 +25,46 @@ void main() {
     File('${tmp.path}/a.md').writeAsStringSync('base\n');
     await client.commitAll('base');
 
-    final repo = Repository.open(tmp.path);
-    try {
-      final c0 = Commit.lookup(repo: repo, oid: repo.head.target);
-      final mainRef = repo.head.name; // refs/heads/master or main
-      Branch.create(repo: repo, name: 'theirs', target: c0);
+    // Mỗi bước mở repo mới: client chạy trong isolate khác với handle riêng,
+    // một handle giữ suốt ở đây có thể còn cache index/HEAD cũ.
+    T withRepo<T>(T Function(Repository repo) body) {
+      final repo = Repository.open(tmp.path);
+      try {
+        return body(repo);
+      } finally {
+        repo.free();
+      }
+    }
 
-      // theirs: base -> "theirs change"
+    final mainRef = withRepo((repo) {
+      final c0 = Commit.lookup(repo: repo, oid: repo.head.target);
+      Branch.create(repo: repo, name: 'theirs', target: c0);
+      return repo.head.name; // refs/heads/master or main
+    });
+
+    // theirs: base -> "theirs change"
+    withRepo((repo) {
       repo.setHead('refs/heads/theirs');
       Checkout.head(repo: repo, strategy: {GitCheckout.force});
-      File('${tmp.path}/a.md').writeAsStringSync('theirs change\n');
-      await client.commitAll('theirs');
-      final theirHead =
-          Reference.lookup(repo: repo, name: 'refs/heads/theirs').target;
+    });
+    File('${tmp.path}/a.md').writeAsStringSync('theirs change\n');
+    await client.commitAll('theirs');
+    final theirHead = withRepo((repo) =>
+        Reference.lookup(repo: repo, name: 'refs/heads/theirs').target);
 
-      // main: base -> "mine change"
+    // main: base -> "mine change"
+    withRepo((repo) {
       repo.setHead(mainRef);
       Checkout.head(repo: repo, strategy: {GitCheckout.force});
-      File('${tmp.path}/a.md').writeAsStringSync('mine change\n');
-      await client.commitAll('mine');
+    });
+    File('${tmp.path}/a.md').writeAsStringSync('mine change\n');
+    await client.commitAll('mine');
 
-      // merge theirs into main -> conflict
+    // merge theirs into main -> conflict
+    withRepo((repo) {
       final annotated = AnnotatedCommit.lookup(repo: repo, oid: theirHead);
       Merge.commit(repo: repo, commit: annotated);
-    } finally {
-      repo.free();
-    }
+    });
   }
 
   List<String> headTreeFileNames() {
