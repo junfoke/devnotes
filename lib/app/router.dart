@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../features/workspace/presentation/workspace_screen.dart';
 import '../features/editor/presentation/editor_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/settings/presentation/manage_collections_screen.dart';
 import '../features/git_sync/presentation/git_setup_screen.dart';
 import '../features/git_sync/presentation/conflict_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
@@ -40,6 +41,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/git',
         builder: (_, __) => const GitSetupScreen(),
+      ),
+      GoRoute(
+        path: '/settings/collections',
+        builder: (_, __) => const ManageCollectionsScreen(),
       ),
       GoRoute(
         path: '/conflict/:filePath',

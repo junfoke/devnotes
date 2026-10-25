@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
+import 'package:devnotes/features/workspace/domain/collection.dart';
 
+/// Dialog tạo collection mới, hoặc sửa [initial] nếu được truyền vào.
+///
+/// Trả về `{'name': String, 'tags': List<String>}`, hoặc null nếu hủy.
 class CreateCollectionDialog extends StatefulWidget {
-  const CreateCollectionDialog({super.key});
+  const CreateCollectionDialog({super.key, this.initial});
+
+  final Collection? initial;
 
   @override
   State<CreateCollectionDialog> createState() => _CreateCollectionDialogState();
 }
 
 class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
-  final _nameController = TextEditingController();
-  final _tagsController = TextEditingController();
+  late final _nameController =
+      TextEditingController(text: widget.initial?.name ?? '');
+  late final _tagsController =
+      TextEditingController(text: widget.initial?.filterTags.join(', ') ?? '');
+
+  bool get _isEdit => widget.initial != null;
 
   @override
   void dispose() {
@@ -24,7 +34,8 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
     final colors = Theme.of(context).appColors;
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text('New Collection', style: TextStyle(color: colors.textPrimary)),
+      title: Text(_isEdit ? 'Edit Collection' : 'New Collection',
+          style: TextStyle(color: colors.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -64,7 +75,8 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
                 .toList();
             Navigator.pop(context, {'name': name, 'tags': tags});
           },
-          child: Text('Create', style: TextStyle(color: colors.accent)),
+          child: Text(_isEdit ? 'Save' : 'Create',
+              style: TextStyle(color: colors.accent)),
         ),
       ],
     );

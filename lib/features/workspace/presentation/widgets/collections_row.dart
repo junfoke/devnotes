@@ -8,12 +8,16 @@ class CollectionsRow extends StatelessWidget {
   final ValueChanged<String?> onSelect;
   final VoidCallback onAdd;
 
+  /// Nhấn giữ một chip collection (không áp dụng cho "All Notes").
+  final ValueChanged<Collection>? onLongPress;
+
   const CollectionsRow({
     super.key,
     required this.collections,
     required this.selectedId,
     required this.onSelect,
     required this.onAdd,
+    this.onLongPress,
   });
 
   @override
@@ -32,6 +36,8 @@ class CollectionsRow extends StatelessWidget {
                 col.name,
                 selectedId == col.id,
                 () => onSelect(col.id),
+                onLongPress:
+                    onLongPress == null ? null : () => onLongPress!(col),
               )),
           const SizedBox(width: 8),
           GestureDetector(
@@ -51,12 +57,14 @@ class CollectionsRow extends StatelessWidget {
     );
   }
 
-  Widget _chip(BuildContext context, String label, bool selected, VoidCallback onTap) {
+  Widget _chip(BuildContext context, String label, bool selected, VoidCallback onTap,
+      {VoidCallback? onLongPress}) {
     final colors = Theme.of(context).appColors;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(

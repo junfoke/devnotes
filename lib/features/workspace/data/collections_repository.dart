@@ -21,4 +21,21 @@ class CollectionsRepository {
     final json = jsonEncode(collections.map((c) => c.toJson()).toList());
     await file.writeAsString(json);
   }
+
+  /// Thay collection cùng `id` bằng [updated]; không có thì không làm gì.
+  Future<void> updateCollection(Collection updated) async {
+    final all = await loadCollections();
+    await saveCollections([
+      for (final c in all) c.id == updated.id ? updated : c,
+    ]);
+  }
+
+  /// Xóa collection [id] khỏi danh sách.
+  ///
+  /// Chỉ bỏ nhóm — collection là bộ lọc ảo theo tag, **không** đụng tới file
+  /// `.md` nào. Xem DECISIONS.md, "Xóa collection" (2026-10-24).
+  Future<void> deleteCollection(String id) async {
+    final all = await loadCollections();
+    await saveCollections(all.where((c) => c.id != id).toList());
+  }
 }
