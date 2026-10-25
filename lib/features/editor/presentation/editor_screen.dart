@@ -295,9 +295,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       return;
     }
     final title = _loadedNote?.title ?? p.basename(widget.filePath);
-    await Share.shareXFiles([
-      XFile(widget.filePath, mimeType: 'text/markdown'),
-    ], subject: title);
+    try {
+      await Share.shareXFiles([
+        XFile(widget.filePath, mimeType: 'text/markdown'),
+      ], subject: title);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không chia sẻ được: $e')),
+        );
+      }
+    }
   }
 
   void _showInfo() {

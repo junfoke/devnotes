@@ -57,13 +57,19 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
       _checkResult = null;
     });
 
-    final client = await ref.read(gitClientProvider.future);
-    final result = await client.checkRemote(
-      remoteUrl: url,
-      username: username,
-      password: pat,
-      branch: branch.isEmpty ? 'main' : branch,
-    );
+    RemoteCheckResult result;
+    try {
+      final client = await ref.read(gitClientProvider.future);
+      result = await client.checkRemote(
+        remoteUrl: url,
+        username: username,
+        password: pat,
+        branch: branch.isEmpty ? 'main' : branch,
+      );
+    } catch (e) {
+      // Không để nút quay mãi nếu khởi tạo git/isolate lỗi.
+      result = RemoteCheckResult(RemoteCheckStatus.unknown, detail: '$e');
+    }
 
     if (!mounted) return;
     setState(() {
@@ -77,7 +83,13 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
     final username = _usernameController.text.trim();
     final pat = _patController.text.trim();
     final branch = _branchController.text.trim();
-    if (url.isEmpty || username.isEmpty || pat.isEmpty) return;
+    if (url.isEmpty || username.isEmpty || pat.isEmpty) {
+      setState(() => _checkResult = const RemoteCheckResult(
+            RemoteCheckStatus.unknown,
+            detail: 'Cần nhập đủ URL, username và PAT để kết nối.',
+          ));
+      return;
+    }
 
     setState(() => _loading = true);
     final config = GitConfig(
@@ -86,11 +98,20 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
       pat: pat,
       branch: branch.isEmpty ? 'main' : branch,
     );
-    await ref.read(gitConfigRepoProvider).saveConfig(config);
-    ref.invalidate(gitConfigProvider);
+    try {
+      await ref.read(gitConfigRepoProvider).saveConfig(config);
+      ref.invalidate(gitConfigProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không lưu được cấu hình Git: $e')));
+      }
+      return;
+    }
+    if (!mounted) return;
     setState(() => _loading = false);
-
-    if (mounted) context.go('/onboarding/first-note');
+    context.go('/onboarding/first-note');
   }
 
   @override
@@ -109,7 +130,9 @@ class _OnboardingGitScreenState extends ConsumerState<OnboardingGitScreen> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.arrow_back, color: colors.textPrimary),
-                    onPressed: () => context.pop(),
+                    // Màn này được mở bằng go(), không có gì để pop —
+                    // pop() ở đây từng ném lỗi.
+                    onPressed: () => context.go('/onboarding'),
                   ),
                   Text(
                     'Git Setup',

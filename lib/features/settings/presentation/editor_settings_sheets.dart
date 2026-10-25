@@ -8,7 +8,17 @@ import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 
 /// Lưu [prefs] và báo cho editor đọc lại ở lần mở note kế tiếp.
 Future<void> _savePrefs(WidgetRef ref, EditorPreferences prefs) async {
-  await ref.read(preferencesRepoProvider).saveEditorPreferences(prefs);
+  try {
+    await ref.read(preferencesRepoProvider).saveEditorPreferences(prefs);
+  } catch (e) {
+    // Sheet vẫn hiện lựa chọn mới; báo để user biết nó chưa được lưu.
+    final context = ref.context;
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không lưu được cài đặt: $e')));
+    }
+    return;
+  }
   ref.invalidate(editorPreferencesProvider);
 }
 

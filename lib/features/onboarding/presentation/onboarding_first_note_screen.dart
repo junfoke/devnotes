@@ -5,8 +5,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 
-class OnboardingFirstNoteScreen extends ConsumerWidget {
+class OnboardingFirstNoteScreen extends ConsumerStatefulWidget {
   const OnboardingFirstNoteScreen({super.key});
+
+  @override
+  ConsumerState<OnboardingFirstNoteScreen> createState() =>
+      _OnboardingFirstNoteScreenState();
+}
+
+class _OnboardingFirstNoteScreenState
+    extends ConsumerState<OnboardingFirstNoteScreen> {
+  /// Đang tạo — chặn bấm lần hai (từng sinh thêm welcome-to-devnotes-1.md).
+  bool _creating = false;
 
   static const _sampleContent = '''# Welcome to DevNotes!
 
@@ -39,8 +49,31 @@ void main() {
 Happy note-taking!
 ''';
 
+  Future<void> _createAndStart() async {
+    if (_creating) return;
+    setState(() => _creating = true);
+    try {
+      final repo = await ref.read(noteFileRepositoryProvider.future);
+      final note = await repo.createNote(
+        title: 'Welcome to DevNotes',
+        tags: ['getting-started'],
+      );
+      await repo.saveNote(note.copyWith(content: _sampleContent));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_complete', true);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _creating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không tạo được ghi chú: $e')));
+      }
+      return;
+    }
+    if (mounted) context.go('/');
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
 
     return Scaffold(
@@ -77,23 +110,7 @@ Happy note-taking!
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final repo = await ref
-                          .read(noteFileRepositoryProvider.future);
-                      final note = await repo.createNote(
-                        title: 'Welcome to DevNotes',
-                        tags: ['getting-started'],
-                      );
-                      final updated =
-                          note.copyWith(content: _sampleContent);
-                      await repo.saveNote(updated);
-
-                      final prefs =
-                          await SharedPreferences.getInstance();
-                      await prefs.setBool('onboarding_complete', true);
-
-                      if (context.mounted) context.go('/');
-                    },
+                    onPressed: _creating ? null : _createAndStart,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.accent,
                       shape: RoundedRectangleBorder(

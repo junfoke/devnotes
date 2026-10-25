@@ -36,7 +36,16 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   }
 
   Future<void> _loadExistingConfig() async {
-    final config = await ref.read(gitConfigProvider.future);
+    final GitConfig? config;
+    try {
+      config = await ref.read(gitConfigProvider.future);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không đọc được cấu hình Git: $e')));
+      }
+      return;
+    }
     if (config != null && mounted) {
       _urlController.text = config.remoteUrl;
       _usernameController.text = config.username;
@@ -77,13 +86,19 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       _checkResult = null;
     });
 
-    final client = await ref.read(gitClientProvider.future);
-    final result = await client.checkRemote(
-      remoteUrl: url,
-      username: username,
-      password: pat,
-      branch: branch.isEmpty ? 'main' : branch,
-    );
+    RemoteCheckResult result;
+    try {
+      final client = await ref.read(gitClientProvider.future);
+      result = await client.checkRemote(
+        remoteUrl: url,
+        username: username,
+        password: pat,
+        branch: branch.isEmpty ? 'main' : branch,
+      );
+    } catch (e) {
+      // Không để nút quay mãi nếu khởi tạo git/isolate lỗi.
+      result = RemoteCheckResult(RemoteCheckStatus.unknown, detail: '$e');
+    }
 
     if (!mounted) return;
     setState(() {
@@ -97,7 +112,13 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     final username = _usernameController.text.trim();
     final pat = _patController.text.trim();
     final branch = _branchController.text.trim();
-    if (url.isEmpty || username.isEmpty || pat.isEmpty) return;
+    if (url.isEmpty || username.isEmpty || pat.isEmpty) {
+      setState(() => _checkResult = const RemoteCheckResult(
+            RemoteCheckStatus.unknown,
+            detail: 'Cần nhập đủ URL, username và PAT để lưu.',
+          ));
+      return;
+    }
 
     setState(() => _loading = true);
     final config = GitConfig(
@@ -106,8 +127,19 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       pat: pat,
       branch: branch.isEmpty ? 'main' : branch,
     );
-    await ref.read(gitConfigRepoProvider).saveConfig(config);
-    ref.invalidate(gitConfigProvider);
+    try {
+      await ref.read(gitConfigRepoProvider).saveConfig(config);
+      ref.invalidate(gitConfigProvider);
+      ref.invalidate(currentBranchProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không lưu được cấu hình Git: $e')));
+      }
+      return;
+    }
+    if (!mounted) return;
     setState(() => _loading = false);
 
     if (mounted) {
@@ -142,8 +174,16 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     );
     if (confirm != true) return;
 
-    await ref.read(gitConfigRepoProvider).deleteConfig();
-    ref.invalidate(gitConfigProvider);
+    try {
+      await ref.read(gitConfigRepoProvider).deleteConfig();
+      ref.invalidate(gitConfigProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không xóa được cấu hình Git: $e')));
+      }
+      return;
+    }
     if (mounted) {
       _urlController.clear();
       _usernameController.clear();
@@ -479,13 +519,6 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text('Skip for now — use local storage only',
-                      style: TextStyle(color: colors.textMuted, fontSize: 13)),
-                ),
-              ),
             ],
           ),
         ),
