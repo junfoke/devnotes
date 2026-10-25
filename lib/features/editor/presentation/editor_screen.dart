@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
+import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_toolbar.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
@@ -476,41 +476,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       ),
                     // Preview mode
                     noteAsync.when(
-                      data: (_) => Markdown(
+                      data: (_) => MarkdownPreview(
                         data: _textController.text,
-                        padding: const EdgeInsets.all(20),
-                        styleSheet: MarkdownStyleSheet(
-                          p: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 14,
-                            height: 1.6,
-                          ),
-                          h1: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          h2: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          h3: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          code: TextStyle(
-                            color: colors.accentLight,
-                            backgroundColor: colors.codeBg,
-                            fontFamily: 'JetBrainsMono',
-                            fontSize: 13,
-                          ),
-                          codeblockDecoration: BoxDecoration(
-                            color: colors.codeBg,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
+                        fontFamily:
+                            editorPrefs?.fontFamily ?? 'JetBrainsMono',
+                        fontSize: editorPrefs?.fontSize ??
+                            EditorPreferences.defaultFontSize,
                       ),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),

@@ -80,9 +80,9 @@ class MarkdownToolbar extends StatelessWidget {
                           color: colors.textSecondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          fontFamily: item.id.startsWith('h')
-                              ? 'Inter'
-                              : 'JetBrainsMono',
+                          // Nút H1-H3 dùng font mặc định của app.
+                          fontFamily:
+                              item.id.startsWith('h') ? null : 'JetBrainsMono',
                         ),
                       ),
               ),
