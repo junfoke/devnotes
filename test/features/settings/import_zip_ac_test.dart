@@ -106,12 +106,31 @@ void main() {
     expect(noteExists('a-2.md'), isFalse);
   });
 
-  test('giữ cấu trúc thư mục con', () async {
+  // App chỉ liệt kê note ở thư mục gốc — note nằm trong thư mục con sẽ
+  // "biến mất" dù vẫn bị commit. Quyết định 2026-10-25: đưa về thư mục gốc.
+  test('note trong thư mục con được đưa về thư mục gốc', () async {
     final report =
         await service.importFromZip(makeZip({'work/meeting.md': '# M'}));
 
-    expect(readNote(p.join('work', 'meeting.md')), '# M');
+    expect(readNote('meeting.md'), '# M');
+    expect(noteExists(p.join('work', 'meeting.md')), isFalse);
     expect(report.added, ['work/meeting.md']);
+  });
+
+  test('hai thư mục con cùng tên file khác nội dung thì tạo bản sao', () async {
+    final report = await service.importFromZip(
+        makeZip({'a/note.md': '# Bản A', 'b/note.md': '# Bản B'}));
+
+    expect(readNote('note.md'), '# Bản A');
+    expect(readNote('note-1.md'), '# Bản B');
+    expect(report.copied, {'b/note.md': 'note-1.md'});
+  });
+
+  test('thư mục .git viết hoa cũng bị từ chối', () async {
+    final report = await service.importFromZip(
+        makeZip({'.GIT/hooks.md': 'x', 'notes/.Git/x.md': 'x'}));
+
+    expect(report.rejected, unorderedEquals(['.GIT/hooks.md', 'notes/.Git/x.md']));
   });
 
   test('mục thoát ra ngoài workspace bằng ../ bị từ chối, mục hợp lệ vẫn nhập',

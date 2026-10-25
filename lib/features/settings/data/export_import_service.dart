@@ -37,7 +37,8 @@ class ExportImportService {
   ///   đã có) → bỏ qua, nên nhập lại cùng một zip không sinh thêm file.
   /// - Trùng tên + khác nội dung → ghi bản sao `ten-1.md`, `ten-2.md`…
   /// - Mục có đường dẫn thoát khỏi workspace (`../`, đường dẫn tuyệt đối,
-  ///   thư mục `.git`) → từ chối (B-16, zip slip).
+  ///   thư mục `.git` dù viết hoa hay thường) → từ chối (B-16, zip slip).
+  /// - Note nằm trong thư mục con được đưa về thư mục gốc của workspace.
   Future<ImportReport> importFromZip(String zipPath) async {
     final List<({String name, List<int> bytes})> entries;
     try {
@@ -85,7 +86,7 @@ class ExportImportService {
       // Tìm bản sao -N đầu tiên còn trống; gặp bản sao giống hệt thì dừng.
       final base = p.withoutExtension(target);
       final ext = p.extension(target);
-      for (var n = 1;; n++) {
+      for (var n = 1; ; n++) {
         final copy = File('$base-$n$ext');
         if (!copy.existsSync()) {
           await copy.writeAsBytes(entry.bytes);
@@ -115,10 +116,12 @@ class ExportImportService {
     if (segments.isEmpty ||
         segments.first == '..' ||
         segments.first == '.' ||
-        segments.contains('.git')) {
+        segments.any((s) => s.toLowerCase() == '.git')) {
       return null;
     }
-    return p.joinAll(segments);
+    // App chỉ liệt kê note ở thư mục gốc: note trong thư mục con được đưa về
+    // gốc (DECISIONS 2026-10-25), trùng tên thì theo luật bản sao như thường.
+    return segments.last;
   }
 
   static bool _sameBytes(File file, List<int> bytes) {
