@@ -216,19 +216,41 @@ Tất cả đều là `onTap: () {}` trong [`settings_screen.dart`](../lib/featu
   Thêm nữa: chọn "Keep Mine" cho cây giống HEAD nên commit bị bỏ qua, `MERGE_HEAD` nằm lại.
 - **Đã sửa:** xem DECISIONS 2026-10-25 "Không bao giờ commit file còn dấu conflict".
 
-### B-19. Nhãn LOCAL/REMOTE ở màn conflict sai nghĩa khi chuyển branch
+### ✅ B-19. Nhãn LOCAL/REMOTE ở màn conflict sai nghĩa khi chuyển branch — XONG 2026-10-25
 
 - Khi chuyển branch, "LOCAL (yours)" là bản của branch **đích** (`main`) còn bản ghi chú user
   vẫn dùng (`master`) lại nằm ở "REMOTE (theirs)". Dễ chọn nhầm.
 - **Hướng:** truyền ngữ cảnh vào màn conflict (pull vs chuyển branch) và đặt nhãn theo tên
   branch: "Bản trên main" / "Bản trên master". Việc UI thuần, không cần chốt.
 
-### B-20. Lịch sử sync hiện giờ UTC
+### ✅ B-20. Lịch sử sync hiện giờ UTC — XONG 2026-10-25
 
 - Sheet Sync History ghi 13:06 khi đồng hồ máy là 20:06 (UTC+7). Cần `.toLocal()` khi hiển thị.
 
+## Đợt rà soát 2026-10-25 (review code + soát độ hoàn thiện)
+
+Hai agent rà toàn bộ thay đổi và toàn app; mọi mục dưới đây đã sửa, có test, đã thử trên emulator.
+
+**Mất dữ liệu / hỏng repo**
+- ✅ B-21. Sync tự động pull lúc editor mở → autosave ghi đè bản mới vừa kéo về. Editor so file trên đĩa trước khi lưu; sync tự động hoãn khi đang soạn (DECISIONS 2026-10-25).
+- ✅ B-22. Pull fast-forward khi có file sửa dở lùi mất thay đổi từ remote; resolve conflict xong thì sync kẹt vĩnh viễn → đổi sang commit → pull → push (DECISIONS 2026-10-25).
+- ✅ B-23. Màn conflict không markResolved, chỉ mở file đầu → file còn dấu conflict bị commit lên remote (B-18, DECISIONS 2026-10-25).
+- ✅ B-24. Conflict modify/delete (file bị xóa) làm sync kẹt; chuyển branch chạy chồng với sync tự động (không chung khóa).
+- ✅ B-25. Back hệ thống / app xuống nền làm mất chữ vừa gõ; note vừa xóa có thể bị autosave ghi lại.
+- ✅ B-26. Xóa/đổi tên note lần hai cùng tham số bị bỏ qua (FutureProvider.family cache theo tham số).
+- ✅ B-27. Mở lại note thấy nội dung cũ trong bộ nhớ (currentNoteProvider không tự hủy).
+- ✅ B-28. libgit2 chờ mạng vô hạn → đặt timeout kết nối 15s, đọc/ghi 30s.
+- ✅ B-29. Import: note trong thư mục con không hiện trong app nhưng vẫn bị commit → đưa về gốc; `.git` chặn mọi kiểu viết hoa.
+
+**Độ bền / hoàn thiện**
+- ✅ Onboarding: nút back bước Git từng crash; thêm Next/Skip; chặn bấm hai lần ở bước tạo note.
+- ✅ Mọi thao tác (tạo/đổi tên/xóa note, collection, lưu cấu hình Git, lưu cài đặt, chia sẻ) báo lỗi thay vì im lặng hay quay mãi.
+- ✅ Preview tô màu cú pháp code (flutter_highlight có sẵn mà chưa dùng), mở được link, theo font/cỡ chữ.
+- ✅ Sửa tag của note; Toolbar Layout hiện tên dễ đọc; phiên bản app đọc từ gói cài.
+- ✅ Bỏ chấm trạng thái từng note (luôn xám, không có dữ liệu); bỏ nút "Skip" khỏi Settings → Git.
+- ✅ Thống nhất mặc định cỡ chữ 14 / tự lưu 3 giây; khoảng tự lưu đọc từ cài đặt.
+
 ## Việc tiếp theo
 
-1. B-19, B-20 — UI nhỏ, làm ngay được.
-2. Bật thử Sync Frequency = "Khi mở app", xác nhận chấm trạng thái đổi đúng.
-3. Nợ nhỏ: `EditorPreferences.autoSaveInterval` được lưu nhưng editor vẫn cứng 3 giây.
+1. Đa ngôn ngữ Việt + Anh (đang làm) — thống nhất toàn bộ chữ trên giao diện, có lựa chọn ngôn ngữ trong Settings.
+2. Nợ nhỏ còn lại: collection chưa sắp xếp lại được (`sortOrder` lưu nhưng chưa dùng); checklist trong preview chưa bấm được.
