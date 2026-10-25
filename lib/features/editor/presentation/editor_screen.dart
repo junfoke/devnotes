@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
+import 'package:devnotes/features/editor/domain/checklist_toggle.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_toolbar.dart';
@@ -305,6 +306,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     );
   }
 
+  /// Bấm ô checklist trong preview: đổi đúng dòng trong văn bản, autosave
+  /// lo phần ghi như mọi lần sửa khác.
+  void _toggleChecklist(int index, bool checked) {
+    final updated = toggleChecklistItem(_textController.text, index, checked);
+    if (updated == _textController.text) return;
+    setState(() => _textController.text = updated);
+  }
+
   /// Đổi tag của note. Tag mới được ghi cùng nội dung đang gõ qua đúng đường
   /// lưu thường (_save), nên vẫn được kiểm tra thay đổi từ bên ngoài.
   Future<void> _editTags() async {
@@ -522,6 +531,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                     noteAsync.when(
                       data: (_) => MarkdownPreview(
                         data: _textController.text,
+                        onToggleChecklist: _loadedNote == null ? null : _toggleChecklist,
                         fontFamily:
                             editorPrefs?.fontFamily ?? 'JetBrainsMono',
                         fontSize: editorPrefs?.fontSize ??

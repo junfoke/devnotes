@@ -28,6 +28,30 @@ void main() {
     expect(view.language, 'dart');
   });
 
+  testWidgets('bấm ô checklist báo đúng ô thứ mấy và trạng thái mới',
+      (tester) async {
+    final taps = <(int, bool)>[];
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('vi'),
+      theme: AppTheme.light(),
+      home: Scaffold(
+        body: MarkdownPreview(
+          data: '- [x] một\n- [ ] hai\n',
+          fontFamily: 'JetBrainsMono',
+          fontSize: 14,
+          onToggleChecklist: (i, v) => taps.add((i, v)),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.byType(Checkbox).at(1));
+    await tester.tap(find.byType(Checkbox).at(0));
+
+    expect(taps, [(1, true), (0, false)]);
+  });
+
   testWidgets('ngôn ngữ lạ không làm crash, hiện dạng chữ thường',
       (tester) async {
     await _pump(tester, '```khongcongonngunay\nabc\n```\n');

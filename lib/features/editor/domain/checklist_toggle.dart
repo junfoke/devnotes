@@ -29,3 +29,19 @@ String toggleChecklistItem(String source, int index, bool checked) {
   }
   return source;
 }
+
+/// Số ô checklist mà preview sẽ hiển thị (cùng luật đếm với
+/// [toggleChecklistItem]).
+int countChecklistItems(String source) {
+  final item = RegExp(r'^\s*[-*+]\s+\[[ xX]\]');
+  var inFence = false;
+  var count = 0;
+  for (final line in source.split('\n')) {
+    if (line.trimLeft().startsWith('```')) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence && item.hasMatch(line)) count++;
+  }
+  return count;
+}

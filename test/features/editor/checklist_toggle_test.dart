@@ -34,6 +34,12 @@ void main() {
     expect(toggleChecklistItem(src, 5, true), src);
   });
 
+  test('đếm ô checklist giống cách preview hiển thị', () {
+    const src = '- [ ] a\n```\n- [ ] trong code\n```\n* [x] b\ntext\n';
+
+    expect(countChecklistItems(src), 2);
+  });
+
   test('giữ nguyên kiểu xuống dòng CRLF', () {
     const src = '- [ ] a\r\n- [ ] b\r\n';
 

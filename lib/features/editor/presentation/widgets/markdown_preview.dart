@@ -8,23 +8,27 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
+import 'package:devnotes/features/editor/domain/checklist_toggle.dart';
 
 /// Trang xem trước Markdown của editor.
 ///
 /// - Cỡ chữ và font theo Settings → Font & Size (trước đây cứng 14px).
 /// - Khối code ```lang được tô màu cú pháp theo ngôn ngữ.
 /// - Bấm link thì mở bằng trình duyệt / app tương ứng.
+/// - Bấm ô checklist thì báo [onToggleChecklist] (ô thứ mấy, trạng thái mới).
 class MarkdownPreview extends StatelessWidget {
   const MarkdownPreview({
     super.key,
     required this.data,
     required this.fontFamily,
     required this.fontSize,
+    this.onToggleChecklist,
   });
 
   final String data;
   final String fontFamily;
   final double fontSize;
+  final void Function(int index, bool checked)? onToggleChecklist;
 
   Future<void> _openLink(BuildContext context, String? href) async {
     final uri = href == null ? null : Uri.tryParse(href);
@@ -52,9 +56,32 @@ class MarkdownPreview extends StatelessWidget {
       height: 1.5,
     );
 
+    // checkboxBuilder chỉ cho biết đúng/sai, không cho biết ô thứ mấy: đánh
+    // số theo thứ tự dựng (đúng thứ tự trong văn bản), lấy dư theo tổng số
+    // ô để Markdown có dựng lại (vd đổi theme) thì số vẫn khớp.
+    final total = countChecklistItems(data);
+    var nextIndex = 0;
+
     return Markdown(
       data: data,
       selectable: true,
+      checkboxBuilder: (checked) {
+        final index = total == 0 ? 0 : nextIndex++ % total;
+        return Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: Checkbox(
+              value: checked,
+              visualDensity: VisualDensity.compact,
+              onChanged: onToggleChecklist == null
+                  ? null
+                  : (v) => onToggleChecklist!(index, v ?? false),
+            ),
+          ),
+        );
+      },
       padding: const EdgeInsets.all(20),
       onTapLink: (_, href, __) => _openLink(context, href),
       builders: {
