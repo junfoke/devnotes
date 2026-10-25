@@ -17,14 +17,15 @@
 | **Xóa** | Bắt buộc xác nhận. Chỉ xóa file `.md`; bản ghi metadata trong SQLite **không** cascade. | `workspace_screen.dart` |
 | **Liệt kê** | Chỉ file `.md`, sắp theo `updatedAt` giảm dần. File thiếu frontmatter vẫn đọc được (xem DECISIONS). | `note_file_repository.dart` |
 | **Tìm kiếm** | Debounce 300ms, FTS5 prefix wildcard, index gồm title+tags+content, tối đa 50 kết quả. Index rebuild toàn bộ mỗi khi danh sách note đổi. | `search_engine.dart`, `search_providers.dart` |
-| **Collection** | Nhóm ảo theo tag, lưu ở `{workspace}/collections.json`. Lọc **OR**: note hiện nếu khớp bất kỳ tag nào. `filterTags` rỗng = khớp tất cả. Chọn một collection tại một thời điểm. | `collections_repository.dart` |
+| **Collection** | Nhóm ảo theo tag, lưu ở `{workspace}/collections.json`. Lọc **OR**: note hiện nếu khớp bất kỳ tag nào. `filterTags` rỗng = khớp tất cả. Chọn một collection tại một thời điểm. Nhấn giữ chip → sửa/xóa; xóa chỉ bỏ nhóm, không đụng note. | `collections_repository.dart` |
 
 ## Editor
 
 - Hai trang vuốt ngang: **soạn** (TextField thô) và **xem trước** (render Markdown). Thanh công cụ chỉ hiện ở trang soạn.
 - **Autosave** debounce 3 giây sau lần gõ cuối; nhấn Back mà chưa lưu thì ép lưu trước khi thoát.
-- Thanh công cụ Markdown chèn cú pháp quanh vùng chọn; mục dạng block tự thêm `\n` phía trước nếu đang ở giữa dòng. Danh sách nút hiện ra theo `editorPreferences.toolbarItems`.
-- ⚠️ **Cú pháp chèn từ toolbar hiện KHÔNG được lưu** — xem B-01 trong [backlog](../docs/06_backlog_chuc_nang_chet.md).
+- Thanh công cụ Markdown chèn cú pháp quanh vùng chọn; mục dạng block tự thêm `\n` phía trước nếu đang ở giữa dòng. Nút hiện ra **theo đúng thứ tự** của `editorPreferences.toolbarItems` (sắp trong Settings → Toolbar Layout).
+- Autosave bắt **mọi** thay đổi nội dung (cả gõ phím lẫn chèn từ toolbar); chỉ dời con trỏ thì không tính.
+- **Lưu lỗi**: báo snackbar, trạng thái về `unsaved`; bấm Back khi lưu lỗi thì ở lại editor để không mất nội dung.
 
 Code: `editor_screen.dart`, `markdown_toolbar.dart`, `editor_providers.dart`
 
@@ -39,18 +40,22 @@ pull → (nếu có thay đổi) commit → push
 - **Xung đột dừng toàn bộ flow.** File xung đột được đánh dấu `conflict`, app mở màn hình resolve. Phải resolve xong rồi sync lại.
 - **Resolve**: chọn một chiến lược cho **cả file** (Keep Mine / Keep Theirs / Keep Both), không chọn từng khối. Resolve xong không tự commit.
 - Chỉ file `.md` được stage. Commit rỗng (tree staged == HEAD tree) bị bỏ qua.
-- **Không atomic**: pull xong mà push lỗi thì commit nằm lại local, không rollback.
+- **Không atomic**: pull xong mà push lỗi thì commit nằm lại local, không rollback — nhưng sync **luôn push**, nên lần sync kế tiếp sẽ đẩy nó lên (DECISIONS 2026-10-24).
+- **Một lần sync tại một thời điểm** (`SyncRunner`), dùng chung cho nút Sync và sync tự động. Mọi thao tác git chạy trong isolate phụ (`Git2dartClient` → `Git2dartOps`).
+- **Sync tự động** (Settings → Sync Frequency): Thủ công / Khi mở app / Định kỳ, chỉ khi app đang mở; không bao giờ tự mở màn hình.
+- **Branch lệch cấu hình**: Git Setup cảnh báo + nút chuyển; chuyển = merge branch cũ vào branch đích, giữ branch cũ.
 - `initializeRepo` idempotent — thoát sớm nếu `.git/` đã tồn tại. Lần đầu: thử clone remote; clone lỗi thì `init` repo mới và giữ lại các file `.md` local.
 - Credential: HTTPS + PAT trong `FlutterSecureStorage`, 4 khóa (`git_remote_url`, `git_username`, `git_pat`, `git_branch`). Không hỗ trợ SSH. Branch rỗng → `main`.
 
-Code: `sync_service.dart`, `git2dart_client.dart`, `conflict_parser.dart`, `git_config_repository.dart`
+Code: `sync_service.dart`, `sync_runner.dart`, `sync_controller.dart`, `auto_sync_policy.dart`, `git2dart_client.dart`, `conflict_parser.dart`, `git_config_repository.dart`
 
 ## Settings
 
 - **Theme**: light / dark / system (mặc định system), lưu `SharedPreferences` khóa `theme_preference`, giá trị lạ → fallback system.
 - **Editor preferences**: fontSize (double), fontFamily (string, mặc định `JetBrainsMono`), toolbarItems (StringList). Lưu `SharedPreferences`, editor áp dụng khi mở note kế tiếp.
-- **Export/Import ZIP**: chỉ file `.md`, giữ cấu trúc thư mục, đường dẫn chuẩn hóa dấu `/`.
-- ⚠️ Nhiều mục Settings hiện **chưa có hành vi** — xem B-07 trong [backlog](../docs/06_backlog_chuc_nang_chet.md).
+- **Export ZIP**: chỉ file `.md`, giữ cấu trúc thư mục, đường dẫn chuẩn hóa dấu `/`; xong mở share sheet.
+- **Import ZIP**: không bao giờ ghi đè — trùng tên giống hệt thì bỏ qua, khác nội dung thì tạo `ten-1.md`; chặn `../` (DECISIONS 2026-10-24).
+- Font & Size, Toolbar Layout, Sync Frequency, Rebuild Search Index, Manage Collections đều đã có hành vi.
 
 ## Onboarding
 

@@ -5,6 +5,20 @@
 >
 > **Cập nhật 2026-08-10 (chiều):** đã xong B-02, B-03, B-04, B-05, B-12 — xem phần
 > "Đã hoàn thành" ở cuối. Phát hiện thêm B-14. Tài liệu này là phần **còn lại**.
+>
+> **Cập nhật 2026-10-24:** xong B-01, B-08, B-13 và 3/5 mục của B-07 (Font & Size,
+> Toolbar Layout, Rebuild Search Index) — đã chạy thật trên emulator Pixel 9. Phát hiện
+> và sửa B-15 (file font rỗng). Phát hiện B-16 (zip slip khi import). Còn lại: các mục
+> **cần chốt nghiệp vụ** (B-14, B-09, B-06, B-10, Sync Frequency) và B-11.
+>
+> **Cập nhật 2026-10-24 (tối):** user chốt xong nghiệp vụ → đã làm **toàn bộ** B-06, B-07,
+> B-09, B-10, B-11, B-14, B-16 (quyết định ghi trong `DECISIONS.md`, ngày 2026-10-24).
+> Sửa thêm: sync luôn push để không kẹt commit. Phát hiện B-17 (PAT trên emulator hết hạn).
+> Backlog **không còn mục code nào mở** — xem "Việc tiếp theo" ở cuối.
+>
+> **Cập nhật 2026-10-25:** user cấp PAT mới → kiểm thử đầu-cuối trên emulator **đạt**: sync,
+> chuyển `master` → `main` qua màn conflict, `main` trên GitHub có đủ 5 note (merge commit
+> hai cha), `master` giữ nguyên. Trong lúc thử phát hiện và sửa B-18; còn mở B-19, B-20.
 
 ## Cách đọc mức ưu tiên
 
@@ -18,7 +32,11 @@
 
 ## P0 — Mất dữ liệu & chức năng lõi
 
-### B-01. Toolbar Markdown không được lưu → mất dữ liệu
+### ✅ B-01. Toolbar Markdown không được lưu → mất dữ liệu — XONG 2026-10-24
+
+> Sửa bằng `_textController.addListener` (bịt mọi đường sửa text bằng code), so với nội
+> dung lần trước để việc chỉ dời con trỏ không bị tính là sửa. Test:
+> `test/features/editor/editor_autosave_test.dart`.
 
 - **Hiện trạng (đã kiểm chứng):** Mở note → bấm **B** → chuỗi `****` được chèn. Thoát ra rồi mở lại → `****` biến mất.
 - **Nguyên nhân:** `MarkdownToolbar._insertSyntax` gán trực tiếp `textController.value`. Gán trực tiếp **không** kích hoạt `TextField.onChanged`, nên `_onTextChanged` không chạy → `saveStatus` vẫn là `saved` → timer autosave 3 giây không được đặt. Nút Back cũng bỏ qua lưu vì điều kiện là `saveStatus != saved`.
@@ -58,14 +76,23 @@
 
 ## P1 — UI có nhưng bấm không chạy
 
-### B-06. Nút ⋮ trong Editor không làm gì
+### ✅ B-06. Nút ⋮ trong Editor không làm gì — XONG 2026-10-24
+
+> Menu Chia sẻ (share file .md) / Thông tin (file, tags, ngày, số từ) / Xóa (xác nhận; chặn autosave ghi lại file vừa xóa). Test: `test/features/editor/editor_more_menu_test.dart`.
 
 - **Hiện trạng (đã kiểm chứng):** Bấm → không có phản hồi nào.
 - **Code:** [`editor_screen.dart:120`](../lib/features/editor/presentation/editor_screen.dart#L120) — `onMore: () { /* TODO */ }`
 - **Nội dung dự kiến (theo comment trong code):** chia sẻ, xem thông tin note, xóa note.
 - **Cần làm trước khi code:** chốt menu này gồm những gì (chia sẻ / thông tin / xóa) rồi mới code.
 
-### B-07. Năm mục Settings không có hành vi
+### ✅ B-07. Năm mục Settings không có hành vi — XONG 2026-10-24
+
+> Thêm Sync Frequency (Thủ công / Khi mở app / Định kỳ) và Manage Collections (`/settings/collections`).
+
+> ✅ Font & Size (bottom sheet chọn JetBrainsMono/FiraCode + slider 12–24), ✅ Toolbar
+> Layout (bật/tắt + kéo đổi thứ tự; toolbar giờ hiện theo thứ tự đã lưu), ✅ Rebuild
+> Search Index. **Còn:** Sync Frequency (đụng git sync → cần chốt), Manage Collections
+> (đi cùng B-09).
 
 Tất cả đều là `onTap: () {}` trong [`settings_screen.dart`](../lib/features/settings/presentation/settings_screen.dart):
 
@@ -79,27 +106,36 @@ Tất cả đều là `onTap: () {}` trong [`settings_screen.dart`](../lib/featu
 
 > Lưu ý: hai mục *Font & Size* và *Toolbar Layout* gần như chỉ thiếu màn hình — phần dữ liệu và logic đã sẵn sàng, chi phí thấp nhất trong nhóm này.
 
-### B-08. Export Notes ghi vào thư mục user không truy cập được
+### ✅ B-08. Export Notes ghi vào thư mục user không truy cập được — XONG 2026-10-24
+
+> Sau khi tạo zip thì mở share sheet (`Share.shareXFiles`, share_plus 10.1.4).
 
 - **Hiện trạng (đã kiểm chứng):** Bấm Export → snackbar *"Exported to /data/user/0/com.devnotes.devnotes/cache/devnotes_export.zip"*. Đây là cache riêng của app — user không mở được bằng trình quản lý file.
 - **Code:** [`settings_screen.dart:60-81`](../lib/features/settings/presentation/settings_screen.dart#L60-L81)
 - **Hướng xử lý đề xuất:** `share_plus` **đã có trong `pubspec.yaml`** — sau khi tạo zip thì mở share sheet (`SharePlus.instance.share`) để user lưu ra Drive/Files/gửi đi. Định nghĩa lại cho đúng: xuất thành công nghĩa là user **nhận được** file.
 
-### B-09. Collection không sửa/xóa được
+### ✅ B-09. Collection không sửa/xóa được — XONG 2026-10-24
+
+> Nhấn giữ chip → Edit/Delete; màn Manage Collections. Xóa chỉ bỏ nhóm, note giữ nguyên.
 
 - **Hiện trạng (đã kiểm chứng):** Tạo collection "Work" và lọc note hoạt động tốt. Nhưng nhấn giữ chip collection không có menu nào; không có đường nào để đổi tên, đổi filter tag, hay xóa.
 - **Code:** [`collections_row.dart`](../lib/features/workspace/presentation/widgets/collections_row.dart) — chip chỉ có `onTap`.
 - **Hướng xử lý đề xuất:** nhấn giữ chip → bottom sheet Sửa/Xóa (giống context menu của note đã có sẵn ở `workspace_screen._showNoteContextMenu`), cộng thêm màn hình "Manage Collections" ở B-07. Cần quyết định nghiệp vụ: xóa collection thì các note bên trong xử lý ra sao (chỉ bỏ nhóm, không xóa note — cần xác nhận).
 
-### B-10. Import Notes chỉ hiện "coming soon"
+### ✅ B-10. Import Notes chỉ hiện "coming soon" — XONG 2026-10-24
+
+> Chọn zip bằng `file_picker` → nhập theo quyết định "trùng tên thì tạo bản sao" → dialog tóm tắt. Đã thử thật trên emulator.
 
 - **Hiện trạng (đã kiểm chứng):** Snackbar *"Import from Files app coming soon"*.
 - **Code:** [`settings_screen.dart:82-89`](../lib/features/settings/presentation/settings_screen.dart#L82-L89)
 - **Cần quyết định nghiệp vụ trước khi code:** khi file trong zip trùng tên với note đang có → ghi đè, bỏ qua, hay tạo bản sao? (hiện chưa chốt.)
+- **Phải sửa B-16 cùng lúc** — không được mở UI Import khi chưa chặn zip slip.
 
 ---
 
-### B-14. Repo local nằm trên `master` trong khi cấu hình ghi `main`
+### ✅ B-14. Repo local nằm trên `master` trong khi cấu hình ghi `main` — XONG 2026-10-24
+
+> Cảnh báo ở Git Setup + nút chuyển (merge branch cũ vào, giữ branch cũ). **Chưa bấm chuyển trên emulator** vì sẽ push lên repo GitHub thật — để user tự bấm khi đã cấp PAT mới (B-17).
 
 - **Hiện trạng (đã kiểm chứng 2026-08-10):** `.git/HEAD` → `refs/heads/master`; chỉ có mỗi
   branch `master`; remote-tracking cũng chỉ có `origin/master`. Nhưng ô Branch trong
@@ -117,9 +153,20 @@ Tất cả đều là `onTap: () {}` trong [`settings_screen.dart`](../lib/featu
   branch local theo cấu hình, (b) cập nhật cấu hình theo local, hay (c) chỉ cảnh báo?
   Đây là quyết định đụng dữ liệu — ghi vào `DECISIONS.md` sau khi chốt.
 
+### ✅ B-16. Import ZIP không chặn path traversal (zip slip) — XONG 2026-10-24
+
+- **Hiện trạng (đọc code 2026-10-24):** `importFromZip` ghi thẳng `'$workspacePath/${file.name}'`.
+  Zip có mục tên `../../shared_prefs/x.md` sẽ ghi ra ngoài workspace — đè dữ liệu app.
+  Chưa khai thác được vì Import chưa có UI (B-10), nhưng sẽ thành lỗ hổng ngay khi B-10 xong.
+- **Code:** [`export_import_service.dart`](../lib/features/settings/data/export_import_service.dart) — `importFromZip`
+- **Hướng xử lý:** chuẩn hóa đường dẫn đích bằng `p.normalize`, bỏ qua mục nào không nằm
+  trong `workspacePath` (`p.isWithin`). Viết test với zip chứa `../`.
+
 ## P2 — Nợ kỹ thuật & tiện ích
 
-### B-11. Git chạy trên main thread → UI đơ khi sync
+### ✅ B-11. Git chạy trên main thread → UI đơ khi sync — XONG 2026-10-24
+
+> `Git2dartClient` giờ là lớp vỏ chạy mọi thao tác qua `Isolate.run`; logic nằm ở `Git2dartOps`. Đã xác nhận trên Android (log "git chạy trong isolate phụ"). Commit `a026ca1` từng gỡ isolate với lý do "FFI không nạp được" — nhiều khả năng chẩn đoán nhầm (lỗi thật là unborn branch). Phòng hờ: không nạp được libgit2 trong isolate thì tự chạy trên main.
 
 - **Hiện trạng:** log Flutter báo *"Skipped 41 frames! The application may be doing too much work on its main thread"* trong lúc sync.
 - **Khác biệt với thiết kế:** spec `docs/` ghi *"All git operations run in `Isolate.run()` to avoid blocking UI"* — code hiện **không** dùng isolate.
@@ -131,20 +178,57 @@ Tất cả đều là `onTap: () {}` trong [`settings_screen.dart`](../lib/featu
 - **Nguyên nhân:** `SyncStateNotifier.setBranch()` không được gọi ở đâu; `Git2dartClient.currentBranch()` có sẵn nhưng không dùng.
 - **Code:** [`git_providers.dart:40`](../lib/features/git_sync/application/git_providers.dart#L40)
 
-### B-13. Lưu thất bại bị nuốt im lặng
+### ✅ B-13. Lưu thất bại bị nuốt im lặng — XONG 2026-10-24
+
+> Ghi lỗi → snackbar "Không lưu được ghi chú", trạng thái về `unsaved`; bấm Back khi lưu
+> lỗi thì **ở lại** editor thay vì thoát và bỏ nội dung. Test:
+> `test/features/editor/editor_save_error_test.dart`.
 
 - **Nguyên nhân:** `EditorScreen._loadNote()` bắt exception và bỏ qua; `_save()` không có nhánh lỗi. Ghi thất bại thì UI kẹt ở trạng thái `saving` mà không báo gì.
 - **Code:** [`editor_screen.dart:69-71`](../lib/features/editor/presentation/editor_screen.dart#L69-L71)
 
 ---
 
-## Thứ tự triển khai đề xuất
+### ✅ B-15. File font trong `assets/fonts/` rỗng (0 byte) — XONG 2026-10-24
 
-1. **B-01** — mất dữ liệu, sửa rẻ, ảnh hưởng mọi lần dùng toolbar. ← *tiếp theo*
-2. ~~B-02 + B-03~~ — xong 2026-08-10.
-3. ~~B-04 + B-05 + B-12~~ — xong 2026-08-10.
-3b. **B-14** — lệch branch, cần chốt nghiệp vụ trước.
-4. **B-07** (Font & Size, Toolbar Layout, Rebuild Search Index) — chi phí thấp, dữ liệu đã sẵn sàng.
-5. **B-08** — share sheet, `share_plus` đã có sẵn.
-6. **B-09 + B-06 + B-10** — cần chốt nghiệp vụ trước (xóa collection, ghi đè khi import, nội dung menu ⋮).
-7. **B-11** — refactor lớn, làm cuối.
+- Cả 4 file `.ttf` là placeholder 0 byte từ lúc dựng project → editor chưa bao giờ hiện
+  font monospace, chọn font nào cũng ra font mặc định của hệ thống.
+- Đã thay bằng bản chính thức JetBrains Mono (repo JetBrains) và Fira Code v6.2 (release
+  tonsky), kèm license OFL trong cùng thư mục.
+
+### ✅ B-17. PAT trên emulator đã hết hạn / bị thu hồi — XONG 2026-10-25
+
+> User cấp PAT mới; kiểm tra kết nối + sync + chuyển branch đều thành công.
+> Mẹo: emulator vừa khởi động lại trên Windows có thể **mất DNS** (TCP tới IP vẫn được) →
+> app báo "Không ra được tới remote". Bật/tắt chế độ máy bay là hết.
+
+- **Hiện trạng (2026-10-24):** Sync báo `Incorrect credentials`; lần sync thành công cuối là 10/08.
+  Đã thử cả bản **tắt isolate** → lỗi y hệt, nên không phải do B-11.
+- **Việc cần làm (user):** tạo PAT mới (scope `repo` hoặc fine-grained Contents read/write) →
+  Settings → Git Repository → Kiểm tra kết nối → Update Credentials. Sau đó mới bấm
+  "Chuyển sang main" (B-14) và chạy thử sync đầu-cuối.
+
+### ✅ B-18. Màn giải quyết conflict có thể làm commit dấu `<<<<<<<` lên remote — XONG 2026-10-25
+
+- **Hiện trạng (kiểm chứng khi chuyển branch thật):** màn conflict ghi file nhưng **không gọi
+  `markResolved`**, không làm mới danh sách note (note hiện tiêu đề lấy từ H1, mất tag), và chỉ
+  mở file conflict **đầu tiên**. Sync sau đó stage mọi `*.md` → file còn dấu conflict bị commit.
+  Thêm nữa: chọn "Keep Mine" cho cây giống HEAD nên commit bị bỏ qua, `MERGE_HEAD` nằm lại.
+- **Đã sửa:** xem DECISIONS 2026-10-25 "Không bao giờ commit file còn dấu conflict".
+
+### B-19. Nhãn LOCAL/REMOTE ở màn conflict sai nghĩa khi chuyển branch
+
+- Khi chuyển branch, "LOCAL (yours)" là bản của branch **đích** (`main`) còn bản ghi chú user
+  vẫn dùng (`master`) lại nằm ở "REMOTE (theirs)". Dễ chọn nhầm.
+- **Hướng:** truyền ngữ cảnh vào màn conflict (pull vs chuyển branch) và đặt nhãn theo tên
+  branch: "Bản trên main" / "Bản trên master". Việc UI thuần, không cần chốt.
+
+### B-20. Lịch sử sync hiện giờ UTC
+
+- Sheet Sync History ghi 13:06 khi đồng hồ máy là 20:06 (UTC+7). Cần `.toLocal()` khi hiển thị.
+
+## Việc tiếp theo
+
+1. B-19, B-20 — UI nhỏ, làm ngay được.
+2. Bật thử Sync Frequency = "Khi mở app", xác nhận chấm trạng thái đổi đúng.
+3. Nợ nhỏ: `EditorPreferences.autoSaveInterval` được lưu nhưng editor vẫn cứng 3 giây.
