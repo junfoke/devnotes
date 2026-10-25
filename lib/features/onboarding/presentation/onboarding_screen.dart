@@ -34,6 +34,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
+  bool get _isLastPage => _currentPage == _pages.length - 1;
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -49,6 +51,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.go('/onboarding/git'),
+                child: Text('Skip',
+                    style: TextStyle(color: colors.textMuted)),
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -111,7 +121,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/onboarding/git'),
+                  onPressed: _isLastPage
+                      ? () => context.go('/onboarding/git')
+                      : () => _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.accent,
                     shape: RoundedRectangleBorder(
@@ -119,7 +134,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   child: Text(
-                    'Get Started',
+                    _isLastPage ? 'Get Started' : 'Next',
                     style: TextStyle(
                       color: colors.textOnAccent,
                       fontSize: 16,

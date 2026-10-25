@@ -142,7 +142,8 @@ class SettingsScreen extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.info_outline, color: colors.textMuted),
                     title: Text(
-                      'DevNotes v1.0.0',
+                      'DevNotes ${ref.watch(appVersionProvider).valueOrNull ?? ''}'
+                          .trim(),
                       style: TextStyle(color: colors.textPrimary),
                     ),
                     subtitle: Text(
