@@ -11,6 +11,7 @@ import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/git_sync/domain/sync_state.dart';
 import 'package:devnotes/features/git_sync/presentation/widgets/sync_history_sheet.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 List<SyncLogEntry> _entries(int count) => List.generate(
       count,
@@ -28,6 +29,9 @@ List<SyncLogEntry> _entries(int count) => List.generate(
 Future<void> _pumpSheet(WidgetTester tester, List<SyncLogEntry> entries) async {
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('vi'),
       theme: AppTheme.light(),
       home: Scaffold(
         body: Align(
@@ -61,7 +65,7 @@ void main() {
   testWidgets('lịch sử rỗng vẫn hiện thông báo và không tràn', (tester) async {
     await _pumpSheet(tester, const []);
 
-    expect(find.text('No sync history yet'), findsOneWidget);
+    expect(find.text('Chưa có lịch sử đồng bộ'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -69,7 +73,7 @@ void main() {
     await _pumpSheet(tester, _entries(3));
 
     expect(find.text('master'), findsOneWidget);
-    expect(find.textContaining('Last sync'), findsOneWidget);
+    expect(find.textContaining('Lần đồng bộ gần nhất'), findsOneWidget);
   });
 
   testWidgets('bản ghi thất bại hiện thông báo lỗi', (tester) async {
@@ -84,6 +88,9 @@ void main() {
     final utc = DateTime.utc(2026, 10, 25, 13, 6);
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
         theme: AppTheme.light(),
         home: Scaffold(
           body: SyncHistorySheet(
@@ -102,7 +109,7 @@ void main() {
       ),
     );
 
-    final local = DateFormat('MMM d, HH:mm').format(utc.toLocal());
+    final local = DateFormat('MMM d, HH:mm', 'vi').format(utc.toLocal());
     expect(find.textContaining(local), findsNWidgets(2));
   });
 }

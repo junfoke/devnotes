@@ -6,9 +6,13 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 Future<void> _pump(WidgetTester tester, String data, {double size = 14}) =>
     tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('vi'),
       theme: AppTheme.light(),
       home: Scaffold(
         body: MarkdownPreview(

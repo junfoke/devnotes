@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 
@@ -32,9 +33,10 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text(_isEdit ? 'Edit Collection' : 'New Collection',
+      title: Text(_isEdit ? l.editCollectionTitle : l.newCollectionTitle,
           style: TextStyle(color: colors.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -44,7 +46,7 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
             autofocus: true,
             style: TextStyle(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Collection name',
+              hintText: l.collectionNameHint,
               hintStyle: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -53,7 +55,7 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
             controller: _tagsController,
             style: TextStyle(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Filter tags (comma separated)',
+              hintText: l.filterTagsHint,
               hintStyle: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -62,7 +64,8 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+          child: Text(l.commonCancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: () {
@@ -75,7 +78,7 @@ class _CreateCollectionDialogState extends State<CreateCollectionDialog> {
                 .toList();
             Navigator.pop(context, {'name': name, 'tags': tags});
           },
-          child: Text(_isEdit ? 'Save' : 'Create',
+          child: Text(_isEdit ? l.commonSave : l.commonCreate,
               style: TextStyle(color: colors.accent)),
         ),
       ],

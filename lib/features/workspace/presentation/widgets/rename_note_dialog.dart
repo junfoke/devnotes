@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class RenameNoteDialog extends StatefulWidget {
@@ -31,10 +32,12 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text('Rename Note', style: TextStyle(color: colors.textPrimary)),
+      title: Text(l.renameNoteTitle,
+          style: TextStyle(color: colors.textPrimary)),
       content: TextField(
         controller: _controller,
         autofocus: true,
@@ -43,7 +46,7 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
           if (_error != null) setState(() => _error = null);
         },
         decoration: InputDecoration(
-          hintText: 'New title',
+          hintText: l.newTitleHint,
           hintStyle: TextStyle(color: colors.textMuted),
           errorText: _error,
         ),
@@ -51,23 +54,24 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+          child: Text(l.commonCancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: () {
             final newTitle = _controller.text.trim();
             // Từ chối phải kèm lý do, không im lặng.
             if (newTitle.isEmpty) {
-              setState(() => _error = 'Vui lòng nhập tiêu đề');
+              setState(() => _error = l.titleRequired);
               return;
             }
             if (newTitle == widget.currentTitle) {
-              setState(() => _error = 'Tiêu đề mới phải khác tiêu đề hiện tại');
+              setState(() => _error = l.titleMustDiffer);
               return;
             }
             Navigator.pop(context, newTitle);
           },
-          child: Text('Rename', style: TextStyle(color: colors.accent)),
+          child: Text(l.commonRename, style: TextStyle(color: colors.accent)),
         ),
       ],
     );

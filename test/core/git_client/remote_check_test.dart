@@ -4,10 +4,16 @@
 // loại được tách thành hàm thuần để có test chạy được ở mọi nơi.
 //
 // Nghiệp vụ: specs/BUSINESS_OVERVIEW.md#git-sync
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/git_client/remote_check.dart';
+import 'package:devnotes/features/git_sync/presentation/git_messages.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
+  // Câu thông báo nay nằm ở tầng UI, theo ngôn ngữ đang chọn.
+  final vi = lookupAppLocalizations(const Locale('vi'));
+  final en = lookupAppLocalizations(const Locale('en'));
   group('classifyRemoteError', () {
     test('git2dart báo "Incorrect credentials" -> sai thông tin đăng nhập', () {
       expect(
@@ -77,8 +83,9 @@ void main() {
       );
 
       expect(result.status, RemoteCheckStatus.branchNotFound);
-      expect(result.describe(branch: 'main'), contains('main'));
-      expect(result.describe(branch: 'main'), contains('master'));
+      expect(describeRemoteCheck(vi, result, branch: 'main'), contains('main'));
+      expect(
+          describeRemoteCheck(vi, result, branch: 'main'), contains('master'));
     });
   });
 
@@ -86,7 +93,15 @@ void main() {
     test('mỗi loại lỗi có thông báo tiếng Việt riêng, không rỗng', () {
       for (final status in RemoteCheckStatus.values) {
         final message =
-            RemoteCheckResult(status).describe(branch: 'main');
+            describeRemoteCheck(vi, RemoteCheckResult(status), branch: 'main');
+        expect(message.trim(), isNotEmpty, reason: 'thiếu thông báo cho $status');
+      }
+    });
+
+    test('bản tiếng Anh cũng đủ thông báo cho mọi loại lỗi', () {
+      for (final status in RemoteCheckStatus.values) {
+        final message =
+            describeRemoteCheck(en, RemoteCheckResult(status), branch: 'main');
         expect(message.trim(), isNotEmpty, reason: 'thiếu thông báo cho $status');
       }
     });
@@ -97,7 +112,8 @@ void main() {
         detail: 'raw libgit2 boom',
       );
 
-      expect(result.describe(branch: 'main'), contains('raw libgit2 boom'));
+      expect(describeRemoteCheck(vi, result, branch: 'main'),
+          contains('raw libgit2 boom'));
     });
   });
 }

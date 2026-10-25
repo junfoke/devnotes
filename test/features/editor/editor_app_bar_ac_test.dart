@@ -7,11 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   Future<void> pumpBar(WidgetTester tester, {required String? title}) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
         theme: AppTheme.light(),
         home: Scaffold(
           body: EditorAppBar(

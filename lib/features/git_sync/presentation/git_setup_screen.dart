@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/core/git_client/remote_check.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
 import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/git_sync/domain/git_config.dart';
 import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
+import 'package:devnotes/features/git_sync/presentation/git_messages.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 
 class GitSetupScreen extends ConsumerStatefulWidget {
@@ -29,6 +31,9 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   /// Kết quả lần kiểm tra kết nối gần nhất, null khi chưa kiểm tra lần nào.
   RemoteCheckResult? _checkResult;
 
+  /// Lỗi của form (thiếu trường), hiện cùng chỗ với [_checkResult].
+  GitFormIssue? _formIssue;
+
   @override
   void initState() {
     super.initState();
@@ -41,8 +46,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       config = await ref.read(gitConfigProvider.future);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không đọc được cấu hình Git: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.gitConfigLoadFailed('$e'))));
       }
       return;
     }
@@ -74,16 +79,17 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     final branch = _branchController.text.trim();
 
     if (url.isEmpty || username.isEmpty || pat.isEmpty) {
-      setState(() => _checkResult = const RemoteCheckResult(
-            RemoteCheckStatus.unknown,
-            detail: 'Cần nhập đủ URL, username và PAT trước khi kiểm tra.',
-          ));
+      setState(() {
+        _checkResult = null;
+        _formIssue = GitFormIssue.missingFieldsForCheck;
+      });
       return;
     }
 
     setState(() {
       _checking = true;
       _checkResult = null;
+      _formIssue = null;
     });
 
     RemoteCheckResult result;
@@ -113,14 +119,17 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     final pat = _patController.text.trim();
     final branch = _branchController.text.trim();
     if (url.isEmpty || username.isEmpty || pat.isEmpty) {
-      setState(() => _checkResult = const RemoteCheckResult(
-            RemoteCheckStatus.unknown,
-            detail: 'Cần nhập đủ URL, username và PAT để lưu.',
-          ));
+      setState(() {
+        _checkResult = null;
+        _formIssue = GitFormIssue.missingFieldsForSave;
+      });
       return;
     }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _formIssue = null;
+    });
     final config = GitConfig(
       remoteUrl: url,
       username: username,
@@ -134,8 +143,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không lưu được cấu hình Git: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.gitConfigSaveFailed('$e'))));
       }
       return;
     }
@@ -144,8 +153,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Git credentials saved successfully'),
+        SnackBar(
+          content: Text(context.l10n.gitCredentialsSaved),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -153,21 +162,21 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   }
 
   Future<void> _disconnect() async {
+    final l = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Disconnect Repository'),
-        content: const Text(
-          'This will remove your saved Git credentials. Your local notes will not be affected.',
-        ),
+        title: Text(l.disconnectRepository),
+        content: Text(l.disconnectBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Disconnect', style: TextStyle(color: Colors.red)),
+            child: Text(l.disconnectButton,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -180,7 +189,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không xóa được cấu hình Git: $e')));
+            SnackBar(content: Text(l.gitConfigDeleteFailed('$e'))));
       }
       return;
     }
@@ -190,8 +199,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       _patController.clear();
       _branchController.text = 'main';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Git credentials removed'),
+        SnackBar(
+          content: Text(l.gitCredentialsRemoved),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -206,6 +215,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     if (local == null || local == config.branch) {
       return const SizedBox.shrink();
     }
+    final l = context.l10n;
     return Container(
       key: const Key('branch-mismatch'),
       padding: const EdgeInsets.all(16),
@@ -223,7 +233,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
               Icon(Icons.warning_amber, color: colors.warning, size: 20),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('Branch không khớp cấu hình',
+                child: Text(l.branchMismatchTitle,
                     style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: 14,
@@ -233,8 +243,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Ghi chú trên máy đang ở branch "$local", nhưng cấu hình là '
-            '"${config.branch}". Sync hiện đang đẩy lên "$local".',
+            l.branchMismatchBody(local, config.branch),
             style: TextStyle(
                 color: colors.textSecondary, fontSize: 13, height: 1.5),
           ),
@@ -249,7 +258,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text('Chuyển sang "${config.branch}"'),
+                  : Text(l.switchToBranch(config.branch)),
             ),
           ),
         ],
@@ -258,24 +267,20 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   }
 
   Future<void> _switchBranch(String from, GitConfig config) async {
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Chuyển sang "${config.branch}"?'),
-        content: Text(
-          'Ghi chú của "$from" sẽ được gộp vào "${config.branch}" rồi đẩy lên '
-          'remote. Không note nào bị xóa; branch "$from" vẫn được giữ lại làm '
-          'bản dự phòng.\n\nNếu cùng một note bị sửa khác nhau ở hai branch, '
-          'bạn sẽ được chuyển tới màn hình giải quyết xung đột.',
-        ),
+        title: Text(l.switchBranchConfirmTitle(config.branch)),
+        content: Text(l.switchBranchConfirmBody(from, config.branch)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Hủy'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Chuyển'),
+            child: Text(l.switchBranchButton),
           ),
         ],
       ),
@@ -300,9 +305,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       if (!mounted) return;
       if (result.hasConflicts) {
         messenger.showSnackBar(SnackBar(
-          content: Text('Đã chuyển sang "${config.branch}", còn '
-              '${result.conflicts.length} note xung đột. Giải quyết xong '
-              'rồi bấm Sync.'),
+          content: Text(l.switchedWithConflicts(
+              config.branch, result.conflicts.length)),
         ));
         // Khi chuyển branch, "ours" là branch đích, "theirs" là branch cũ.
         context.push(ConflictScreen.location(result.conflicts.first,
@@ -310,15 +314,14 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
       } else {
         messenger.showSnackBar(SnackBar(
           content: Text(result.pushError == null
-              ? 'Đã chuyển sang "${config.branch}" và đẩy lên remote.'
-              : 'Đã chuyển sang "${config.branch}" nhưng chưa đẩy lên được '
-                  '(${result.pushError}). Lần Sync sau sẽ đẩy.'),
+              ? l.switchedAndPushed(config.branch)
+              : l.switchedNotPushed(config.branch, result.pushError!)),
         ));
       }
     } catch (e) {
       ref.invalidate(currentBranchProvider);
       messenger.showSnackBar(
-          SnackBar(content: Text('Chuyển branch thất bại: $e')));
+          SnackBar(content: Text(l.switchBranchFailed(describeError(l, e)))));
     } finally {
       if (mounted) setState(() => _switching = false);
     }
@@ -327,6 +330,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     final configAsync = ref.watch(gitConfigProvider);
     final hasConfig = configAsync.valueOrNull != null;
 
@@ -344,7 +348,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                     icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                     onPressed: () => context.pop(),
                   ),
-                  Text('Git Setup',
+                  Text(l.gitSetupTitle,
                       style: TextStyle(color: colors.textPrimary, fontSize: 20, fontWeight: FontWeight.w600)),
                 ],
               ),
@@ -371,7 +375,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                             // biết là đã có credential lưu, chưa biết credential
                             // đó còn dùng được không. Muốn biết thì bấm nút
                             // "Kiểm tra kết nối" ở dưới.
-                            Text('Repository configured',
+                            Text(l.repoConfigured,
                                 style: TextStyle(color: colors.success, fontSize: 14, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
                             Text(
@@ -400,7 +404,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Connect your private Git repository to sync notes across devices. Your data stays in your control.',
+                          l.gitSetupIntro,
                           style: TextStyle(color: colors.accentLight, fontSize: 13, height: 1.5),
                         ),
                       ),
@@ -410,16 +414,16 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
               if (configAsync.valueOrNull case final config?)
                 _buildBranchMismatch(colors, config),
               // Form fields
-              _buildField('Git Remote URL', _urlController,
+              _buildField(l.gitFieldRemoteUrl, _urlController,
                   'https://github.com/user/devnotes.git', colors),
               const SizedBox(height: 20),
-              _buildField('Username', _usernameController,
+              _buildField(l.gitFieldUsername, _usernameController,
                   'your-github-username', colors),
               const SizedBox(height: 20),
-              _buildField('Personal Access Token (PAT)', _patController,
+              _buildField(l.gitFieldPat, _patController,
                   'ghp_xxxxxxxxxxxx', colors, obscure: true),
               const SizedBox(height: 20),
-              _buildField('Branch', _branchController,
+              _buildField(l.gitFieldBranch, _branchController,
                   'main', colors),
               const SizedBox(height: 16),
               // Security notice
@@ -438,11 +442,11 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Your data is secure',
+                          Text(l.securityTitle,
                               style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
                           Text(
-                            'Credentials are stored locally on your device using encrypted storage.',
+                            l.securityBody,
                             style: TextStyle(color: colors.textMuted, fontSize: 12, height: 1.4),
                           ),
                         ],
@@ -453,7 +457,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
               ),
               const SizedBox(height: 16),
               // Kết quả kiểm tra kết nối
-              if (_checkResult != null) _buildCheckResult(colors),
+              if (_checkResult != null || _formIssue != null)
+                _buildCheckResult(colors),
               const SizedBox(height: 12),
               // Nút kiểm tra kết nối — chạy trước khi lưu
               SizedBox(
@@ -469,7 +474,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                               strokeWidth: 2, color: colors.accent))
                       : Icon(Icons.wifi_tethering, color: colors.accent),
                   label: Text(
-                    _checking ? 'Đang kiểm tra…' : 'Kiểm tra kết nối',
+                    _checking ? l.checkingConnection : l.checkConnection,
                     style: TextStyle(
                         color: colors.accent, fontWeight: FontWeight.w600),
                   ),
@@ -492,7 +497,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: colors.textOnAccent))
                       : Icon(Icons.save, color: colors.textOnAccent),
                   label: Text(
-                    hasConfig ? 'Update Credentials' : 'Save Credentials',
+                    hasConfig ? l.updateCredentials : l.saveCredentials,
                     style: TextStyle(color: colors.textOnAccent, fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -514,7 +519,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                       side: BorderSide(color: colors.error),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Disconnect Repository'),
+                    child: Text(l.disconnectRepository),
                   ),
                 ),
               ],
@@ -528,8 +533,10 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
 
   /// Hộp kết quả kiểm tra kết nối — xanh khi được, đỏ kèm hướng xử lý khi hỏng.
   Widget _buildCheckResult(AppColorScheme colors) {
-    final result = _checkResult!;
-    final good = result.ok;
+    final l = context.l10n;
+    final issue = _formIssue;
+    final result = _checkResult;
+    final good = issue == null && result != null && result.ok;
     final tint = good ? colors.success : colors.error;
     final branch = _branchController.text.trim();
 
@@ -549,7 +556,10 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              result.describe(branch: branch.isEmpty ? 'main' : branch),
+              issue != null
+                  ? describeGitFormIssue(l, issue)
+                  : describeRemoteCheck(l, result!,
+                      branch: branch.isEmpty ? 'main' : branch),
               style: TextStyle(color: tint, fontSize: 13, height: 1.4),
             ),
           ),

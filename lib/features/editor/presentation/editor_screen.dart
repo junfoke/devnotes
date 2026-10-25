@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
@@ -66,22 +68,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _textController.addListener(_onControllerChanged);
     _loadNote();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final l = context.l10n;
       TooltipService.showTooltips(
         context: context,
         tooltipKey: 'editor',
         targets: [
           TooltipService.createTarget(
             key: _toolbarKey,
-            title: 'Markdown Toolbar',
-            description:
-                'Quick-insert Markdown syntax — headings, bold, code blocks, and more.',
+            title: l.tooltipToolbarTitle,
+            description: l.tooltipToolbarDesc,
             align: ContentAlign.top,
           ),
           TooltipService.createTarget(
             key: _previewKey,
-            title: 'Swipe to Preview',
-            description:
-                'Swipe left to see a rendered preview of your Markdown.',
+            title: l.tooltipPreviewTitle,
+            description: l.tooltipPreviewDesc,
           ),
         ],
       );
@@ -179,7 +180,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Không lưu được ghi chú: $e')));
+        ).showSnackBar(
+            SnackBar(content: Text(context.l10n.noteSaveFailed('$e'))));
       }
       return false;
     }
@@ -201,23 +203,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   Future<void> _askAboutExternalChange(NoteFile onDisk) async {
     _askingExternalChange = true;
+    final l = context.l10n;
     final keepMine = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Ghi chú đã thay đổi bên ngoài'),
-        content: const Text(
-          'Trong lúc bạn đang sửa, ghi chú này vừa được thay đổi ở nơi khác '
-          '(ví dụ do đồng bộ). Để không ghi đè mất bản đó, hãy chọn:',
-        ),
+        title: Text(l.externalChangeTitle),
+        content: Text(l.externalChangeBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Tải bản mới'),
+            child: Text(l.externalChangeReload),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Lưu bản của tôi thành note mới'),
+            child: Text(l.externalChangeKeepMine),
           ),
         ],
       ),
@@ -230,22 +230,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       try {
         final repo = await ref.read(noteFileRepositoryProvider.future);
         final copy = await repo.createNote(
-          title: '${_loadedNote!.title} (bản sửa)',
+          title: l.editedCopyTitle(_loadedNote!.title),
           tags: _pendingTags ?? _loadedNote!.tags,
         );
         await repo.saveNote(copy.copyWith(content: mine));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Đã lưu bản của bạn thành "${copy.title}".'),
-            ),
+            SnackBar(content: Text(l.savedAsCopy(copy.title))),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Không lưu được bản sao: $e')));
+          ).showSnackBar(SnackBar(content: Text(l.copySaveFailed('$e'))));
         }
         return; // Giữ nguyên nội dung đang sửa để user thử lại.
       }
@@ -261,6 +259,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   }
 
   void _showMoreMenu() {
+    final l = context.l10n;
     showModalBottomSheet<void>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -269,7 +268,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.share),
-              title: const Text('Chia sẻ'),
+              title: Text(l.editorMenuShare),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _shareNote();
@@ -277,7 +276,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
             ListTile(
               leading: const Icon(Icons.sell_outlined),
-              title: const Text('Sửa tag'),
+              title: Text(l.editorMenuEditTags),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _editTags();
@@ -285,7 +284,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('Thông tin'),
+              title: Text(l.editorMenuInfo),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _showInfo();
@@ -293,7 +292,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Xóa', style: TextStyle(color: Colors.red)),
+              title: Text(l.commonDelete,
+                  style: const TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _deleteNote();
@@ -340,7 +340,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không chia sẻ được: $e')),
+          SnackBar(content: Text(context.l10n.shareFailed('$e'))),
         );
       }
     }
@@ -353,11 +353,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     final words = text.trim().isEmpty
         ? 0
         : text.trim().split(RegExp(r'\s+')).length;
-    String fmt(DateTime t) {
-      final l = t.toLocal();
-      String two(int n) => n.toString().padLeft(2, '0');
-      return '${two(l.day)}/${two(l.month)}/${l.year} ${two(l.hour)}:${two(l.minute)}';
-    }
+    final l = context.l10n;
+    final dateFormat =
+        DateFormat.yMd(Localizations.localeOf(context).toLanguageTag())
+            .add_Hm();
+    String fmt(DateTime t) => dateFormat.format(t.toLocal());
 
     showDialog<void>(
       context: context,
@@ -367,17 +367,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('File: ${p.basename(note.filePath)}'),
-            Text('Tags: ${note.tags.isEmpty ? '—' : note.tags.join(', ')}'),
-            Text('Tạo lúc: ${fmt(note.createdAt)}'),
-            Text('Sửa lúc: ${fmt(note.updatedAt)}'),
-            Text('$words từ · ${text.length} ký tự'),
+            Text(l.noteInfoFile(p.basename(note.filePath))),
+            Text(l.noteInfoTags(
+                note.tags.isEmpty ? '—' : note.tags.join(', '))),
+            Text(l.noteInfoCreated(fmt(note.createdAt))),
+            Text(l.noteInfoUpdated(fmt(note.updatedAt))),
+            Text('${l.noteInfoWords(words)} · '
+                '${l.noteInfoChars(text.length)}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('OK'),
+            child: Text(l.commonOk),
           ),
         ],
       ),
@@ -388,19 +390,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// chạy sau khi xóa sẽ ghi lại file, khiến note "sống lại".
   Future<void> _deleteNote() async {
     final title = _loadedNote?.title ?? p.basename(widget.filePath);
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa ghi chú'),
-        content: Text('Xóa "$title"? Không thể hoàn tác.'),
+        title: Text(l.deleteNoteTitle),
+        content: Text(l.deleteNoteConfirm(title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Hủy'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+            child: Text(l.commonDelete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -423,7 +427,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Không xóa được ghi chú: $e')));
+        ).showSnackBar(
+            SnackBar(content: Text(l.noteDeleteFailed('$e'))));
       }
       return;
     }
@@ -444,6 +449,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     final prefsAsync = ref.watch(editorPreferencesProvider);
     final editorPrefs = prefsAsync.valueOrNull;
     final saveStatus = ref.watch(saveStatusProvider);
@@ -480,7 +486,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Không mở được ghi chú: $_loadError',
+                            l.noteOpenFailed('$_loadError'),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: colors.error),
                           ),
@@ -506,9 +512,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                                 EditorPreferences.defaultFontSize,
                             height: 1.6,
                           ),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: 'Start writing...',
+                            hintText: l.editorHint,
                           ),
                         ),
                       ),
@@ -523,7 +529,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       ),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text('Error: $e')),
+                      error: (e, _) =>
+                          Center(child: Text(l.errorWithDetail('$e'))),
                     ),
                   ],
                 ),
@@ -567,23 +574,23 @@ class _EditTagsDialogState extends State<_EditTagsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AlertDialog(
-      title: const Text('Sửa tag'),
+      title: Text(l.editorMenuEditTags),
       content: TextField(
         key: const Key('edit-tags-field'),
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(
-            hintText: 'Các tag, cách nhau bằng dấu phẩy'),
+        decoration: InputDecoration(hintText: l.editTagsHint),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Hủy'),
+          child: Text(l.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('Lưu'),
+          child: Text(l.commonSave),
         ),
       ],
     );

@@ -6,6 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:highlight/languages/all.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 /// Trang xem trước Markdown của editor.
@@ -37,7 +38,7 @@ class MarkdownPreview extends StatelessWidget {
     }
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không mở được liên kết: ${href ?? ''}')));
+          SnackBar(content: Text(context.l10n.linkOpenFailed(href ?? ''))));
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/editor/domain/toolbar_item.dart';
@@ -15,7 +16,7 @@ Future<void> _savePrefs(WidgetRef ref, EditorPreferences prefs) async {
     final context = ref.context;
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không lưu được cài đặt: $e')));
+          SnackBar(content: Text(context.l10n.settingsSaveFailed('$e'))));
     }
     return;
   }
@@ -47,6 +48,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     final size = _prefs.fontSize.clamp(
       FontSettingsSheet.minSize,
       FontSettingsSheet.maxSize,
@@ -60,7 +62,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Font & Size',
+              l.settingsFontAndSize,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 18,
@@ -91,7 +93,8 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Text('Size', style: TextStyle(color: colors.textSecondary)),
+                Text(l.fontSize,
+                    style: TextStyle(color: colors.textSecondary)),
                 Expanded(
                   child: Slider(
                     value: size,
@@ -118,7 +121,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '## Preview\nconst answer = 42; // **bold**',
+                l.fontPreviewSample,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontFamily: _prefs.fontFamily,
@@ -135,24 +138,24 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
 }
 
 /// Tên dễ đọc của một nút thanh công cụ (thay cho id nội bộ như
-/// `code_inline`).
-String toolbarItemName(String id) => switch (id) {
-      'h1' => 'Tiêu đề 1',
-      'h2' => 'Tiêu đề 2',
-      'h3' => 'Tiêu đề 3',
-      'bold' => 'In đậm',
-      'italic' => 'In nghiêng',
-      'strikethrough' => 'Gạch ngang',
-      'link' => 'Liên kết',
-      'image' => 'Hình ảnh',
-      'code_inline' => 'Code trong dòng',
-      'code_block' => 'Khối code',
-      'checklist' => 'Danh sách việc',
-      'list_unordered' => 'Danh sách gạch đầu dòng',
-      'list_ordered' => 'Danh sách đánh số',
-      'quote' => 'Trích dẫn',
-      'table' => 'Bảng',
-      'hr' => 'Đường kẻ ngang',
+/// `code_inline`), theo ngôn ngữ đang chọn.
+String toolbarItemName(AppLocalizations l, String id) => switch (id) {
+      'h1' => l.toolbarItemH1,
+      'h2' => l.toolbarItemH2,
+      'h3' => l.toolbarItemH3,
+      'bold' => l.toolbarItemBold,
+      'italic' => l.toolbarItemItalic,
+      'strikethrough' => l.toolbarItemStrikethrough,
+      'link' => l.toolbarItemLink,
+      'image' => l.toolbarItemImage,
+      'code_inline' => l.toolbarItemCodeInline,
+      'code_block' => l.toolbarItemCodeBlock,
+      'checklist' => l.toolbarItemChecklist,
+      'list_unordered' => l.toolbarItemListUnordered,
+      'list_ordered' => l.toolbarItemListOrdered,
+      'quote' => l.toolbarItemQuote,
+      'table' => l.toolbarItemTable,
+      'hr' => l.toolbarItemHr,
       _ => id,
     };
 
@@ -195,6 +198,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return SafeArea(
       child: SizedBox(
@@ -205,7 +209,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
-                'Toolbar Layout',
+                l.settingsToolbarLayout,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 18,
@@ -216,7 +220,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Bật/tắt nút và kéo để đổi thứ tự.',
+                l.toolbarLayoutHint,
                 style: TextStyle(color: colors.textMuted, fontSize: 12),
               ),
             ),
@@ -254,7 +258,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
                             ),
                           ),
                     title: Text(
-                      toolbarItemName(item.id),
+                      toolbarItemName(l, item.id),
                       style: TextStyle(color: colors.textPrimary),
                     ),
                   );
@@ -295,6 +299,7 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     TextStyle titleStyle() => TextStyle(color: colors.textPrimary);
     TextStyle subStyle() => TextStyle(color: colors.textMuted, fontSize: 12);
 
@@ -306,7 +311,7 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sync Frequency',
+              l.settingsSyncFrequency,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 18,
@@ -324,29 +329,27 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
                   RadioListTile<SyncFrequency>(
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.manual,
-                    title: Text('Thủ công', style: titleStyle()),
+                    title: Text(l.syncFrequencyManual, style: titleStyle()),
                     subtitle: Text(
-                      'Chỉ sync khi bấm nút Sync.',
+                      l.syncFrequencyManualDesc,
                       style: subStyle(),
                     ),
                   ),
                   RadioListTile<SyncFrequency>(
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.onOpen,
-                    title: Text('Khi mở app', style: titleStyle()),
+                    title: Text(l.syncFrequencyOnOpen, style: titleStyle()),
                     subtitle: Text(
-                      'Tự sync khi mở app và khi quay lại app '
-                      '(cách nhau ít nhất 5 phút).',
+                      l.syncFrequencyOnOpenDesc,
                       style: subStyle(),
                     ),
                   ),
                   RadioListTile<SyncFrequency>(
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.periodic,
-                    title: Text('Định kỳ', style: titleStyle()),
+                    title: Text(l.syncFrequencyPeriodic, style: titleStyle()),
                     subtitle: Text(
-                      'Như "Khi mở app", thêm sync định kỳ trong lúc '
-                      'app đang mở.',
+                      l.syncFrequencyPeriodicDesc,
                       style: subStyle(),
                     ),
                   ),
@@ -361,7 +364,7 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
                   children: [
                     for (final d in SyncFrequencySheet.intervals)
                       ChoiceChip(
-                        label: Text('${d.inMinutes} phút'),
+                        label: Text(l.syncFrequencyMinutes(d.inMinutes)),
                         selected: _prefs.periodicInterval == d,
                         onSelected: (_) =>
                             _update(_prefs.copyWith(periodicInterval: d)),
@@ -371,8 +374,7 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
               ),
             const SizedBox(height: 12),
             Text(
-              'App không sync ngầm khi đã đóng. Sync tự động gặp lỗi hoặc '
-              'xung đột sẽ báo ở chấm trạng thái cạnh nút Sync.',
+              l.syncFrequencyFootnote,
               style: subStyle(),
             ),
           ],

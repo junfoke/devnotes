@@ -8,11 +8,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/create_note_dialog.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/rename_note_dialog.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 /// Mở [dialog] trong một app tối giản để test tương tác.
 Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('vi'),
       theme: AppTheme.light(),
       home: Builder(
         builder: (context) => ElevatedButton(
@@ -38,7 +42,7 @@ void main() {
 
       expect(find.text('Vui lòng nhập tiêu đề'), findsNothing);
 
-      await tester.tap(find.text('Create'));
+      await tester.tap(find.text('Tạo'));
       await tester.pumpAndSettle();
 
       expect(find.text('Vui lòng nhập tiêu đề'), findsOneWidget);
@@ -50,7 +54,7 @@ void main() {
       await _pumpDialog(tester, const CreateNoteDialog());
 
       await tester.enterText(find.byType(TextField).first, '   ');
-      await tester.tap(find.text('Create'));
+      await tester.tap(find.text('Tạo'));
       await tester.pumpAndSettle();
 
       expect(find.text('Vui lòng nhập tiêu đề'), findsOneWidget);
@@ -62,7 +66,7 @@ void main() {
       await _pumpDialog(tester, const CreateNoteDialog());
 
       await tester.enterText(find.byType(TextField).first, 'Ghi chú họp');
-      await tester.tap(find.text('Create'));
+      await tester.tap(find.text('Tạo'));
       await tester.pumpAndSettle();
 
       expect(find.byType(CreateNoteDialog), findsNothing);
@@ -72,7 +76,7 @@ void main() {
     testWidgets('lỗi biến mất khi user bắt đầu gõ lại', (tester) async {
       await _pumpDialog(tester, const CreateNoteDialog());
 
-      await tester.tap(find.text('Create'));
+      await tester.tap(find.text('Tạo'));
       await tester.pumpAndSettle();
       expect(find.text('Vui lòng nhập tiêu đề'), findsOneWidget);
 
@@ -92,7 +96,7 @@ void main() {
       );
 
       await tester.enterText(find.byType(TextField), '');
-      await tester.tap(find.text('Rename'));
+      await tester.tap(find.text('Đổi tên'));
       await tester.pumpAndSettle();
 
       expect(find.text('Vui lòng nhập tiêu đề'), findsOneWidget);
@@ -105,7 +109,7 @@ void main() {
         const RenameNoteDialog(currentTitle: 'Ghi chú cũ'),
       );
 
-      await tester.tap(find.text('Rename'));
+      await tester.tap(find.text('Đổi tên'));
       await tester.pumpAndSettle();
 
       expect(find.text('Tiêu đề mới phải khác tiêu đề hiện tại'), findsOneWidget);
@@ -119,7 +123,7 @@ void main() {
       );
 
       await tester.enterText(find.byType(TextField), 'Ghi chú mới');
-      await tester.tap(find.text('Rename'));
+      await tester.tap(find.text('Đổi tên'));
       await tester.pumpAndSettle();
 
       expect(find.byType(RenameNoteDialog), findsNothing);

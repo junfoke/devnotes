@@ -1,5 +1,6 @@
 // lib/features/git_sync/presentation/widgets/sync_history_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/git_sync/domain/sync_state.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -20,7 +21,13 @@ class SyncHistorySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
-    final dateFormat = DateFormat('MMM d, HH:mm');
+    final l = context.l10n;
+    // Theo ngôn ngữ đang chọn ("Oct 25, 20:06" / "thg 10 25, 20:06"). Dữ liệu
+    // ngày giờ của intl được flutter_localizations nạp sẵn cho en và vi.
+    final dateFormat = DateFormat(
+      'MMM d, HH:mm',
+      Localizations.localeOf(context).toLanguageTag(),
+    );
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -52,7 +59,7 @@ class SyncHistorySheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Sync History',
+                l.syncHistoryTitle,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 18,
@@ -81,7 +88,8 @@ class SyncHistorySheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                'Last sync: ${dateFormat.format(lastSyncAt!.toLocal())}',
+                l.syncHistoryLastSync(
+                    dateFormat.format(lastSyncAt!.toLocal())),
                 style: TextStyle(color: colors.textMuted, fontSize: 12),
               ),
             ),
@@ -91,7 +99,7 @@ class SyncHistorySheet extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  'No sync history yet',
+                  l.syncHistoryEmpty,
                   style: TextStyle(color: colors.textMuted),
                 ),
               ),
@@ -107,6 +115,7 @@ class SyncHistorySheet extends StatelessWidget {
                       entry.success ? Icons.check_circle : Icons.error;
                   final iconColor =
                       entry.success ? colors.success : colors.error;
+                  // Tên lệnh git giữ nguyên, không dịch.
                   final actionLabel = switch (entry.action) {
                     SyncAction.push => 'Push',
                     SyncAction.pull => 'Pull',
@@ -126,7 +135,8 @@ class SyncHistorySheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '$actionLabel — ${entry.filesChanged} file(s)',
+                                l.syncHistoryEntry(
+                                    actionLabel, entry.filesChanged),
                                 style: TextStyle(
                                   color: colors.textPrimary,
                                   fontSize: 13,

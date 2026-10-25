@@ -70,7 +70,9 @@ class SyncService {
           action: SyncAction.pull,
           filesChanged: 0,
           success: false,
-          errorMessage: '${unresolved.length} conflicts chưa giải quyết',
+          // Bản ghi lịch sử, không phải chữ giao diện: giữ tiếng Anh kỹ
+          // thuật, trung lập với ngôn ngữ đang chọn.
+          errorMessage: '${unresolved.length} unresolved conflicts',
         );
         return SyncResult(success: false, conflicts: unresolved);
       }

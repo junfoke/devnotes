@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
@@ -20,6 +21,7 @@ import 'package:devnotes/features/workspace/presentation/widgets/collection_acti
 import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/git_sync/application/sync_runner.dart';
 import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
+import 'package:devnotes/features/git_sync/presentation/git_messages.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -46,24 +48,25 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final l = context.l10n;
       TooltipService.showTooltips(
         context: context,
         tooltipKey: 'workspace',
         targets: [
           TooltipService.createTarget(
             key: _searchKey,
-            title: 'Search',
-            description: 'Search through all your notes with full-text search.',
+            title: l.tooltipSearchTitle,
+            description: l.tooltipSearchDesc,
           ),
           TooltipService.createTarget(
             key: _syncKey,
-            title: 'Sync',
-            description: 'Tap to sync your notes with your Git repository.',
+            title: l.tooltipSyncTitle,
+            description: l.tooltipSyncDesc,
           ),
           TooltipService.createTarget(
             key: _fabKey,
-            title: 'New Note',
-            description: 'Create a new Markdown note.',
+            title: l.newNote,
+            description: l.tooltipNewNoteDesc,
             align: ContentAlign.top,
           ),
         ],
@@ -86,20 +89,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   /// Chạy một thao tác; lỗi thì báo bằng snackbar thay vì im lặng.
-  Future<T?> _guard<T>(String failMessage, Future<T> Function() op) async {
+  /// [failMessage] dựng câu báo đã dịch từ chi tiết lỗi.
+  Future<T?> _guard<T>(
+    String Function(AppLocalizations l, String error) failMessage,
+    Future<T> Function() op,
+  ) async {
     try {
       return await op();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$failMessage: $e')));
+            SnackBar(content: Text(failMessage(context.l10n, '$e'))));
       }
       return null;
     }
   }
 
   Future<void> _deleteNote(NoteFile note) =>
-      _guard('Không xóa được ghi chú',
+      _guard((l, e) => l.noteDeleteFailed(e),
           () => ref.read(noteActionsProvider).delete(note.filePath));
 
   void _createCollection() async {
@@ -108,7 +115,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       builder: (_) => const CreateCollectionDialog(),
     );
     if (result == null) return;
-    await _guard('Không tạo được collection', () async {
+    await _guard((l, e) => l.collectionCreateFailed(e), () async {
       final existing = await ref.read(collectionsProvider.future);
       final repo = await ref.read(collectionsRepositoryProvider.future);
       final newCol = Collection(
@@ -131,7 +138,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
     if (result == null) return;
     final note = await _guard(
-      'Không tạo được ghi chú',
+      (l, e) => l.noteCreateFailed(e),
       () => ref.read(noteActionsProvider).create(
             title: result['title'] as String,
             tags: result['tags'] as List<String>,
@@ -143,6 +150,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   void _showNoteContextMenu(NoteFile note) {
+    final l = context.l10n;
     showModalBottomSheet(
       context: context,
       builder: (_) => SafeArea(
@@ -151,7 +159,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Rename'),
+              title: Text(l.commonRename),
               onTap: () async {
                 Navigator.pop(context);
                 final newTitle = await showDialog<String>(
@@ -161,7 +169,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 );
                 if (newTitle != null) {
                   await _guard(
-                    'Không đổi được tên',
+                    (l, e) => l.noteRenameFailed(e),
                     () => ref
                         .read(noteActionsProvider)
                         .rename(note.filePath, newTitle),
@@ -171,26 +179,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete',
-                  style: TextStyle(color: Colors.red)),
+              title: Text(l.commonDelete,
+                  style: const TextStyle(color: Colors.red)),
               onTap: () async {
                 Navigator.pop(context);
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text('Delete Note'),
-                    content: Text(
-                      'Delete "${note.title}"? This cannot be undone.',
-                    ),
+                    title: Text(l.deleteNoteTitle),
+                    content: Text(l.deleteNoteConfirm(note.title)),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(l.commonCancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                        child: Text(l.commonDelete,
+                            style: const TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
@@ -207,6 +213,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     ref.watch(searchIndexInitProvider);
     final notesAsync = ref.watch(noteListProvider);
 
@@ -231,24 +238,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
                 final result = outcome.result;
                 if (outcome.skipped == SyncSkipReason.alreadyRunning) {
-                  _showSyncSnack('Đang sync, chờ lần hiện tại xong đã.');
-                } else if (outcome.error != null) {
-                  _showSyncSnack('Sync error: ${outcome.error}');
+                  _showSyncSnack(l.syncAlreadyRunning);
+                } else if (outcome.error case final error?) {
+                  _showSyncSnack(l.syncError(describeError(l, error)));
                 } else if (result == null) {
                   // Bỏ qua vì lý do khác — không có gì để báo.
                 } else if (result.conflicts.isNotEmpty) {
                   context.push(ConflictScreen.location(result.conflicts.first));
                 } else if (result.success) {
-                  _showSyncSnack('Synced — ${result.filesChanged} file(s) changed');
+                  _showSyncSnack(l.syncDone(result.filesChanged));
                 } else {
-                  _showSyncSnack('Sync failed: ${result.error ?? "Unknown error"}');
+                  _showSyncSnack(l.syncFailed(result.error ?? l.unknownError));
                 }
               },
               onGitStatusTap: () async {
                 // Lịch sử và thời điểm sync gần nhất đọc từ SQLite nên vẫn
                 // đúng sau khi khởi động lại app.
                 final loaded = await _guard(
-                  'Không đọc được lịch sử đồng bộ',
+                  (l, e) => l.syncHistoryLoadFailed(e),
                   () async => (
                     await ref.read(syncHistoryProvider.future),
                     await ref.read(lastSuccessfulSyncProvider.future),
@@ -317,7 +324,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     data: (results) => results.isEmpty
                         ? Center(
                             child: Text(
-                              'No results found',
+                              l.searchNoResults,
                               style: TextStyle(color: colors.textMuted),
                             ),
                           )
@@ -329,7 +336,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) =>
-                        Center(child: Text('Search error: $e')),
+                        Center(child: Text(l.searchError('$e'))),
                   );
                 }
                 return notesAsync.when(
@@ -355,13 +362,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Không có ghi chú nào trong collection này',
+                            Text(l.collectionNoNotes,
                                 style: TextStyle(color: colors.textMuted)),
                             TextButton(
                               onPressed: () => ref
                                   .read(selectedCollectionProvider.notifier)
                                   .state = null,
-                              child: const Text('Xem tất cả ghi chú'),
+                              child: Text(l.collectionShowAll),
                             ),
                           ],
                         ),
@@ -390,22 +397,21 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  title: const Text('Delete Note'),
-                                  content: Text(
-                                    'Delete "${note.title}"? This cannot be undone.',
-                                  ),
+                                  title: Text(l.deleteNoteTitle),
+                                  content: Text(l.deleteNoteConfirm(note.title)),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
+                                      child: Text(l.commonCancel),
                                     ),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
-                                      child: const Text(
-                                        'Delete',
-                                        style: TextStyle(color: Colors.red),
+                                      child: Text(
+                                        l.commonDelete,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                       ),
                                     ),
                                   ],
@@ -427,12 +433,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Không tải được danh sách ghi chú: $e',
+                        Text(l.noteListLoadFailed('$e'),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: colors.error)),
                         TextButton(
                           onPressed: () => ref.invalidate(noteListProvider),
-                          child: const Text('Thử lại'),
+                          child: Text(l.commonRetry),
                         ),
                       ],
                     ),

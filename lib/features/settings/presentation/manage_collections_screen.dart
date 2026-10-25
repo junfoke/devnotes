@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/application/collections_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/collection_actions.dart';
@@ -12,6 +13,7 @@ class ManageCollectionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     final collectionsAsync = ref.watch(collectionsProvider);
 
     return Scaffold(
@@ -30,7 +32,7 @@ class ManageCollectionsScreen extends ConsumerWidget {
                       onPressed: () => context.pop(),
                     ),
                     Text(
-                      'Collections',
+                      l.settingsSectionCollections,
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: 20,
@@ -44,12 +46,12 @@ class ManageCollectionsScreen extends ConsumerWidget {
             Expanded(
               child: collectionsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) =>
+                    Center(child: Text(l.errorWithDetail('$e'))),
                 data: (collections) => collections.isEmpty
                     ? Center(
                         child: Text(
-                          'Chưa có collection nào.\n'
-                          'Tạo bằng nút + ở màn hình chính.',
+                          l.collectionsEmpty,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: colors.textMuted),
                         ),
@@ -68,7 +70,7 @@ class ManageCollectionsScreen extends ConsumerWidget {
                               ),
                               subtitle: Text(
                                 c.filterTags.isEmpty
-                                    ? 'Tất cả ghi chú'
+                                    ? l.allNotes
                                     : c.filterTags.map((t) => '#$t').join(' '),
                                 style: TextStyle(
                                   color: colors.textMuted,
@@ -79,7 +81,7 @@ class ManageCollectionsScreen extends ConsumerWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    tooltip: 'Edit',
+                                    tooltip: l.commonEdit,
                                     icon: Icon(
                                       Icons.edit,
                                       color: colors.textSecondary,
@@ -88,7 +90,7 @@ class ManageCollectionsScreen extends ConsumerWidget {
                                         CollectionActions.edit(context, ref, c),
                                   ),
                                   IconButton(
-                                    tooltip: 'Delete',
+                                    tooltip: l.commonDelete,
                                     icon: const Icon(
                                       Icons.delete,
                                       color: Colors.red,

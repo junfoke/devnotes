@@ -1,5 +1,5 @@
 // AC-traceability widget test cho ô chọn theme trong Settings.
-//   - UC-015 AC-1: chọn Dark cập nhật state + persist
+//   - UC-015 AC-1: chọn Tối (Dark) cập nhật state + persist
 //   - UC-015 AC-4: menu chọn theme không tràn khỏi mép màn hình
 //
 // Nghiệp vụ: specs/BUSINESS_OVERVIEW.md#settings (theme)
@@ -11,6 +11,7 @@ import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/theme/theme_provider.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/settings/presentation/settings_screen.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   late SharedPreferences prefs;
@@ -31,6 +32,9 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('vi'),
           theme: AppTheme.light(),
           home: const SettingsScreen(),
         ),
@@ -49,7 +53,7 @@ void main() {
 
       final screenWidth = tester.view.physicalSize.width / tester.view.devicePixelRatio;
 
-      for (final label in ['System', 'Light', 'Dark']) {
+      for (final label in ['Theo hệ thống', 'Sáng', 'Tối']) {
         final items = find.text(label);
         expect(items, findsWidgets, reason: 'thiếu lựa chọn "$label"');
 
@@ -62,13 +66,13 @@ void main() {
       }
     });
 
-    testWidgets('AC-1: chọn Dark cập nhật state và ghi SharedPreferences',
+    testWidgets('AC-1: chọn Tối (Dark) cập nhật state và ghi SharedPreferences',
         (tester) async {
       await pumpSettings(tester);
 
       await tester.tap(find.byKey(const Key('theme-selector')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Dark').last);
+      await tester.tap(find.text('Tối').last);
       await tester.pumpAndSettle();
 
       expect(container.read(themeProvider), ThemePreference.dark);

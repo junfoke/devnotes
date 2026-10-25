@@ -46,7 +46,7 @@ class ExportImportService {
       // archive 4.x không ném lỗi với dữ liệu rác mà trả về archive rỗng —
       // phải tự kiểm chữ ký "PK" thì mới phân biệt được zip hỏng với zip rỗng.
       if (bytes.length < 4 || bytes[0] != 0x50 || bytes[1] != 0x4B) {
-        throw const FormatException('thiếu chữ ký PK');
+        throw const FormatException('missing PK signature');
       }
       final archive = ZipDecoder().decodeBytes(bytes);
       entries = [
@@ -55,7 +55,7 @@ class ExportImportService {
             (name: file.name, bytes: file.content),
       ];
     } catch (e) {
-      throw ImportException('File không phải ZIP hợp lệ: $e');
+      throw ImportException('$e');
     }
 
     final report = ImportReport();
@@ -144,10 +144,12 @@ class ImportReport {
   final List<String> rejected = [];
 }
 
+/// File chọn để nhập không phải ZIP hợp lệ. Câu báo cho user do tầng UI
+/// dịch; [detail] là lỗi kỹ thuật gốc, hiện nguyên văn sau câu đó.
 class ImportException implements Exception {
-  ImportException(this.message);
-  final String message;
+  ImportException(this.detail);
+  final String detail;
 
   @override
-  String toString() => message;
+  String toString() => 'ImportException: not a valid ZIP file: $detail';
 }
