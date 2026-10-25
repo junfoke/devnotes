@@ -181,8 +181,10 @@ class Git2dartOps {
       final remote = Remote.lookup(repo: repo, name: 'origin');
       final stats = remote.fetch(callbacks: creds);
 
-      // 2. Handle unborn branch (no commits yet) — nothing to merge
-      if (repo.isBranchUnborn) {
+      final branch = _headBranch(repo);
+      final theirHead = _lookupOid(repo, 'refs/remotes/origin/$branch');
+      if (theirHead == null) {
+        // Remote chưa có branch này — không có gì để kéo.
         return PullResult(
           success: true,
           filesChanged: stats.receivedObjects,
@@ -190,18 +192,15 @@ class Git2dartOps {
         );
       }
 
-      // 3. Find local branch
-      String branch;
-      try {
-        branch = repo.head.name.replaceFirst('refs/heads/', '');
-      } catch (_) {
-        branch = 'main';
-      }
-      final remoteRefName = 'refs/remotes/origin/$branch';
-      final Oid theirHead;
-      try {
-        theirHead = Reference.lookup(repo: repo, name: remoteRefName).target;
-      } catch (_) {
+      // 2. Repo chưa có commit nào nhưng remote đã có: lấy nguyên branch từ
+      //    remote. Checkout trước, tạo ref sau — checkout lỗi thì repo vẫn y cũ.
+      if (repo.isBranchUnborn) {
+        Checkout.commit(
+          repo: repo,
+          commit: Commit.lookup(repo: repo, oid: theirHead),
+        );
+        Reference.create(
+            repo: repo, name: 'refs/heads/$branch', target: theirHead);
         return PullResult(
           success: true,
           filesChanged: stats.receivedObjects,
@@ -217,13 +216,20 @@ class Git2dartOps {
       }
 
       if (analysis.result.contains(GitMergeAnalysis.fastForward)) {
+        // Checkout cây đích TRƯỚC, dời branch SAU. Làm ngược lại thì khi
+        // checkout bị chặn (file đang sửa dở), branch đã trỏ tới commit mới
+        // trong khi file trên đĩa vẫn cũ — lần commit sau sẽ lùi toàn bộ thay
+        // đổi từ remote.
+        Checkout.commit(
+          repo: repo,
+          commit: Commit.lookup(repo: repo, oid: theirHead),
+        );
         Reference.create(
           repo: repo,
           name: 'refs/heads/$branch',
           target: theirHead,
           force: true,
         );
-        Checkout.head(repo: repo);
         return PullResult(
           success: true,
           filesChanged: stats.receivedObjects,
@@ -294,8 +300,19 @@ class Git2dartOps {
     final repo = Repository.open(repoPath);
     try {
       final relative = _toRelative(filePath);
-      repo.index.add(relative);
-      repo.index.conflicts[relative]?.remove();
+      if (File('$repoPath/$relative').existsSync()) {
+        repo.index.add(relative);
+        repo.index.conflicts[relative]?.remove();
+      } else {
+        // User chọn xóa luôn file đang conflict: `add` sẽ ném lỗi vì file
+        // không còn — gỡ các mục conflict và ghi nhận việc xóa.
+        repo.index.conflicts[relative]?.remove();
+        try {
+          repo.index.remove(relative);
+        } catch (_) {
+          // Không có mục stage 0 nào để gỡ — vậy là đã sạch.
+        }
+      }
       repo.index.write();
     } finally {
       repo.free();
@@ -395,8 +412,25 @@ class Git2dartOps {
       repo.free();
     }
 
-    await push(username: username, password: password);
+    // Đã chuyển xong trên máy. Push lỗi (mất mạng, remote đi trước) không
+    // làm việc chuyển thất bại — lần Sync sau sẽ đẩy lên.
+    try {
+      await push(username: username, password: password);
+    } catch (e) {
+      return SwitchBranchResult(conflicts: const [], pushError: e.toString());
+    }
     return const SwitchBranchResult(conflicts: []);
+  }
+
+  /// Tên branch HEAD đang trỏ tới, kể cả khi branch chưa có commit nào
+  /// (lúc đó `repo.head` ném lỗi, nên đọc thẳng `.git/HEAD`).
+  String _headBranch(Repository repo) {
+    if (!repo.isBranchUnborn) {
+      return repo.head.name.replaceFirst('refs/heads/', '');
+    }
+    final head = File('$repoPath/.git/HEAD').readAsStringSync().trim();
+    const prefix = 'ref: refs/heads/';
+    return head.startsWith(prefix) ? head.substring(prefix.length) : 'main';
   }
 
   static Oid? _lookupOid(Repository repo, String refName) {

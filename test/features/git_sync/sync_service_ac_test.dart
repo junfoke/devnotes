@@ -1,4 +1,6 @@
-// Luồng sync: pull → (có thay đổi thì) commit → push.
+// Luồng sync: (có thay đổi thì) commit → pull → push.
+//
+// Quyết định: DECISIONS.md — "Sync theo thứ tự commit → pull → push" (2026-10-25).
 //
 // Quyết định: DECISIONS.md — "Sync luôn push sau khi pull thành công"
 // (2026-10-24). Trước đây chỉ push khi có thay đổi mới, nên commit của một lần
@@ -66,14 +68,14 @@ void main() {
 
   setUp(() => db = MetadataDatabase(dbPath: ':memory:'));
 
-  test('có thay đổi thì pull → commit → push theo đúng thứ tự', () async {
+  test('có thay đổi thì commit → pull → push theo đúng thứ tự', () async {
     final git = _FakeGitClient(changes: true);
 
     final result =
         await SyncService(gitClient: git, metadataDb: db).sync(config);
 
     expect(result.success, isTrue);
-    expect(git.calls, ['pull', 'commit', 'push']);
+    expect(git.calls, ['commit', 'pull', 'push']);
   });
 
   test('không có thay đổi mới vẫn push, để đẩy commit còn kẹt từ lần trước',
@@ -85,7 +87,7 @@ void main() {
     expect(git.calls, ['pull', 'push']);
   });
 
-  test('pull ra conflict thì dừng, không commit, không push', () async {
+  test('pull ra conflict thì dừng, không push gì lên', () async {
     final git = _FakeGitClient(changes: true, conflicts: ['/w/a.md']);
 
     final result =
@@ -93,7 +95,7 @@ void main() {
 
     expect(result.success, isFalse);
     expect(result.conflicts, ['/w/a.md']);
-    expect(git.calls, ['pull']);
+    expect(git.calls, ['commit', 'pull']);
   });
 
   group('file còn đánh dấu conflict từ trước', () {
@@ -127,7 +129,7 @@ void main() {
       final result = await service.sync(config);
 
       expect(result.success, isTrue);
-      expect(git.calls, ['resolve /w/a.md', 'pull', 'commit', 'push']);
+      expect(git.calls, ['resolve /w/a.md', 'commit', 'pull', 'push']);
     });
 
     test('nhiều file: chỉ cần một file còn dấu là dừng, file đó được báo lại',

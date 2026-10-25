@@ -5,6 +5,7 @@ import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/core/git_client/remote_check.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
+import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/git_sync/domain/git_config.dart';
 import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
@@ -245,11 +246,14 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final client = await ref.read(gitClientProvider.future);
-      final result = await client.switchBranch(
-        config.branch,
-        username: config.username,
-        password: config.pat,
-      );
+      // Cùng khóa với sync: không để sync tự động chạy chồng lúc đang chuyển.
+      final result = await ref.read(syncControllerProvider).exclusive(
+            () => client.switchBranch(
+              config.branch,
+              username: config.username,
+              password: config.pat,
+            ),
+          );
       ref.invalidate(currentBranchProvider);
       ref.invalidate(noteListProvider);
       ref.read(syncStateProvider.notifier).setBranch(config.branch);
@@ -265,7 +269,10 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
             ours: config.branch, theirs: from));
       } else {
         messenger.showSnackBar(SnackBar(
-          content: Text('Đã chuyển sang "${config.branch}" và đẩy lên remote.'),
+          content: Text(result.pushError == null
+              ? 'Đã chuyển sang "${config.branch}" và đẩy lên remote.'
+              : 'Đã chuyển sang "${config.branch}" nhưng chưa đẩy lên được '
+                  '(${result.pushError}). Lần Sync sau sẽ đẩy.'),
         ));
       }
     } catch (e) {

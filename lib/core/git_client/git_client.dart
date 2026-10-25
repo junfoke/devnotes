@@ -19,7 +19,10 @@ class SwitchBranchResult {
   /// mới. Rỗng nghĩa là đã chuyển xong và đã push.
   final List<String> conflicts;
 
-  const SwitchBranchResult({required this.conflicts});
+  /// Đã chuyển branch trên máy nhưng đẩy lên remote lỗi — lần Sync sau đẩy.
+  final String? pushError;
+
+  const SwitchBranchResult({required this.conflicts, this.pushError});
 
   bool get hasConflicts => conflicts.isNotEmpty;
 }

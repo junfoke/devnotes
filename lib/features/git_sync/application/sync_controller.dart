@@ -38,6 +38,10 @@ class SyncController {
 
   bool get isRunning => _runner.isRunning;
 
+  /// Xem [SyncRunner.exclusive]: chạy thao tác git khác dưới cùng khóa với
+  /// sync; đang bận thì ném [GitBusyException].
+  Future<T> exclusive<T>(Future<T> Function() op) => _runner.exclusive(op);
+
   Future<SyncOutcome> sync({bool auto = false}) async {
     final state = _ref.read(syncStateProvider.notifier);
     if (_runner.isRunning) {

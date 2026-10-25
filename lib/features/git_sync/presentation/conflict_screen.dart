@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
+import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/features/git_sync/domain/conflict_parser.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
+import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 
 class ConflictScreen extends ConsumerStatefulWidget {
@@ -42,6 +44,12 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
   late List<ConflictBlock> _blocks;
   bool _loading = true;
 
+  /// Lỗi khi đọc file (file mất, không đọc được) — hiện thay vì quay mãi.
+  Object? _loadError;
+
+  /// Đang ghi/đánh dấu — khóa ba nút để không bấm chồng.
+  bool _busy = false;
+
   @override
   void initState() {
     super.initState();
@@ -49,21 +57,40 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
   }
 
   Future<void> _loadFile() async {
-    _rawContent = await File(widget.filePath).readAsString();
-    _blocks = ConflictParser.parse(_rawContent);
-    setState(() => _loading = false);
+    try {
+      _rawContent = await File(widget.filePath).readAsString();
+      _blocks = ConflictParser.parse(_rawContent);
+    } catch (e) {
+      _loadError = e;
+    }
+    if (mounted) setState(() => _loading = false);
   }
+
+  bool get _hasMarkers => ConflictParser.hasConflicts(_rawContent);
 
   /// Ghi bản đã giải quyết, báo git là file này xong, rồi sang file conflict
   /// kế tiếp — hoặc quay về nếu đã hết. Commit để lần Sync sau lo.
-  Future<void> _resolve(Resolution resolution) async {
+  Future<void> _resolve(Resolution? resolution) async {
+    if (_busy) return;
+    setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
-    final resolved = ConflictParser.resolveAll(_rawContent, resolution);
-    await File(widget.filePath).writeAsString(resolved);
-
-    final client = await ref.read(gitClientProvider.future);
-    await client.markResolved(widget.filePath);
-    final remaining = await client.conflictedFiles();
+    final List<String> remaining;
+    try {
+      remaining = await ref.read(syncControllerProvider).exclusive(() async {
+        if (resolution != null) {
+          final resolved = ConflictParser.resolveAll(_rawContent, resolution);
+          await File(widget.filePath).writeAsString(resolved);
+        }
+        final client = await ref.read(gitClientProvider.future);
+        await client.markResolved(widget.filePath);
+        return client.conflictedFiles();
+      });
+    } catch (e) {
+      if (mounted) setState(() => _busy = false);
+      messenger.showSnackBar(
+          SnackBar(content: Text('Không giải quyết được xung đột: $e')));
+      return;
+    }
     ref.invalidate(noteListProvider);
     if (!mounted) return;
 
@@ -86,8 +113,12 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: colors.bgPrimary,
+        appBar: AppBar(backgroundColor: colors.bgPrimary),
         body: const Center(child: CircularProgressIndicator()),
       );
+    }
+    if (_loadError != null || !_hasMarkers) {
+      return _buildMessage(colors);
     }
 
     return Scaffold(
@@ -204,7 +235,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _resolve(Resolution.keepMine),
+                      onPressed: _busy ? null : () => _resolve(Resolution.keepMine),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.success,
                         side: BorderSide(color: colors.success),
@@ -216,7 +247,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _resolve(Resolution.keepTheirs),
+                      onPressed: _busy ? null : () => _resolve(Resolution.keepTheirs),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: colors.accentLight,
                         side: BorderSide(color: colors.accentLight),
@@ -228,7 +259,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _resolve(Resolution.keepBoth),
+                      onPressed: _busy ? null : () => _resolve(Resolution.keepBoth),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: colors.accent),
                       child: Text('Giữ cả hai',
@@ -238,6 +269,44 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// File không đọc được, hoặc không còn dấu xung đột (đã sửa tay trong
+  /// editor) — giải thích thay vì quay mãi hay hiện ba nút vô nghĩa.
+  Widget _buildMessage(AppColorScheme colors) {
+    final error = _loadError;
+    return Scaffold(
+      backgroundColor: colors.bgPrimary,
+      appBar: AppBar(
+        backgroundColor: colors.bgPrimary,
+        title: const Text('Giải quyết xung đột'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(error != null ? Icons.error_outline : Icons.check_circle,
+                size: 48,
+                color: error != null ? colors.error : colors.success),
+            const SizedBox(height: 16),
+            Text(
+              error != null
+                  ? 'Không đọc được file: $error'
+                  : 'File này không còn dấu xung đột — có vẻ đã được sửa tay.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.textPrimary),
+            ),
+            const SizedBox(height: 24),
+            if (error == null)
+              ElevatedButton(
+                onPressed: _busy ? null : () => _resolve(null),
+                child: const Text('Đánh dấu đã giải quyết'),
+              ),
           ],
         ),
       ),

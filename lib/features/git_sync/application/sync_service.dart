@@ -60,6 +60,8 @@ class SyncService {
   }
 
   Future<SyncResult> sync(GitConfig config) async {
+    // Bước đang chạy — để lịch sử ghi đúng bước nào lỗi.
+    var step = SyncAction.commit;
     try {
       // 0. Conflict còn dở từ lần trước thì phải giải quyết hết rồi mới sync.
       final unresolved = await _settleConflicts();
@@ -73,7 +75,21 @@ class SyncService {
         return SyncResult(success: false, conflicts: unresolved);
       }
 
-      // 1. Pull
+      // 1. Commit thay đổi trên máy TRƯỚC khi pull. Xem DECISIONS.md, "Sync
+      //    theo thứ tự commit → pull → push" (2026-10-25): pull khi còn file
+      //    sửa dở thì fast-forward có thể bị chặn giữa chừng và lần commit sau
+      //    lùi mất thay đổi từ remote; commit trước thì hai phía cùng sửa một
+      //    note luôn thành conflict để user chọn, không bao giờ đè im lặng.
+      //    Đang dở merge (vừa giải quyết conflict) thì đây là merge commit.
+      step = SyncAction.commit;
+      final hasChanges = await gitClient.hasChanges();
+      if (hasChanges) {
+        final timestamp = DateTime.now().toUtc().toIso8601String();
+        await gitClient.commitAll('DevNotes sync $timestamp');
+      }
+
+      // 2. Pull — conflict thì dừng, chưa đẩy gì lên.
+      step = SyncAction.pull;
       final pullResult = await gitClient.pull(
         username: config.username,
         password: config.pat,
@@ -96,21 +112,15 @@ class SyncService {
         );
       }
 
-      // 2. Check for local changes
-      final hasChanges = await gitClient.hasChanges();
-      if (hasChanges) {
-        final timestamp = DateTime.now().toUtc().toIso8601String();
-        await gitClient.commitAll('DevNotes sync $timestamp');
-      }
-      // Luôn push, kể cả khi không có thay đổi mới: commit của một lần push
-      // lỗi trước đó (mất mạng…) phải được đẩy lên ở lần sync kế tiếp, không
-      // nằm kẹt trên máy. Remote đã đủ thì push không làm gì.
+      // 3. Luôn push, kể cả khi không có thay đổi mới: commit của một lần push
+      //    lỗi trước đó (mất mạng…) phải được đẩy lên ở lần sync kế tiếp.
+      //    Remote đã đủ thì push không làm gì.
+      step = SyncAction.push;
       await gitClient.push(
         username: config.username,
         password: config.pat,
       );
 
-      // 3. Update metadata
       final totalChanged = pullResult.filesChanged + (hasChanges ? 1 : 0);
       metadataDb.addSyncLogEntry(
         action: hasChanges ? SyncAction.push : SyncAction.pull,
@@ -121,7 +131,7 @@ class SyncService {
       return SyncResult(success: true, filesChanged: totalChanged);
     } catch (e) {
       metadataDb.addSyncLogEntry(
-        action: SyncAction.push,
+        action: step,
         filesChanged: 0,
         success: false,
         errorMessage: e.toString(),

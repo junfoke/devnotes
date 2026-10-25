@@ -132,5 +132,50 @@ void main() {
       expect(first.error, isNotNull);
       expect(second.result?.success, isTrue);
     });
+
+    // Chuyển branch / đánh dấu đã giải quyết cũng đụng vào repo — phải dùng
+    // chung khóa với sync, nếu không hai isolate cùng ghi index một lúc.
+    test('thao tác git khác đang chạy thì sync bị bỏ qua', () async {
+      final gate = Completer<void>();
+      var syncCalls = 0;
+      final runner = SyncRunner(
+        loadConfig: () async => config,
+        hasUnresolvedConflicts: () async => false,
+        prepareRepo: (_) async {},
+        doSync: (_) async {
+          syncCalls++;
+          return const SyncResult(success: true);
+        },
+      );
+
+      final switching = runner.exclusive(() => gate.future);
+      final outcome = await runner.run(auto: true);
+      gate.complete();
+      await switching;
+
+      expect(outcome.skipped, SyncSkipReason.alreadyRunning);
+      expect(syncCalls, 0);
+    });
+
+    test('đang sync thì thao tác git khác báo bận, không chạy chồng', () async {
+      final gate = Completer<void>();
+      final runner = SyncRunner(
+        loadConfig: () async => config,
+        hasUnresolvedConflicts: () async => false,
+        prepareRepo: (_) async {},
+        doSync: (_) async {
+          await gate.future;
+          return const SyncResult(success: true);
+        },
+      );
+
+      final syncing = runner.run();
+      await expectLater(
+          runner.exclusive(() async => 1), throwsA(isA<GitBusyException>()));
+      gate.complete();
+      await syncing;
+
+      expect(await runner.exclusive(() async => 1), 1);
+    });
   });
 }

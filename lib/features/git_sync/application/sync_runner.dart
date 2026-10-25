@@ -12,6 +12,14 @@ enum SyncSkipReason {
   unresolvedConflicts,
 }
 
+/// Repo đang bận với một thao tác git khác (sync, chuyển branch…).
+class GitBusyException implements Exception {
+  const GitBusyException();
+
+  @override
+  String toString() => 'Đang đồng bộ, thử lại sau khi xong.';
+}
+
 /// Kết quả một lần gọi [SyncRunner.run]: đúng một trong ba trường khác null.
 class SyncOutcome {
   const SyncOutcome.skipped(SyncSkipReason this.skipped)
@@ -48,6 +56,19 @@ class SyncRunner {
 
   bool _running = false;
   bool get isRunning => _running;
+
+  /// Chạy một thao tác git khác sync (chuyển branch, đánh dấu đã giải quyết
+  /// conflict) dưới cùng khóa với sync. Đang có thao tác khác thì ném
+  /// [GitBusyException] thay vì chạy chồng lên repo.
+  Future<T> exclusive<T>(Future<T> Function() op) async {
+    if (_running) throw const GitBusyException();
+    _running = true;
+    try {
+      return await op();
+    } finally {
+      _running = false;
+    }
+  }
 
   /// [auto]: lần sync do hệ thống kích hoạt, không phải user bấm. Sync tự
   /// động bỏ qua khi repo còn conflict — để user tự quyết, không bị app chen
