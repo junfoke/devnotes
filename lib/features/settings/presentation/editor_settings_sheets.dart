@@ -37,8 +37,10 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
-    final size = _prefs.fontSize
-        .clamp(FontSettingsSheet.minSize, FontSettingsSheet.maxSize);
+    final size = _prefs.fontSize.clamp(
+      FontSettingsSheet.minSize,
+      FontSettingsSheet.maxSize,
+    );
 
     return SafeArea(
       child: Padding(
@@ -47,11 +49,14 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Font & Size',
-                style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              'Font & Size',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 16),
             RadioGroup<String>(
               groupValue: _prefs.fontFamily,
@@ -62,9 +67,13 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
                     RadioListTile<String>(
                       contentPadding: EdgeInsets.zero,
                       value: family,
-                      title: Text(family,
-                          style: TextStyle(
-                              color: colors.textPrimary, fontFamily: family)),
+                      title: Text(
+                        family,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontFamily: family,
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -72,8 +81,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Text('Size',
-                    style: TextStyle(color: colors.textSecondary)),
+                Text('Size', style: TextStyle(color: colors.textSecondary)),
                 Expanded(
                   child: Slider(
                     value: size,
@@ -86,8 +94,10 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
                     onChangeEnd: (v) => _update(_prefs.copyWith(fontSize: v)),
                   ),
                 ),
-                Text('${size.round()}',
-                    style: TextStyle(color: colors.textPrimary)),
+                Text(
+                  '${size.round()}',
+                  style: TextStyle(color: colors.textPrimary),
+                ),
               ],
             ),
             Container(
@@ -121,8 +131,7 @@ class ToolbarLayoutSheet extends ConsumerStatefulWidget {
   final EditorPreferences initial;
 
   @override
-  ConsumerState<ToolbarLayoutSheet> createState() =>
-      _ToolbarLayoutSheetState();
+  ConsumerState<ToolbarLayoutSheet> createState() => _ToolbarLayoutSheetState();
 }
 
 class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
@@ -163,16 +172,21 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Text('Toolbar Layout',
-                  style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600)),
+              child: Text(
+                'Toolbar Layout',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Bật/tắt nút và kéo để đổi thứ tự.',
-                  style: TextStyle(color: colors.textMuted, fontSize: 12)),
+              child: Text(
+                'Bật/tắt nút và kéo để đổi thứ tự.',
+                style: TextStyle(color: colors.textMuted, fontSize: 12),
+              ),
             ),
             Expanded(
               child: ReorderableListView.builder(
@@ -200,12 +214,17 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
                     },
                     secondary: item.icon != null
                         ? Icon(item.icon, color: colors.textSecondary)
-                        : Text(item.label,
+                        : Text(
+                            item.label,
                             style: TextStyle(
-                                color: colors.textSecondary,
-                                fontWeight: FontWeight.bold)),
-                    title: Text(item.id,
-                        style: TextStyle(color: colors.textPrimary)),
+                              color: colors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                    title: Text(
+                      item.id,
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                   );
                 },
               ),
@@ -230,8 +249,7 @@ class SyncFrequencySheet extends ConsumerStatefulWidget {
   ];
 
   @override
-  ConsumerState<SyncFrequencySheet> createState() =>
-      _SyncFrequencySheetState();
+  ConsumerState<SyncFrequencySheet> createState() => _SyncFrequencySheetState();
 }
 
 class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
@@ -255,11 +273,14 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Sync Frequency',
-                style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              'Sync Frequency',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 8),
             RadioGroup<SyncFrequency>(
               groupValue: _prefs.syncFrequency,
@@ -272,26 +293,30 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.manual,
                     title: Text('Thủ công', style: titleStyle()),
-                    subtitle:
-                        Text('Chỉ sync khi bấm nút Sync.', style: subStyle()),
+                    subtitle: Text(
+                      'Chỉ sync khi bấm nút Sync.',
+                      style: subStyle(),
+                    ),
                   ),
                   RadioListTile<SyncFrequency>(
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.onOpen,
                     title: Text('Khi mở app', style: titleStyle()),
                     subtitle: Text(
-                        'Tự sync khi mở app và khi quay lại app '
-                        '(cách nhau ít nhất 5 phút).',
-                        style: subStyle()),
+                      'Tự sync khi mở app và khi quay lại app '
+                      '(cách nhau ít nhất 5 phút).',
+                      style: subStyle(),
+                    ),
                   ),
                   RadioListTile<SyncFrequency>(
                     contentPadding: EdgeInsets.zero,
                     value: SyncFrequency.periodic,
                     title: Text('Định kỳ', style: titleStyle()),
                     subtitle: Text(
-                        'Như "Khi mở app", thêm sync định kỳ trong lúc '
-                        'app đang mở.',
-                        style: subStyle()),
+                      'Như "Khi mở app", thêm sync định kỳ trong lúc '
+                      'app đang mở.',
+                      style: subStyle(),
+                    ),
                   ),
                 ],
               ),

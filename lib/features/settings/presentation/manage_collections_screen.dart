@@ -29,19 +29,21 @@ class ManageCollectionsScreen extends ConsumerWidget {
                       icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       onPressed: () => context.pop(),
                     ),
-                    Text('Collections',
-                        style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'Collections',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             Expanded(
               child: collectionsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
                 data: (collections) => collections.isEmpty
                     ? Center(
@@ -56,34 +58,46 @@ class ManageCollectionsScreen extends ConsumerWidget {
                         children: [
                           for (final c in collections)
                             ListTile(
-                              leading:
-                                  Icon(c.icon, color: colors.textSecondary),
-                              title: Text(c.name,
-                                  style:
-                                      TextStyle(color: colors.textPrimary)),
+                              leading: Icon(
+                                c.icon,
+                                color: colors.textSecondary,
+                              ),
+                              title: Text(
+                                c.name,
+                                style: TextStyle(color: colors.textPrimary),
+                              ),
                               subtitle: Text(
                                 c.filterTags.isEmpty
                                     ? 'Tất cả ghi chú'
                                     : c.filterTags.map((t) => '#$t').join(' '),
                                 style: TextStyle(
-                                    color: colors.textMuted, fontSize: 12),
+                                  color: colors.textMuted,
+                                  fontSize: 12,
+                                ),
                               ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     tooltip: 'Edit',
-                                    icon: Icon(Icons.edit,
-                                        color: colors.textSecondary),
-                                    onPressed: () => CollectionActions.edit(
-                                        context, ref, c),
+                                    icon: Icon(
+                                      Icons.edit,
+                                      color: colors.textSecondary,
+                                    ),
+                                    onPressed: () =>
+                                        CollectionActions.edit(context, ref, c),
                                   ),
                                   IconButton(
                                     tooltip: 'Delete',
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
                                     onPressed: () => CollectionActions.delete(
-                                        context, ref, c),
+                                      context,
+                                      ref,
+                                      c,
+                                    ),
                                   ),
                                 ],
                               ),

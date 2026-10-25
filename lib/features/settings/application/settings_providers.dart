@@ -6,8 +6,9 @@ final preferencesRepoProvider = Provider<PreferencesRepository>(
   (ref) => PreferencesRepository(),
 );
 
-final editorPreferencesProvider =
-    FutureProvider<EditorPreferences>((ref) async {
+final editorPreferencesProvider = FutureProvider<EditorPreferences>((
+  ref,
+) async {
   final repo = ref.watch(preferencesRepoProvider);
   return repo.loadEditorPreferences();
 });

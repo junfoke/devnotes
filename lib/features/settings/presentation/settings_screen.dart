@@ -36,15 +36,17 @@ class SettingsScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon:
-                          Icon(Icons.arrow_back, color: colors.textPrimary),
+                      icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       onPressed: () => context.pop(),
                     ),
-                    Text('Settings',
-                        style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'Settings',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -53,19 +55,44 @@ class SettingsScreen extends ConsumerWidget {
               child: ListView(
                 children: [
                   _sectionHeader('Git', colors),
-                  _tile('Git Repository', Icons.commit, colors,
-                      () => context.push('/settings/git')),
+                  _tile(
+                    'Git Repository',
+                    Icons.commit,
+                    colors,
+                    () => context.push('/settings/git'),
+                  ),
                   _sectionHeader('Sync', colors),
-                  _tile('Sync Frequency', Icons.sync, colors,
-                      () => _openEditorSheet(context, ref,
-                          (prefs) => SyncFrequencySheet(initial: prefs))),
+                  _tile(
+                    'Sync Frequency',
+                    Icons.sync,
+                    colors,
+                    () => _openEditorSheet(
+                      context,
+                      ref,
+                      (prefs) => SyncFrequencySheet(initial: prefs),
+                    ),
+                  ),
                   _sectionHeader('Editor', colors),
-                  _tile('Font & Size', Icons.text_fields, colors,
-                      () => _openEditorSheet(context, ref,
-                          (prefs) => FontSettingsSheet(initial: prefs))),
-                  _tile('Toolbar Layout', Icons.dashboard_customize, colors,
-                      () => _openEditorSheet(context, ref,
-                          (prefs) => ToolbarLayoutSheet(initial: prefs))),
+                  _tile(
+                    'Font & Size',
+                    Icons.text_fields,
+                    colors,
+                    () => _openEditorSheet(
+                      context,
+                      ref,
+                      (prefs) => FontSettingsSheet(initial: prefs),
+                    ),
+                  ),
+                  _tile(
+                    'Toolbar Layout',
+                    Icons.dashboard_customize,
+                    colors,
+                    () => _openEditorSheet(
+                      context,
+                      ref,
+                      (prefs) => ToolbarLayoutSheet(initial: prefs),
+                    ),
+                  ),
                   _sectionHeader('Appearance', colors),
                   _themeTile(context, ref, colors, theme),
                   _sectionHeader('Data', colors),
@@ -73,18 +100,17 @@ class SettingsScreen extends ConsumerWidget {
                     try {
                       final path =
                           await WorkspacePathProvider.getWorkspacePath();
-                      final service =
-                          ExportImportService(workspacePath: path);
+                      final service = ExportImportService(workspacePath: path);
                       final tempDir = await getTemporaryDirectory();
                       final zipPath = await service.exportToZip(
-                          '${tempDir.path}/devnotes_export.zip');
+                        '${tempDir.path}/devnotes_export.zip',
+                      );
                       // File nằm trong cache riêng của app, user không tự mở
                       // được — phải đưa qua share sheet để lưu ra Drive/Files
                       // hoặc gửi đi (B-08).
-                      await Share.shareXFiles(
-                        [XFile(zipPath, mimeType: 'application/zip')],
-                        subject: 'DevNotes export',
-                      );
+                      await Share.shareXFiles([
+                        XFile(zipPath, mimeType: 'application/zip'),
+                      ], subject: 'DevNotes export');
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,23 +119,36 @@ class SettingsScreen extends ConsumerWidget {
                       }
                     }
                   }),
-                  _tile('Import Notes', Icons.download, colors,
-                      () => _importNotes(context, ref)),
-                  _tile('Rebuild Search Index', Icons.refresh, colors,
-                      () => _rebuildSearchIndex(context, ref)),
+                  _tile(
+                    'Import Notes',
+                    Icons.download,
+                    colors,
+                    () => _importNotes(context, ref),
+                  ),
+                  _tile(
+                    'Rebuild Search Index',
+                    Icons.refresh,
+                    colors,
+                    () => _rebuildSearchIndex(context, ref),
+                  ),
                   _sectionHeader('Collections', colors),
-                  _tile('Manage Collections', Icons.folder, colors,
-                      () => context.push('/settings/collections')),
+                  _tile(
+                    'Manage Collections',
+                    Icons.folder,
+                    colors,
+                    () => context.push('/settings/collections'),
+                  ),
                   _sectionHeader('About', colors),
                   ListTile(
-                    leading:
-                        Icon(Icons.info_outline, color: colors.textMuted),
-                    title: Text('DevNotes v1.0.0',
-                        style: TextStyle(color: colors.textPrimary)),
+                    leading: Icon(Icons.info_outline, color: colors.textMuted),
+                    title: Text(
+                      'DevNotes v1.0.0',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                     subtitle: Text(
-                        'Local-first Markdown notes for devs',
-                        style: TextStyle(
-                            color: colors.textMuted, fontSize: 12)),
+                      'Local-first Markdown notes for devs',
+                      style: TextStyle(color: colors.textMuted, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -120,8 +159,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openEditorSheet(BuildContext context, WidgetRef ref,
-      Widget Function(EditorPreferences prefs) builder) async {
+  Future<void> _openEditorSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Widget Function(EditorPreferences prefs) builder,
+  ) async {
     final prefs = await ref.read(editorPreferencesProvider.future);
     if (!context.mounted) return;
     await showModalBottomSheet<void>(
@@ -145,8 +187,9 @@ class SettingsScreen extends ConsumerWidget {
     final String summary;
     try {
       final path = await WorkspacePathProvider.getWorkspacePath();
-      final report =
-          await ExportImportService(workspacePath: path).importFromZip(zipPath);
+      final report = await ExportImportService(
+        workspacePath: path,
+      ).importFromZip(zipPath);
       ref.invalidate(noteListProvider);
       summary = [
         'Thêm mới: ${report.added.length}',
@@ -159,9 +202,9 @@ class SettingsScreen extends ConsumerWidget {
       ].join('\n');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Nhập thất bại: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Nhập thất bại: $e')));
       }
       return;
     }
@@ -185,7 +228,8 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _rebuildSearchIndex(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
-        const SnackBar(content: Text('Đang dựng lại chỉ mục tìm kiếm...')));
+      const SnackBar(content: Text('Đang dựng lại chỉ mục tìm kiếm...')),
+    );
     try {
       ref.invalidate(noteListProvider);
       ref.invalidate(searchIndexInitProvider);
@@ -193,30 +237,39 @@ class SettingsScreen extends ConsumerWidget {
       final count = (await ref.read(noteListProvider.future)).length;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-            content: Text('Đã dựng lại chỉ mục cho $count ghi chú')));
+        ..showSnackBar(
+          SnackBar(content: Text('Đã dựng lại chỉ mục cho $count ghi chú')),
+        );
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
-            SnackBar(content: Text('Dựng lại chỉ mục thất bại: $e')));
+          SnackBar(content: Text('Dựng lại chỉ mục thất bại: $e')),
+        );
     }
   }
 
   Widget _sectionHeader(String title, AppColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-      child: Text(title,
-          style: TextStyle(
-              color: colors.accentLight,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1)),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: colors.accentLight,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
+        ),
+      ),
     );
   }
 
-  Widget _tile(String title, IconData icon, AppColorScheme colors,
-      VoidCallback onTap) {
+  Widget _tile(
+    String title,
+    IconData icon,
+    AppColorScheme colors,
+    VoidCallback onTap,
+  ) {
     return ListTile(
       leading: Icon(icon, color: colors.textSecondary),
       title: Text(title, style: TextStyle(color: colors.textPrimary)),
@@ -232,8 +285,12 @@ class SettingsScreen extends ConsumerWidget {
   /// dropdown menu is laid out at the button's own width and overflowed the
   /// right screen edge from this trailing position; the popup
   /// route keeps itself inside the screen bounds.
-  Widget _themeTile(BuildContext context, WidgetRef ref,
-      AppColorScheme colors, ThemePreference current) {
+  Widget _themeTile(
+    BuildContext context,
+    WidgetRef ref,
+    AppColorScheme colors,
+    ThemePreference current,
+  ) {
     return ListTile(
       leading: Icon(Icons.palette, color: colors.textSecondary),
       title: Text('Theme', style: TextStyle(color: colors.textPrimary)),
@@ -242,8 +299,7 @@ class SettingsScreen extends ConsumerWidget {
         initialValue: current,
         color: colors.bgSecondary,
         tooltip: 'Chọn giao diện',
-        onSelected: (value) =>
-            ref.read(themeProvider.notifier).setTheme(value),
+        onSelected: (value) => ref.read(themeProvider.notifier).setTheme(value),
         itemBuilder: (_) => ThemePreference.values
             .map(
               (t) => PopupMenuItem(
