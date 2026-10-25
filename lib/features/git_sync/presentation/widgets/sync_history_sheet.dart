@@ -81,7 +81,7 @@ class SyncHistorySheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                'Last sync: ${dateFormat.format(lastSyncAt!)}',
+                'Last sync: ${dateFormat.format(lastSyncAt!.toLocal())}',
                 style: TextStyle(color: colors.textMuted, fontSize: 12),
               ),
             ),
@@ -144,7 +144,7 @@ class SyncHistorySheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          dateFormat.format(entry.timestamp),
+                          dateFormat.format(entry.timestamp.toLocal()),
                           style: TextStyle(
                             color: colors.textMuted,
                             fontSize: 11,

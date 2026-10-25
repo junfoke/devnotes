@@ -5,6 +5,7 @@
 //
 // Nghiệp vụ: specs/BUSINESS_OVERVIEW.md#git-sync
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -75,5 +76,33 @@ void main() {
     await _pumpSheet(tester, _entries(2));
 
     expect(find.textContaining('Incorrect credentials'), findsOneWidget);
+  });
+
+  // Bug B-20: SQLite lưu giờ UTC, sheet từng in thẳng ra (13:06 thay vì 20:06
+  // ở UTC+7). Mốc giờ hiển thị phải là giờ địa phương của máy.
+  testWidgets('giờ trong lịch sử hiển thị theo giờ địa phương', (tester) async {
+    final utc = DateTime.utc(2026, 10, 25, 13, 6);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: SyncHistorySheet(
+            branchName: 'main',
+            lastSyncAt: utc,
+            entries: [
+              SyncLogEntry(
+                timestamp: utc,
+                action: SyncAction.pull,
+                filesChanged: 0,
+                success: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final local = DateFormat('MMM d, HH:mm').format(utc.toLocal());
+    expect(find.textContaining(local), findsNWidgets(2));
   });
 }
