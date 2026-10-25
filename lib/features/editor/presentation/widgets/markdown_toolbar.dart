@@ -46,9 +46,11 @@ class MarkdownToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
-    final items = ToolbarItem.allItems
-        .where((item) => visibleItemIds.contains(item.id))
-        .toList();
+    // Theo thứ tự người dùng đã sắp trong Settings → Toolbar Layout.
+    final items = [
+      for (final id in visibleItemIds)
+        ...ToolbarItem.allItems.where((item) => item.id == id),
+    ];
 
     return Container(
       height: 48,
