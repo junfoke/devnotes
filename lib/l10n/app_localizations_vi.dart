@@ -940,4 +940,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get editorToolStats => 'Thống kê';
+
+  @override
+  String get editorToolsButton => 'Công cụ soạn thảo';
 }

@@ -31,8 +31,16 @@ class InMemoryNoteRepository extends NoteFileRepository {
     return note;
   }
 
+  /// Đặt `true` để mọi lần đọc đều lỗi (giả lập file hỏng, mất quyền...).
+  bool failOnRead = false;
+
   @override
-  Future<NoteFile> readNote(String filePath) async => notes[filePath]!;
+  Future<NoteFile> readNote(String filePath) async {
+    if (failOnRead) {
+      throw const FileSystemException('Permission denied');
+    }
+    return notes[filePath]!;
+  }
 
   @override
   Future<void> saveNote(NoteFile note) async {
@@ -63,8 +71,10 @@ class InMemoryNoteRepository extends NoteFileRepository {
     required String title,
     required List<String> tags,
   }) async {
-    final note = seed(fileName: 'note-${notes.length + 1}.md', content: '')
-        .copyWith(title: title, tags: tags);
+    final note = seed(
+      fileName: 'note-${notes.length + 1}.md',
+      content: '',
+    ).copyWith(title: title, tags: tags);
     notes[note.filePath] = note;
     return note;
   }

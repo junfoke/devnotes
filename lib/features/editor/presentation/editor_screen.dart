@@ -12,7 +12,8 @@ import 'package:devnotes/features/editor/application/editor_providers.dart';
 import 'package:devnotes/features/editor/domain/checklist_toggle.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
-import 'package:devnotes/features/editor/presentation/widgets/markdown_toolbar.dart';
+import 'package:devnotes/features/editor/presentation/editor_tool_runner.dart';
+import 'package:devnotes/features/editor/presentation/widgets/editor_toolbar.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
@@ -33,6 +34,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     with WidgetsBindingObserver {
   final _pageController = PageController();
   final _textController = TextEditingController();
+  final _undoController = UndoHistoryController();
+
+  /// Đổi mỗi khi nạp nội dung từ đĩa (mở note, tải lại bản bên ngoài) để
+  /// TextField dựng lại và lịch sử hoàn tác bắt đầu từ nội dung vừa nạp —
+  /// hoàn tác không được đưa note về trống.
+  int _historyGeneration = 0;
   Timer? _debounce;
   int _currentPage = 0;
   NoteFile? _loadedNote;
@@ -97,11 +104,24 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       _loadedNote = note;
       // Gán _lastText trước để việc nạp nội dung không bị tính là một lần sửa.
       _lastText = note.content;
-      _textController.text = note.content;
+      _setLoadedText(note.content);
       setState(() {});
     } catch (e) {
       if (mounted) setState(() => _loadError = e);
     }
+  }
+
+  /// Nạp nội dung từ đĩa vào editor và bắt đầu lịch sử hoàn tác mới từ đó.
+  /// Con trỏ đặt cuối văn bản: vùng chọn phải hợp lệ thì lịch sử mới ghi
+  /// nhận giá trị đầu, và chèn từ toolbar khi chưa chạm vào văn bản vẫn
+  /// rơi vào cuối như trước.
+  void _setLoadedText(String content) {
+    _textController.value = TextEditingValue(
+      text: content,
+      selection: TextSelection.collapsed(offset: content.length),
+    );
+    _undoController.value = UndoHistoryValue.empty;
+    _historyGeneration++;
   }
 
   /// App xuống nền (chuyển app, tắt màn hình) có thể bị hệ điều hành giết
@@ -253,7 +273,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _loadedNote = onDisk;
     _pendingTags = null;
     _lastText = onDisk.content;
-    _textController.text = onDisk.content;
+    setState(() => _setLoadedText(onDisk.content));
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
     ref.invalidate(currentNoteProvider(widget.filePath));
     ref.invalidate(noteListProvider);
@@ -452,7 +472,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _debounce?.cancel();
     _pageController.dispose();
     _textController.dispose();
+    _undoController.dispose();
     super.dispose();
+  }
+
+  void _runTool(String id) {
+    EditorToolRunner(
+      text: _textController,
+      undo: _undoController,
+      context: context,
+      ref: ref,
+    ).run(id);
   }
 
   @override
@@ -505,7 +535,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       Padding(
                         padding: const EdgeInsets.all(20),
                         child: TextField(
+                          key: ValueKey(_historyGeneration),
                           controller: _textController,
+                          undoController: _undoController,
                           // Chưa tải xong thì chưa cho gõ: chữ gõ lúc này sẽ bị
                           // nội dung note ghi đè khi tải xong.
                           readOnly: _loadedNote == null,
@@ -546,12 +578,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                 ),
               ),
               if (_currentPage == 0)
-                MarkdownToolbar(
+                EditorToolbar(
                   key: _toolbarKey,
-                  textController: _textController,
-                  visibleItemIds:
+                  pinnedIds:
                       editorPrefs?.toolbarItems ??
                       EditorPreferences.defaultToolbarItems,
+                  enabled: _loadedNote != null,
+                  onTool: _runTool,
+                  // Bảng "Công cụ soạn thảo" được gắn ở task sau.
+                  onOpenSheet: () {},
                 ),
             ],
           ),

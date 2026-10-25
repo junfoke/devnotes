@@ -1585,6 +1585,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Statistics'**
   String get editorToolStats;
+
+  /// No description provided for @editorToolsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor tools'**
+  String get editorToolsButton;
 }
 
 class _AppLocalizationsDelegate

@@ -951,4 +951,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorToolStats => 'Statistics';
+
+  @override
+  String get editorToolsButton => 'Editor tools';
 }

@@ -261,5 +261,6 @@
   "editorToolNoteLink": "Liên kết note",
   "editorToolTemplate": "Mẫu",
   "editorToolOutline": "Dàn ý",
-  "editorToolStats": "Thống kê"
+  "editorToolStats": "Thống kê",
+  "editorToolsButton": "Công cụ soạn thảo"
 }
