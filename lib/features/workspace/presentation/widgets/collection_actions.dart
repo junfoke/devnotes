@@ -15,12 +15,16 @@ class CollectionActions {
       builder: (_) => CreateCollectionDialog(initial: collection),
     );
     if (result == null) return;
-    final repo = await ref.read(collectionsRepositoryProvider.future);
-    await repo.updateCollection(collection.copyWith(
-      name: result['name'] as String,
-      filterTags: result['tags'] as List<String>,
-    ));
-    ref.invalidate(collectionsProvider);
+    try {
+      final repo = await ref.read(collectionsRepositoryProvider.future);
+      await repo.updateCollection(collection.copyWith(
+        name: result['name'] as String,
+        filterTags: result['tags'] as List<String>,
+      ));
+      ref.invalidate(collectionsProvider);
+    } catch (e) {
+      if (context.mounted) _fail(context, 'Không sửa được collection', e);
+    }
   }
 
   /// Hỏi xác nhận rồi xóa. Chỉ bỏ nhóm — note bên trong giữ nguyên.
@@ -45,13 +49,24 @@ class CollectionActions {
       ),
     );
     if (confirmed != true) return;
-    final repo = await ref.read(collectionsRepositoryProvider.future);
-    await repo.deleteCollection(collection.id);
+    try {
+      final repo = await ref.read(collectionsRepositoryProvider.future);
+      await repo.deleteCollection(collection.id);
+    } catch (e) {
+      if (context.mounted) _fail(context, 'Không xóa được collection', e);
+      return;
+    }
     // Collection đang lọc vừa bị xóa thì quay về All Notes.
     if (ref.read(selectedCollectionProvider) == collection.id) {
       ref.read(selectedCollectionProvider.notifier).state = null;
     }
     ref.invalidate(collectionsProvider);
+  }
+
+  static void _fail(BuildContext context, String message, Object error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$message: $error')));
   }
 
   /// Bottom sheet Sửa / Xóa khi nhấn giữ một chip collection.

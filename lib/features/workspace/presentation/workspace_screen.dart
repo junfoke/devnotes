@@ -85,24 +85,43 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
   }
 
+  /// Chạy một thao tác; lỗi thì báo bằng snackbar thay vì im lặng.
+  Future<T?> _guard<T>(String failMessage, Future<T> Function() op) async {
+    try {
+      return await op();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$failMessage: $e')));
+      }
+      return null;
+    }
+  }
+
+  Future<void> _deleteNote(NoteFile note) =>
+      _guard('Không xóa được ghi chú',
+          () => ref.read(noteActionsProvider).delete(note.filePath));
+
   void _createCollection() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => const CreateCollectionDialog(),
     );
     if (result == null) return;
-    final existing = await ref.read(collectionsProvider.future);
-    final repo = await ref.read(collectionsRepositoryProvider.future);
-    final newCol = Collection(
-      id: const Uuid().v4(),
-      name: result['name'] as String,
-      filterTags: result['tags'] as List<String>,
-      icon: Icons.folder,
-      color: Colors.blue,
-      sortOrder: existing.length,
-    );
-    await repo.saveCollections([...existing, newCol]);
-    ref.invalidate(collectionsProvider);
+    await _guard('Không tạo được collection', () async {
+      final existing = await ref.read(collectionsProvider.future);
+      final repo = await ref.read(collectionsRepositoryProvider.future);
+      final newCol = Collection(
+        id: const Uuid().v4(),
+        name: result['name'] as String,
+        filterTags: result['tags'] as List<String>,
+        icon: Icons.folder,
+        color: Colors.blue,
+        sortOrder: existing.length,
+      );
+      await repo.saveCollections([...existing, newCol]);
+      ref.invalidate(collectionsProvider);
+    });
   }
 
   void _createNote() async {
@@ -111,10 +130,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       builder: (_) => const CreateNoteDialog(),
     );
     if (result == null) return;
-    final note = await ref.read(createNoteProvider(
-      (title: result['title'] as String, tags: result['tags'] as List<String>),
-    ).future);
-    if (mounted) {
+    final note = await _guard(
+      'Không tạo được ghi chú',
+      () => ref.read(noteActionsProvider).create(
+            title: result['title'] as String,
+            tags: result['tags'] as List<String>,
+          ),
+    );
+    if (note != null && mounted) {
       context.push('/editor/${Uri.encodeComponent(note.filePath)}');
     }
   }
@@ -137,9 +160,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       RenameNoteDialog(currentTitle: note.title),
                 );
                 if (newTitle != null) {
-                  await ref.read(renameNoteProvider(
-                    (filePath: note.filePath, newTitle: newTitle),
-                  ).future);
+                  await _guard(
+                    'Không đổi được tên',
+                    () => ref
+                        .read(noteActionsProvider)
+                        .rename(note.filePath, newTitle),
+                  );
                 }
               },
             ),
@@ -169,11 +195,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     ],
                   ),
                 );
-                if (confirm == true) {
-                  await ref.read(
-                    deleteNoteProvider(note.filePath).future,
-                  );
-                }
+                if (confirm == true) await _deleteNote(note);
               },
             ),
           ],
@@ -225,11 +247,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               onGitStatusTap: () async {
                 // Lịch sử và thời điểm sync gần nhất đọc từ SQLite nên vẫn
                 // đúng sau khi khởi động lại app.
-                final entries = await ref.read(syncHistoryProvider.future);
-                final lastSyncAt =
-                    await ref.read(lastSuccessfulSyncProvider.future);
-                final branch = await ref.read(currentBranchProvider.future);
-                if (!context.mounted) return;
+                final loaded = await _guard(
+                  'Không đọc được lịch sử đồng bộ',
+                  () async => (
+                    await ref.read(syncHistoryProvider.future),
+                    await ref.read(lastSuccessfulSyncProvider.future),
+                    await ref.read(currentBranchProvider.future),
+                  ),
+                );
+                if (loaded == null || !context.mounted) return;
+                final (entries, lastSyncAt, branch) = loaded;
                 showModalBottomSheet(
                   context: context,
                   builder: (_) => SyncHistorySheet(
@@ -318,8 +345,27 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         ).toList();
                       }
                     }
-                    if (displayNotes.isEmpty) {
+                    if (notes.isEmpty) {
                       return EmptyState(onCreateFirst: _createNote);
+                    }
+                    if (displayNotes.isEmpty) {
+                      // Có note nhưng collection đang chọn không khớp note
+                      // nào — đừng nói "chưa có ghi chú" như workspace trống.
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Không có ghi chú nào trong collection này',
+                                style: TextStyle(color: colors.textMuted)),
+                            TextButton(
+                              onPressed: () => ref
+                                  .read(selectedCollectionProvider.notifier)
+                                  .state = null,
+                              child: const Text('Xem tất cả ghi chú'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
@@ -365,11 +411,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                                   ],
                                 ),
                               );
-                              if (confirm == true) {
-                                await ref.read(
-                                  deleteNoteProvider(note.filePath).future,
-                                );
-                              }
+                              if (confirm == true) await _deleteNote(note);
                             },
                             onLongPress: () {
                               _showNoteContextMenu(note);
@@ -381,7 +423,20 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Không tải được danh sách ghi chú: $e',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: colors.error)),
+                        TextButton(
+                          onPressed: () => ref.invalidate(noteListProvider),
+                          child: const Text('Thử lại'),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               }(),
             ),

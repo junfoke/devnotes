@@ -48,6 +48,17 @@ class InMemoryNoteRepository extends NoteFileRepository {
   }
 
   @override
+  Future<NoteFile> renameNote(String oldPath, String newTitle) async {
+    final old = notes.remove(oldPath)!;
+    final renamed = old.copyWith(
+      filePath: '$workspacePath/${newTitle.toLowerCase()}.md',
+      title: newTitle,
+    );
+    notes[renamed.filePath] = renamed;
+    return renamed;
+  }
+
+  @override
   Future<NoteFile> createNote({
     required String title,
     required List<String> tags,
