@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 
-final currentNoteProvider = FutureProvider.family<NoteFile, String>(
+/// Note đang mở trong editor. autoDispose: đóng editor là bỏ cache, lần mở
+/// sau đọc lại từ đĩa — không thì sync kéo bản mới về mà mở note vẫn thấy
+/// nội dung cũ trong bộ nhớ.
+final currentNoteProvider = FutureProvider.autoDispose.family<NoteFile, String>(
   (ref, filePath) async {
     final repo = await ref.watch(noteFileRepositoryProvider.future);
     return repo.readNote(filePath);

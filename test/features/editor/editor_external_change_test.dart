@@ -126,4 +126,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(openEditorCountProvider), 0);
   });
+
+  // Bug: note được đọc qua provider có cache không tự hủy — sync kéo bản mới
+  // về rồi mở lại note vẫn thấy nội dung cũ trong bộ nhớ.
+  testWidgets('đóng rồi mở lại note thì thấy nội dung mới nhất trên đĩa',
+      (tester) async {
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => EditorScreen(filePath: note.filePath),
+              )),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('ban goc'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    changedOutside('ban moi sau khi sync');
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('ban moi sau khi sync'), findsOneWidget);
+  });
 }
