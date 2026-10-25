@@ -54,6 +54,13 @@ void main() {
   TextEditingController controllerOf(WidgetTester tester) =>
       tester.widget<TextField>(find.byType(TextField).first).controller!;
 
+  /// Chuyển trang PageView (0: soạn, 1: preview). Kéo ngang trên TextField
+  /// bị ô nhập giành cử chỉ nên dùng thẳng controller.
+  Future<void> goToPage(WidgetTester tester, int page) async {
+    tester.widget<PageView>(find.byType(PageView)).controller!.jumpToPage(page);
+    await tester.pumpAndSettle();
+  }
+
   /// Bấm nút ghim theo nhãn; cuộn thanh công cụ tới nút nếu nó khuất.
   Future<void> tapTool(
     WidgetTester tester,
@@ -154,6 +161,30 @@ void main() {
     await tapTool(tester, l.editorToolUndo);
     await tester.pump();
     expect(controllerOf(tester).text, 'ban moi tu laptop');
+  });
+
+  testWidgets('đánh dấu checklist ở preview, gõ tiếp rồi hoàn tác thì ô vẫn '
+      'được đánh dấu', (tester) async {
+    note = repo.seed(fileName: 'ghi-chu.md', content: '- [ ] viec');
+    await pumpEditor(tester);
+
+    // Sang trang preview, đánh dấu ô, quay lại trang soạn.
+    await goToPage(tester, 1);
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump(const Duration(seconds: 1));
+    await goToPage(tester, 0);
+    expect(controllerOf(tester).text, '- [x] viec');
+    // Ô soạn được dựng lại khi quay về trang 0 — chờ nhịp ghi lịch sử đầu.
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.enterText(find.byType(TextField).first, '- [x] viec them');
+    await tester.pump(const Duration(seconds: 1));
+
+    await tapTool(tester, l.editorToolUndo);
+    await tester.pump();
+    expect(controllerOf(tester).text, contains('- [x]'));
+    expect(controllerOf(tester).text, '- [x] viec');
+    await flushAutosave(tester);
   });
 
   testWidgets(

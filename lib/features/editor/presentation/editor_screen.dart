@@ -331,7 +331,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   void _toggleChecklist(int index, bool checked) {
     final updated = toggleChecklistItem(_textController.text, index, checked);
     if (updated == _textController.text) return;
-    setState(() => _textController.text = updated);
+    // Vùng chọn phải hợp lệ, nếu không lịch sử hoàn tác bỏ qua lần đổi này
+    // và một lần hoàn tác sau đó lặng lẽ bỏ dấu ô vừa đánh.
+    final offset = _textController.selection.baseOffset
+        .clamp(0, updated.length)
+        .toInt();
+    setState(
+      () => _textController.value = TextEditingValue(
+        text: updated,
+        selection: TextSelection.collapsed(offset: offset),
+      ),
+    );
   }
 
   /// Đổi tag của note. Tag mới được ghi cùng nội dung đang gõ qua đúng đường

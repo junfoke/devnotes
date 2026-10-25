@@ -7,12 +7,13 @@ class PreferencesRepository {
     final prefs = await SharedPreferences.getInstance();
     var toolbar = prefs.getStringList('editor_toolbar_items');
     if (!(prefs.getBool('editor_tools_migrated_v1') ?? false)) {
-      // Di trú một lần: người dùng cũ được thêm 4 nút mới vào cuối danh sách ghim.
+      // Di trú một lần: người dùng cũ được thêm 4 nút mới lên ĐẦU danh sách
+      // ghim (ruling R5 — để cuối thì khuất màn hình trên điện thoại hẹp).
       if (toolbar != null) {
         toolbar = [
-          ...toolbar,
           for (final id in EditorPreferences.pinnedAddedByToolsUpdate)
             if (!toolbar.contains(id)) id,
+          ...toolbar,
         ];
         await prefs.setStringList('editor_toolbar_items', toolbar);
       }

@@ -1,9 +1,10 @@
 // Tự lưu phải bắt được MỌI thay đổi nội dung, kể cả thay đổi do code sinh ra
 // (thanh công cụ Markdown), không chỉ thay đổi do gõ phím.
 //
-// Bug B-01: MarkdownToolbar gán thẳng textController.value, việc này không kích
-// hoạt TextField.onChanged nên trạng thái vẫn là "saved" và autosave không bao
-// giờ chạy — cú pháp chèn từ toolbar bị mất khi thoát màn hình.
+// Bug B-01: thanh công cụ editor (nay là EditorToolbar + EditorToolRunner) gán
+// thẳng textController.value, việc này không kích hoạt TextField.onChanged
+// nên trạng thái vẫn là "saved" và autosave không bao giờ chạy — cú pháp chèn
+// từ toolbar bị mất khi thoát màn hình.
 //
 // Nghiệp vụ: specs/BUSINESS_OVERVIEW.md#editor
 import 'package:flutter/material.dart';

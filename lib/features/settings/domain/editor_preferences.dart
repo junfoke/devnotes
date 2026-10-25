@@ -71,7 +71,10 @@ class EditorPreferences {
   static const defaultAutoSaveInterval = Duration(seconds: 3);
 
   /// Default set of toolbar items shown in the editor.
+  /// Ruling R5: 4 nút chỉnh sửa đứng đầu để luôn trong tầm một chạm, kể cả
+  /// trên điện thoại hẹp.
   static const defaultToolbarItems = [
+    ...pinnedAddedByToolsUpdate,
     'h1',
     'h2',
     'h3',
@@ -88,7 +91,6 @@ class EditorPreferences {
     'quote',
     'table',
     'hr',
-    ...pinnedAddedByToolsUpdate,
   ];
 
   EditorPreferences copyWith({

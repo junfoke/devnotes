@@ -7,26 +7,30 @@ void main() {
   test('máy mới: ghim mặc định có hoàn tác, làm lại, thụt, lùi', () async {
     SharedPreferences.setMockInitialValues({});
     final p = await PreferencesRepository().loadEditorPreferences();
-    expect(
-      p.toolbarItems,
-      containsAllInOrder(['h1', 'undo', 'redo', 'indent', 'outdent']),
-    );
+    // Ruling R5: 4 nút chỉnh sửa đứng đầu để luôn trong tầm một chạm.
+    expect(p.toolbarItems.take(5).toList(), [
+      'undo',
+      'redo',
+      'indent',
+      'outdent',
+      'h1',
+    ]);
   });
 
   test(
-    'người dùng cũ đã sắp toolbar: thêm 4 nút mới một lần, giữ thứ tự cũ',
+    'người dùng cũ đã sắp toolbar: thêm 4 nút mới lên đầu một lần, giữ thứ tự cũ',
     () async {
       SharedPreferences.setMockInitialValues({
         'editor_toolbar_items': ['bold', 'h1'],
       });
       final repo = PreferencesRepository();
       expect((await repo.loadEditorPreferences()).toolbarItems, [
-        'bold',
-        'h1',
         'undo',
         'redo',
         'indent',
         'outdent',
+        'bold',
+        'h1',
       ]);
     },
   );
