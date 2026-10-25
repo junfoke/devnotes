@@ -12,6 +12,7 @@ import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 
 import 'in_memory_note_repository.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   late InMemoryNoteRepository repo;
@@ -29,11 +30,15 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  Future<void> pumpEditor(WidgetTester tester) async {
+  Future<void> pumpEditor(WidgetTester tester,
+      {Locale locale = const Locale('vi')}) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: locale,
           theme: AppTheme.light(),
           home: Builder(
             builder: (context) => Scaffold(
@@ -145,5 +150,25 @@ void main() {
 
     expect(repo.notes[note.filePath]!.tags, ['a']);
     expect(repo.notes[note.filePath]!.content, 'dang go do');
+  });
+
+  testWidgets('giao diện tiếng Anh: menu ⋮ và Thông tin hiện chữ tiếng Anh',
+      (tester) async {
+    await pumpEditor(tester, locale: const Locale('en'));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Share'), findsOneWidget);
+    expect(find.text('Edit tags'), findsOneWidget);
+    expect(find.text('Info'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+    expect(find.text('Chia sẻ'), findsNothing);
+
+    await tester.tap(find.text('Info'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('3 words'), findsOneWidget);
+    expect(find.textContaining('từ'), findsNothing);
   });
 }

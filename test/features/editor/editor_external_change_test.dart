@@ -15,6 +15,7 @@ import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 
 import 'in_memory_note_repository.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   late InMemoryNoteRepository repo;
@@ -36,6 +37,9 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
         theme: AppTheme.light(),
         home: EditorScreen(filePath: note.filePath),
       ),

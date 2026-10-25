@@ -13,11 +13,14 @@ enum SyncSkipReason {
 }
 
 /// Repo đang bận với một thao tác git khác (sync, chuyển branch…).
+///
+/// Câu báo cho user do tầng UI dịch (`describeError`), [toString] chỉ là
+/// mô tả kỹ thuật.
 class GitBusyException implements Exception {
   const GitBusyException();
 
   @override
-  String toString() => 'Đang đồng bộ, thử lại sau khi xong.';
+  String toString() => 'GitBusyException: another git operation is running';
 }
 
 /// Kết quả một lần gọi [SyncRunner.run]: đúng một trong ba trường khác null.

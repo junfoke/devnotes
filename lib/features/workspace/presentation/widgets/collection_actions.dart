@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/features/workspace/application/collections_providers.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
@@ -23,27 +24,30 @@ class CollectionActions {
       ));
       ref.invalidate(collectionsProvider);
     } catch (e) {
-      if (context.mounted) _fail(context, 'Không sửa được collection', e);
+      if (context.mounted) {
+        _fail(context, context.l10n.collectionEditFailed('$e'));
+      }
     }
   }
 
   /// Hỏi xác nhận rồi xóa. Chỉ bỏ nhóm — note bên trong giữ nguyên.
   static Future<void> delete(
       BuildContext context, WidgetRef ref, Collection collection) async {
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Xóa collection "${collection.name}"?'),
-        content: const Text(
-            'Chỉ xóa nhóm. Các ghi chú bên trong vẫn giữ nguyên trong All Notes.'),
+        title: Text(l.deleteCollectionTitle(collection.name)),
+        content: Text(l.deleteCollectionBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(l.commonDelete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -53,7 +57,7 @@ class CollectionActions {
       final repo = await ref.read(collectionsRepositoryProvider.future);
       await repo.deleteCollection(collection.id);
     } catch (e) {
-      if (context.mounted) _fail(context, 'Không xóa được collection', e);
+      if (context.mounted) _fail(context, l.collectionDeleteFailed('$e'));
       return;
     }
     // Collection đang lọc vừa bị xóa thì quay về All Notes.
@@ -63,15 +67,16 @@ class CollectionActions {
     ref.invalidate(collectionsProvider);
   }
 
-  static void _fail(BuildContext context, String message, Object error) {
+  static void _fail(BuildContext context, String message) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$message: $error')));
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Bottom sheet Sửa / Xóa khi nhấn giữ một chip collection.
   static void showMenu(
       BuildContext context, WidgetRef ref, Collection collection) {
+    final l = context.l10n;
     showModalBottomSheet<void>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -80,7 +85,7 @@ class CollectionActions {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Edit'),
+              title: Text(l.commonEdit),
               onTap: () {
                 Navigator.pop(sheetContext);
                 edit(context, ref, collection);
@@ -88,7 +93,8 @@ class CollectionActions {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              title: Text(l.commonDelete,
+                  style: const TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 delete(context, ref, collection);

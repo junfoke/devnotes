@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class CreateNoteDialog extends StatefulWidget {
@@ -25,10 +26,11 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text('New Note', style: TextStyle(color: colors.textPrimary)),
+      title: Text(l.newNote, style: TextStyle(color: colors.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -40,7 +42,7 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
               if (_titleError != null) setState(() => _titleError = null);
             },
             decoration: InputDecoration(
-              hintText: 'Note title',
+              hintText: l.noteTitleHint,
               hintStyle: TextStyle(color: colors.textMuted),
               errorText: _titleError,
             ),
@@ -50,7 +52,7 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
             controller: _tagsController,
             style: TextStyle(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Tags (comma separated)',
+              hintText: l.tagsHint,
               hintStyle: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -59,14 +61,15 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+          child: Text(l.commonCancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: () {
             final title = _titleController.text.trim();
             // Tiêu đề rỗng phải báo lỗi rõ ràng, không im lặng.
             if (title.isEmpty) {
-              setState(() => _titleError = 'Vui lòng nhập tiêu đề');
+              setState(() => _titleError = l.titleRequired);
               return;
             }
             final tags = _tagsController.text
@@ -76,7 +79,7 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
                 .toList();
             Navigator.pop(context, {'title': title, 'tags': tags});
           },
-          child: Text('Create', style: TextStyle(color: colors.accent)),
+          child: Text(l.commonCreate, style: TextStyle(color: colors.accent)),
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class CollectionsRow extends StatelessWidget {
@@ -30,7 +31,8 @@ class CollectionsRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
-          _chip(context, 'All Notes', selectedId == null, () => onSelect(null)),
+          _chip(context, context.l10n.allNotes, selectedId == null,
+              () => onSelect(null)),
           ...collections.map((col) => _chip(
                 context,
                 col.name,

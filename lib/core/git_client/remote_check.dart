@@ -40,30 +40,8 @@ class RemoteCheckResult {
 
   bool get ok => status == RemoteCheckStatus.ok;
 
-  /// Thông báo hiển thị cho người dùng, tiếng Việt, nói rõ phải làm gì tiếp.
-  String describe({required String branch}) {
-    switch (status) {
-      case RemoteCheckStatus.ok:
-        return remoteBranches.isEmpty
-            ? 'Kết nối thành công. Remote đang rỗng — lần đồng bộ đầu tiên sẽ '
-                'đẩy ghi chú của bạn lên branch "$branch".'
-            : 'Kết nối thành công. Đã thấy branch "$branch" trên remote.';
-      case RemoteCheckStatus.invalidCredentials:
-        return 'Sai thông tin đăng nhập. Kiểm tra lại username và PAT — PAT có '
-            'thể đã hết hạn hoặc thiếu quyền "repo".';
-      case RemoteCheckStatus.repoNotFound:
-        return 'Không tìm thấy repository. Kiểm tra lại URL. Nếu repo ở chế độ '
-            'private thì PAT cũng phải có quyền truy cập chính repo đó.';
-      case RemoteCheckStatus.networkUnreachable:
-        return 'Không ra được tới remote. Kiểm tra kết nối mạng rồi thử lại.';
-      case RemoteCheckStatus.branchNotFound:
-        final found = remoteBranches.join(', ');
-        return 'Kết nối được nhưng remote không có branch "$branch". '
-            'Branch đang có: $found.';
-      case RemoteCheckStatus.unknown:
-        return 'Kiểm tra thất bại: ${detail ?? "lỗi không xác định"}';
-    }
-  }
+  // Câu chữ hiển thị cho user nằm ở tầng UI (đa ngôn ngữ): xem
+  // `describeRemoteCheck` trong features/git_sync/presentation/git_messages.dart.
 }
 
 /// Suy ra loại lỗi từ thông điệp libgit2/git2dart trả về.

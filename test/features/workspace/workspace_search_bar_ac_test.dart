@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/workspace_search_bar.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   late TextEditingController controller;
@@ -21,6 +22,9 @@ void main() {
   Future<void> pumpBar(WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
         theme: AppTheme.light(),
         home: Scaffold(
           body: WorkspaceSearchBar(

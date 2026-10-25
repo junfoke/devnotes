@@ -338,8 +338,7 @@ class Git2dartOps {
         return const SwitchBranchResult(conflicts: []);
       }
       if (repo.index.hasConflicts) {
-        throw StateError(
-            'Còn conflict chưa giải quyết — giải quyết xong rồi mới chuyển branch.');
+        throw const UnresolvedConflictsException();
       }
     } finally {
       repo.free();

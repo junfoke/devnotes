@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class WorkspaceSearchBar extends StatelessWidget {
@@ -29,14 +30,14 @@ class WorkspaceSearchBar extends StatelessWidget {
           onTap: onTap,
           style: TextStyle(color: colors.textPrimary, fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Search notes...',
+            hintText: context.l10n.searchHint,
             hintStyle: TextStyle(color: colors.textMuted),
             prefixIcon: Icon(Icons.search, color: colors.textMuted, size: 20),
             suffixIcon: value.text.isEmpty
                 ? null
                 : IconButton(
                     icon: Icon(Icons.close, color: colors.textMuted, size: 20),
-                    tooltip: 'Xóa từ khóa',
+                    tooltip: context.l10n.searchClearTooltip,
                     onPressed: () {
                       controller.clear();
                       onChanged('');

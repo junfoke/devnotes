@@ -27,6 +27,16 @@ class SwitchBranchResult {
   bool get hasConflicts => conflicts.isNotEmpty;
 }
 
+/// Repo còn file conflict chưa giải quyết nên không làm được thao tác vừa
+/// gọi (vd chuyển branch). Câu báo cho user do tầng UI dịch.
+class UnresolvedConflictsException implements Exception {
+  const UnresolvedConflictsException();
+
+  @override
+  String toString() =>
+      'UnresolvedConflictsException: resolve the remaining conflicts first';
+}
+
 abstract class GitClient {
   Future<void> clone(String url, String localPath,
       {String? username, String? password});

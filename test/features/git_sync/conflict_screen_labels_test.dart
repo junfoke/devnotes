@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
+import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   late Directory tmp;
@@ -29,7 +30,13 @@ void main() {
     // đọc chạy trên đồng hồ thật, nếu không nó không bao giờ xong.
     await tester.runAsync(() async {
       await tester.pumpWidget(ProviderScope(
-        child: MaterialApp(theme: AppTheme.light(), home: screen),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('vi'),
+          theme: AppTheme.light(),
+          home: screen,
+        ),
       ));
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
