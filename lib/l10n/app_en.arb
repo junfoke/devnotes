@@ -449,5 +449,27 @@
       "action": { "type": "String" },
       "count": { "type": "int" }
     }
-  }
+  },
+  "editorToolFont": "Font",
+  "editorToolSizeDown": "Smaller text",
+  "editorToolSizeUp": "Larger text",
+  "editorToolLineHeight": "Line spacing",
+  "editorToolWordWrap": "Word wrap",
+  "editorToolFocusMode": "Focus mode",
+  "editorToolTheme": "Theme",
+  "editorToolUndo": "Undo",
+  "editorToolRedo": "Redo",
+  "editorToolIndent": "Indent",
+  "editorToolOutdent": "Outdent",
+  "editorToolMoveUp": "Move line up",
+  "editorToolMoveDown": "Move line down",
+  "editorToolDuplicateLine": "Duplicate line",
+  "editorToolDeleteLine": "Delete line",
+  "editorToolFindReplace": "Find & replace",
+  "editorToolDateTime": "Insert date & time",
+  "editorToolSymbols": "Symbols",
+  "editorToolNoteLink": "Note link",
+  "editorToolTemplate": "Template",
+  "editorToolOutline": "Outline",
+  "editorToolStats": "Statistics"
 }

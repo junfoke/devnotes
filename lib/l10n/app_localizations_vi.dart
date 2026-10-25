@@ -874,4 +874,70 @@ class AppLocalizationsVi extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get editorToolFont => 'Phông chữ';
+
+  @override
+  String get editorToolSizeDown => 'Giảm cỡ chữ';
+
+  @override
+  String get editorToolSizeUp => 'Tăng cỡ chữ';
+
+  @override
+  String get editorToolLineHeight => 'Giãn dòng';
+
+  @override
+  String get editorToolWordWrap => 'Tự xuống dòng';
+
+  @override
+  String get editorToolFocusMode => 'Chế độ tập trung';
+
+  @override
+  String get editorToolTheme => 'Giao diện';
+
+  @override
+  String get editorToolUndo => 'Hoàn tác';
+
+  @override
+  String get editorToolRedo => 'Làm lại';
+
+  @override
+  String get editorToolIndent => 'Thụt lề';
+
+  @override
+  String get editorToolOutdent => 'Lùi lề';
+
+  @override
+  String get editorToolMoveUp => 'Chuyển dòng lên';
+
+  @override
+  String get editorToolMoveDown => 'Chuyển dòng xuống';
+
+  @override
+  String get editorToolDuplicateLine => 'Nhân đôi dòng';
+
+  @override
+  String get editorToolDeleteLine => 'Xóa dòng';
+
+  @override
+  String get editorToolFindReplace => 'Tìm và thay';
+
+  @override
+  String get editorToolDateTime => 'Chèn ngày giờ';
+
+  @override
+  String get editorToolSymbols => 'Ký hiệu';
+
+  @override
+  String get editorToolNoteLink => 'Liên kết note';
+
+  @override
+  String get editorToolTemplate => 'Mẫu';
+
+  @override
+  String get editorToolOutline => 'Dàn ý';
+
+  @override
+  String get editorToolStats => 'Thống kê';
 }

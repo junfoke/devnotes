@@ -885,4 +885,70 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get editorToolFont => 'Font';
+
+  @override
+  String get editorToolSizeDown => 'Smaller text';
+
+  @override
+  String get editorToolSizeUp => 'Larger text';
+
+  @override
+  String get editorToolLineHeight => 'Line spacing';
+
+  @override
+  String get editorToolWordWrap => 'Word wrap';
+
+  @override
+  String get editorToolFocusMode => 'Focus mode';
+
+  @override
+  String get editorToolTheme => 'Theme';
+
+  @override
+  String get editorToolUndo => 'Undo';
+
+  @override
+  String get editorToolRedo => 'Redo';
+
+  @override
+  String get editorToolIndent => 'Indent';
+
+  @override
+  String get editorToolOutdent => 'Outdent';
+
+  @override
+  String get editorToolMoveUp => 'Move line up';
+
+  @override
+  String get editorToolMoveDown => 'Move line down';
+
+  @override
+  String get editorToolDuplicateLine => 'Duplicate line';
+
+  @override
+  String get editorToolDeleteLine => 'Delete line';
+
+  @override
+  String get editorToolFindReplace => 'Find & replace';
+
+  @override
+  String get editorToolDateTime => 'Insert date & time';
+
+  @override
+  String get editorToolSymbols => 'Symbols';
+
+  @override
+  String get editorToolNoteLink => 'Note link';
+
+  @override
+  String get editorToolTemplate => 'Template';
+
+  @override
+  String get editorToolOutline => 'Outline';
+
+  @override
+  String get editorToolStats => 'Statistics';
 }

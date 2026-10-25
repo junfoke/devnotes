@@ -4,6 +4,7 @@ import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/editor/domain/toolbar_item.dart';
+import 'package:devnotes/features/editor/presentation/editor_tool_labels.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 
@@ -137,28 +138,6 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
   }
 }
 
-/// Tên dễ đọc của một nút thanh công cụ (thay cho id nội bộ như
-/// `code_inline`), theo ngôn ngữ đang chọn.
-String toolbarItemName(AppLocalizations l, String id) => switch (id) {
-  'h1' => l.toolbarItemH1,
-  'h2' => l.toolbarItemH2,
-  'h3' => l.toolbarItemH3,
-  'bold' => l.toolbarItemBold,
-  'italic' => l.toolbarItemItalic,
-  'strikethrough' => l.toolbarItemStrikethrough,
-  'link' => l.toolbarItemLink,
-  'image' => l.toolbarItemImage,
-  'code_inline' => l.toolbarItemCodeInline,
-  'code_block' => l.toolbarItemCodeBlock,
-  'checklist' => l.toolbarItemChecklist,
-  'list_unordered' => l.toolbarItemListUnordered,
-  'list_ordered' => l.toolbarItemListOrdered,
-  'quote' => l.toolbarItemQuote,
-  'table' => l.toolbarItemTable,
-  'hr' => l.toolbarItemHr,
-  _ => id,
-};
-
 /// Bottom sheet bật/tắt và sắp xếp các nút trên thanh công cụ Markdown.
 class ToolbarLayoutSheet extends ConsumerStatefulWidget {
   const ToolbarLayoutSheet({super.key, required this.initial});
@@ -258,7 +237,7 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
                             ),
                           ),
                     title: Text(
-                      toolbarItemName(l, item.id),
+                      editorToolLabel(l, item.id),
                       style: TextStyle(color: colors.textPrimary),
                     ),
                   );

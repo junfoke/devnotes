@@ -1453,6 +1453,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{{action} — 1 file} other{{action} — {count} files}}'**
   String syncHistoryEntry(String action, int count);
+
+  /// No description provided for @editorToolFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get editorToolFont;
+
+  /// No description provided for @editorToolSizeDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Smaller text'**
+  String get editorToolSizeDown;
+
+  /// No description provided for @editorToolSizeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger text'**
+  String get editorToolSizeUp;
+
+  /// No description provided for @editorToolLineHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Line spacing'**
+  String get editorToolLineHeight;
+
+  /// No description provided for @editorToolWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word wrap'**
+  String get editorToolWordWrap;
+
+  /// No description provided for @editorToolFocusMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus mode'**
+  String get editorToolFocusMode;
+
+  /// No description provided for @editorToolTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get editorToolTheme;
+
+  /// No description provided for @editorToolUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get editorToolUndo;
+
+  /// No description provided for @editorToolRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get editorToolRedo;
+
+  /// No description provided for @editorToolIndent.
+  ///
+  /// In en, this message translates to:
+  /// **'Indent'**
+  String get editorToolIndent;
+
+  /// No description provided for @editorToolOutdent.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent'**
+  String get editorToolOutdent;
+
+  /// No description provided for @editorToolMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move line up'**
+  String get editorToolMoveUp;
+
+  /// No description provided for @editorToolMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move line down'**
+  String get editorToolMoveDown;
+
+  /// No description provided for @editorToolDuplicateLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate line'**
+  String get editorToolDuplicateLine;
+
+  /// No description provided for @editorToolDeleteLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete line'**
+  String get editorToolDeleteLine;
+
+  /// No description provided for @editorToolFindReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Find & replace'**
+  String get editorToolFindReplace;
+
+  /// No description provided for @editorToolDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert date & time'**
+  String get editorToolDateTime;
+
+  /// No description provided for @editorToolSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get editorToolSymbols;
+
+  /// No description provided for @editorToolNoteLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Note link'**
+  String get editorToolNoteLink;
+
+  /// No description provided for @editorToolTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Template'**
+  String get editorToolTemplate;
+
+  /// No description provided for @editorToolOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get editorToolOutline;
+
+  /// No description provided for @editorToolStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get editorToolStats;
 }
 
 class _AppLocalizationsDelegate
