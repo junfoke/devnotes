@@ -64,4 +64,22 @@ void main() {
     expect(loaded.first.name, 'Công việc');
     expect(loaded.first.filterTags, ['work', 'meeting']);
   });
+
+  test('sắp xếp lại collection: lưu thứ tự mới, tải lên đúng thứ tự đó',
+      () async {
+    await repo.reorderCollections(['home', 'work']);
+
+    final loaded = await repo.loadCollections();
+    expect(loaded.map((c) => c.id), ['home', 'work']);
+    expect(loaded.map((c) => c.sortOrder), [0, 1]);
+  });
+
+  test('collection lưu lộn thứ tự trong file vẫn tải lên theo sortOrder',
+      () async {
+    await repo.saveCollections(
+        [work.copyWith(sortOrder: 5), home.copyWith(sortOrder: 1)]);
+
+    final loaded = await repo.loadCollections();
+    expect(loaded.map((c) => c.id), ['home', 'work']);
+  });
 }
