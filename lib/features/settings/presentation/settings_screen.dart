@@ -101,30 +101,38 @@ class SettingsScreen extends ConsumerWidget {
                   _themeTile(context, ref, colors, theme),
                   _languageTile(context, ref, colors, language),
                   _sectionHeader(l.settingsSectionData, colors),
-                  _tile(l.settingsExportNotes, Icons.upload_file, colors,
-                      () async {
-                    try {
-                      final path =
-                          await WorkspacePathProvider.getWorkspacePath();
-                      final service = ExportImportService(workspacePath: path);
-                      final tempDir = await getTemporaryDirectory();
-                      final zipPath = await service.exportToZip(
-                        '${tempDir.path}/devnotes_export.zip',
-                      );
-                      // File nằm trong cache riêng của app, user không tự mở
-                      // được — phải đưa qua share sheet để lưu ra Drive/Files
-                      // hoặc gửi đi (B-08).
-                      await Share.shareXFiles([
-                        XFile(zipPath, mimeType: 'application/zip'),
-                      ], subject: l.settingsExportSubject);
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l.settingsExportFailed('$e'))),
+                  _tile(
+                    l.settingsExportNotes,
+                    Icons.upload_file,
+                    colors,
+                    () async {
+                      try {
+                        final path =
+                            await WorkspacePathProvider.getWorkspacePath();
+                        final service = ExportImportService(
+                          workspacePath: path,
                         );
+                        final tempDir = await getTemporaryDirectory();
+                        final zipPath = await service.exportToZip(
+                          '${tempDir.path}/devnotes_export.zip',
+                        );
+                        // File nằm trong cache riêng của app, user không tự mở
+                        // được — phải đưa qua share sheet để lưu ra Drive/Files
+                        // hoặc gửi đi (B-08).
+                        await Share.shareXFiles([
+                          XFile(zipPath, mimeType: 'application/zip'),
+                        ], subject: l.settingsExportSubject);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l.settingsExportFailed('$e')),
+                            ),
+                          );
+                        }
                       }
-                    }
-                  }),
+                    },
+                  ),
                   _tile(
                     l.settingsImportNotes,
                     Icons.download,
@@ -210,12 +218,15 @@ class SettingsScreen extends ConsumerWidget {
       ].join('\n');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(
-            content: Text(l.importFailed(e is ImportException
-                ? l.importInvalidZip(e.detail)
-                : '$e'))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l.importFailed(
+                e is ImportException ? l.importInvalidZip(e.detail) : '$e',
+              ),
+            ),
+          ),
+        );
       }
       return;
     }
@@ -239,9 +250,7 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _rebuildSearchIndex(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     final l = context.l10n;
-    messenger.showSnackBar(
-      SnackBar(content: Text(l.rebuildIndexInProgress)),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(l.rebuildIndexInProgress)));
     try {
       ref.invalidate(noteListProvider);
       ref.invalidate(searchIndexInitProvider);
@@ -249,15 +258,11 @@ class SettingsScreen extends ConsumerWidget {
       final count = (await ref.read(noteListProvider.future)).length;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l.rebuildIndexDone(count))),
-        );
+        ..showSnackBar(SnackBar(content: Text(l.rebuildIndexDone(count))));
     } catch (e) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l.rebuildIndexFailed('$e'))),
-        );
+        ..showSnackBar(SnackBar(content: Text(l.rebuildIndexFailed('$e'))));
     }
   }
 
@@ -359,8 +364,10 @@ class SettingsScreen extends ConsumerWidget {
     final l = context.l10n;
     return ListTile(
       leading: Icon(Icons.language, color: colors.textSecondary),
-      title:
-          Text(l.settingsLanguage, style: TextStyle(color: colors.textPrimary)),
+      title: Text(
+        l.settingsLanguage,
+        style: TextStyle(color: colors.textPrimary),
+      ),
       trailing: PopupMenuButton<AppLocalePreference>(
         key: const Key('language-selector'),
         initialValue: current,

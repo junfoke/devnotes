@@ -16,7 +16,8 @@ Future<void> _savePrefs(WidgetRef ref, EditorPreferences prefs) async {
     final context = ref.context;
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.settingsSaveFailed('$e'))));
+        SnackBar(content: Text(context.l10n.settingsSaveFailed('$e'))),
+      );
     }
     return;
   }
@@ -93,8 +94,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Text(l.fontSize,
-                    style: TextStyle(color: colors.textSecondary)),
+                Text(l.fontSize, style: TextStyle(color: colors.textSecondary)),
                 Expanded(
                   child: Slider(
                     value: size,
@@ -140,24 +140,24 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
 /// Tên dễ đọc của một nút thanh công cụ (thay cho id nội bộ như
 /// `code_inline`), theo ngôn ngữ đang chọn.
 String toolbarItemName(AppLocalizations l, String id) => switch (id) {
-      'h1' => l.toolbarItemH1,
-      'h2' => l.toolbarItemH2,
-      'h3' => l.toolbarItemH3,
-      'bold' => l.toolbarItemBold,
-      'italic' => l.toolbarItemItalic,
-      'strikethrough' => l.toolbarItemStrikethrough,
-      'link' => l.toolbarItemLink,
-      'image' => l.toolbarItemImage,
-      'code_inline' => l.toolbarItemCodeInline,
-      'code_block' => l.toolbarItemCodeBlock,
-      'checklist' => l.toolbarItemChecklist,
-      'list_unordered' => l.toolbarItemListUnordered,
-      'list_ordered' => l.toolbarItemListOrdered,
-      'quote' => l.toolbarItemQuote,
-      'table' => l.toolbarItemTable,
-      'hr' => l.toolbarItemHr,
-      _ => id,
-    };
+  'h1' => l.toolbarItemH1,
+  'h2' => l.toolbarItemH2,
+  'h3' => l.toolbarItemH3,
+  'bold' => l.toolbarItemBold,
+  'italic' => l.toolbarItemItalic,
+  'strikethrough' => l.toolbarItemStrikethrough,
+  'link' => l.toolbarItemLink,
+  'image' => l.toolbarItemImage,
+  'code_inline' => l.toolbarItemCodeInline,
+  'code_block' => l.toolbarItemCodeBlock,
+  'checklist' => l.toolbarItemChecklist,
+  'list_unordered' => l.toolbarItemListUnordered,
+  'list_ordered' => l.toolbarItemListOrdered,
+  'quote' => l.toolbarItemQuote,
+  'table' => l.toolbarItemTable,
+  'hr' => l.toolbarItemHr,
+  _ => id,
+};
 
 /// Bottom sheet bật/tắt và sắp xếp các nút trên thanh công cụ Markdown.
 class ToolbarLayoutSheet extends ConsumerStatefulWidget {
@@ -373,10 +373,7 @@ class _SyncFrequencySheetState extends ConsumerState<SyncFrequencySheet> {
                 ),
               ),
             const SizedBox(height: 12),
-            Text(
-              l.syncFrequencyFootnote,
-              style: subStyle(),
-            ),
+            Text(l.syncFrequencyFootnote, style: subStyle()),
           ],
         ),
       ),
