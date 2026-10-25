@@ -250,7 +250,13 @@ Hai agent rà toàn bộ thay đổi và toàn app; mọi mục dưới đây đ
 - ✅ Bỏ chấm trạng thái từng note (luôn xám, không có dữ liệu); bỏ nút "Skip" khỏi Settings → Git.
 - ✅ Thống nhất mặc định cỡ chữ 14 / tự lưu 3 giây; khoảng tự lưu đọc từ cài đặt.
 
+**Hoàn thiện cuối đợt (2026-10-25)**
+- ✅ Đa ngôn ngữ Việt + Anh (gen-l10n, 226 chuỗi), chọn ngôn ngữ trong Settings → Giao diện; ghi chú mẫu lúc onboarding theo ngôn ngữ.
+- ✅ Bấm ô checklist trong preview; kéo thả sắp xếp collection.
+- ✅ Kiểm thử trên emulator: back hệ thống lưu, preview tô màu + mở link, sửa tag, xóa, checklist, đổi ngôn ngữ, sync.
+
 ## Việc tiếp theo
 
-1. Đa ngôn ngữ Việt + Anh (đang làm) — thống nhất toàn bộ chữ trên giao diện, có lựa chọn ngôn ngữ trong Settings.
-2. Nợ nhỏ còn lại: collection chưa sắp xếp lại được (`sortOrder` lưu nhưng chưa dùng); checklist trong preview chưa bấm được.
+Backlog không còn mục mở. Gợi ý cho đợt sau (chưa ai yêu cầu):
+- Hiển thị note trong thư mục con của repo (hiện app chỉ liệt kê thư mục gốc).
+- Sync nền khi app đóng (cần giải pháp chạy libgit2 ngoài tiến trình Flutter).

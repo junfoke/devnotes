@@ -17,13 +17,15 @@
 | **Xóa** | Bắt buộc xác nhận. Chỉ xóa file `.md`; bản ghi metadata trong SQLite **không** cascade. | `workspace_screen.dart` |
 | **Liệt kê** | Chỉ file `.md`, sắp theo `updatedAt` giảm dần. File thiếu frontmatter vẫn đọc được (xem DECISIONS). | `note_file_repository.dart` |
 | **Tìm kiếm** | Debounce 300ms, FTS5 prefix wildcard, index gồm title+tags+content, tối đa 50 kết quả. Index rebuild toàn bộ mỗi khi danh sách note đổi. | `search_engine.dart`, `search_providers.dart` |
-| **Collection** | Nhóm ảo theo tag, lưu ở `{workspace}/collections.json`. Lọc **OR**: note hiện nếu khớp bất kỳ tag nào. `filterTags` rỗng = khớp tất cả. Chọn một collection tại một thời điểm. Nhấn giữ chip → sửa/xóa; xóa chỉ bỏ nhóm, không đụng note. | `collections_repository.dart` |
+| **Collection** | Nhóm ảo theo tag, lưu ở `{workspace}/collections.json`. Lọc **OR**: note hiện nếu khớp bất kỳ tag nào. `filterTags` rỗng = khớp tất cả. Chọn một collection tại một thời điểm. Nhấn giữ chip → sửa/xóa; xóa chỉ bỏ nhóm, không đụng note. Thứ tự theo `sortOrder`, kéo thả trong Manage Collections. | `collections_repository.dart` |
 
 ## Editor
 
 - Hai trang vuốt ngang: **soạn** (TextField thô) và **xem trước** (render Markdown). Thanh công cụ chỉ hiện ở trang soạn.
 - **Autosave** debounce 3 giây sau lần gõ cuối; nhấn Back mà chưa lưu thì ép lưu trước khi thoát.
 - Thanh công cụ Markdown chèn cú pháp quanh vùng chọn; mục dạng block tự thêm `\n` phía trước nếu đang ở giữa dòng. Nút hiện ra **theo đúng thứ tự** của `editorPreferences.toolbarItems` (sắp trong Settings → Toolbar Layout).
+- Preview tô màu cú pháp khối code, mở được link, bấm được ô checklist (đổi đúng dòng trong văn bản), theo font/cỡ chữ đã chọn.
+- Menu ⋮: Chia sẻ / Sửa tag / Thông tin / Xóa.
 - Autosave bắt **mọi** thay đổi nội dung (cả gõ phím lẫn chèn từ toolbar); chỉ dời con trỏ thì không tính.
 - **Lưu lỗi**: báo snackbar, trạng thái về `unsaved`; bấm Back khi lưu lỗi thì ở lại editor để không mất nội dung.
 
@@ -34,7 +36,7 @@ Code: `editor_screen.dart`, `markdown_toolbar.dart`, `editor_providers.dart`
 Thứ tự nghiêm ngặt, không được đảo:
 
 ```
-pull → (nếu có thay đổi) commit → push
+(nếu có thay đổi) commit → pull → push
 ```
 
 - **Xung đột dừng toàn bộ flow.** File xung đột được đánh dấu `conflict`, app mở màn hình resolve. Phải resolve xong rồi sync lại.
@@ -64,6 +66,10 @@ Ba bước: Welcome (carousel 3 trang) → Git Setup (**có thể Skip**) → t�
 Tooltip theo ngữ cảnh: mỗi màn hình có khóa riêng (`tooltip_{key}`), đã hiện một lần thì không hiện lại.
 
 Code: `onboarding_*_screen.dart`, `tooltip_service.dart`
+
+## Ngôn ngữ
+
+Giao diện Việt + Anh (`lib/l10n/*.arb`, gen-l10n). Settings → Giao diện → Ngôn ngữ: Theo hệ thống / Tiếng Việt / English, lưu khóa `app_locale`. Theo hệ thống mà máy không dùng vi/en thì dùng tiếng Anh. Lịch sử sync và commit message giữ dạng kỹ thuật, không dịch.
 
 ## Mô hình dữ liệu
 

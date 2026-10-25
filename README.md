@@ -11,7 +11,10 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 - Auto-save with 3-second debounce after each keystroke
 - Save status indicator (green = saved, yellow = saving, gray = unsaved)
 - Scrollable toolbar with 16 Markdown syntax actions (headings, bold, italic, strikethrough, links, images, inline/block code, checklists, lists, quotes, tables, horizontal rules)
-- Monospace font (JetBrainsMono) with configurable size
+- Monospace font (JetBrains Mono or Fira Code) with configurable size
+- Preview with syntax-highlighted code blocks, tappable links and checklists
+- Edit tags, share, view info or delete a note from the editor menu
+- Never overwrites a note that changed on disk while you were editing (e.g. after a sync)
 
 ### Workspace Explorer
 - Note list sorted by last updated
@@ -32,6 +35,10 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 - Smart Init: auto-detects empty vs existing remote repos
 - Pull/merge/commit/push workflow via `git2dart` (libgit2 FFI bindings)
 - Conflict resolution screen (Keep Mine / Keep Theirs / Keep Both)
+- Sync order commit → pull → push: edits on two devices become a conflict, never a silent overwrite
+- Optional auto sync: on app open/resume or periodically while the app is open
+- Switch the local branch to the configured one (merges the old branch, keeps it as a backup)
+- Git runs in a background isolate with network timeouts, so the UI never freezes
 - Sync history bottom sheet with operation log
 - Visual sync status indicator in app bar
 - Credentials stored securely via `flutter_secure_storage`
@@ -40,12 +47,15 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 - Group notes by tags
 - Create collections with custom name and filter tags
 - Filter note list by selected collection
+- Edit, delete (keeps the notes) and drag to reorder collections
 
 ### Settings
 - Theme picker (Dark / Light / System)
 - Git repository setup with connection status
-- Export notes as ZIP archive
-- Import notes from ZIP
+- Font & size, toolbar layout (show/hide/reorder), sync frequency
+- Language: System / Tiếng Việt / English
+- Export notes as ZIP archive via the share sheet
+- Import notes from ZIP — never overwrites: identical files are skipped, different ones are saved as copies
 
 ### Onboarding
 - 3-step welcome wizard (Local-First, Git Sync, Built for Developers)
