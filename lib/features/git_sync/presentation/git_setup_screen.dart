@@ -6,6 +6,7 @@ import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/core/git_client/remote_check.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
 import 'package:devnotes/features/git_sync/domain/git_config.dart';
+import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 
 class GitSetupScreen extends ConsumerStatefulWidget {
@@ -259,8 +260,9 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
               '${result.conflicts.length} note xung đột. Giải quyết xong '
               'rồi bấm Sync.'),
         ));
-        context.push(
-            '/conflict/${Uri.encodeComponent(result.conflicts.first)}');
+        // Khi chuyển branch, "ours" là branch đích, "theirs" là branch cũ.
+        context.push(ConflictScreen.location(result.conflicts.first,
+            ours: config.branch, theirs: from));
       } else {
         messenger.showSnackBar(SnackBar(
           content: Text('Đã chuyển sang "${config.branch}" và đẩy lên remote.'),

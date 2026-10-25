@@ -19,6 +19,7 @@ import 'package:devnotes/features/workspace/presentation/widgets/create_collecti
 import 'package:devnotes/features/workspace/presentation/widgets/collection_actions.dart';
 import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/git_sync/application/sync_runner.dart';
+import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -214,7 +215,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 } else if (result == null) {
                   // Bỏ qua vì lý do khác — không có gì để báo.
                 } else if (result.conflicts.isNotEmpty) {
-                  context.push('/conflict/${Uri.encodeComponent(result.conflicts.first)}');
+                  context.push(ConflictScreen.location(result.conflicts.first));
                 } else if (result.success) {
                   _showSyncSnack('Synced — ${result.filesChanged} file(s) changed');
                 } else {

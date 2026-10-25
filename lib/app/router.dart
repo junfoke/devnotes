@@ -50,6 +50,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/conflict/:filePath',
         builder: (_, state) => ConflictScreen(
           filePath: Uri.decodeComponent(state.pathParameters['filePath']!),
+          oursName: state.uri.queryParameters['ours'] ?? 'máy này',
+          theirsName: state.uri.queryParameters['theirs'] ?? 'remote',
         ),
       ),
       GoRoute(

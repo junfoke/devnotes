@@ -9,7 +9,29 @@ import 'package:devnotes/features/workspace/application/workspace_providers.dart
 
 class ConflictScreen extends ConsumerStatefulWidget {
   final String filePath;
-  const ConflictScreen({super.key, required this.filePath});
+
+  /// Tên phía "ours" (HEAD) và "theirs" để hiện trên nhãn và nút. Sau pull là
+  /// "máy này" / "remote"; khi chuyển branch thì là tên hai branch — nếu không,
+  /// bản ghi chú user đang dùng lại bị gọi là "REMOTE (theirs)" (B-19).
+  final String oursName;
+  final String theirsName;
+
+  const ConflictScreen({
+    super.key,
+    required this.filePath,
+    this.oursName = 'máy này',
+    this.theirsName = 'remote',
+  });
+
+  /// Đường dẫn route tới màn conflict của [filePath], giữ nguyên tên hai phía.
+  static String location(String filePath, {String? ours, String? theirs}) {
+    final query = {
+      if (ours != null) 'ours': ours,
+      if (theirs != null) 'theirs': theirs,
+    };
+    final path = '/conflict/${Uri.encodeComponent(filePath)}';
+    return query.isEmpty ? path : '$path?${Uri(queryParameters: query).query}';
+  }
 
   @override
   ConsumerState<ConflictScreen> createState() => _ConflictScreenState();
@@ -48,8 +70,8 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
     if (remaining.isNotEmpty) {
       messenger.showSnackBar(SnackBar(
           content: Text('Còn ${remaining.length} note xung đột.')));
-      context.pushReplacement(
-          '/conflict/${Uri.encodeComponent(remaining.first)}');
+      context.pushReplacement(ConflictScreen.location(remaining.first,
+          ours: widget.oursName, theirs: widget.theirsName));
     } else {
       messenger.showSnackBar(const SnackBar(
           content: Text('Đã giải quyết hết xung đột — bấm Sync để hoàn tất.')));
@@ -83,7 +105,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                       icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       onPressed: () => context.pop(),
                     ),
-                    Text('Resolve Conflict',
+                    Text('Giải quyết xung đột',
                         style: TextStyle(
                             color: colors.textPrimary,
                             fontSize: 18,
@@ -130,7 +152,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('LOCAL (yours)',
+                              Text('BẢN TRÊN ${widget.oursName.toUpperCase()}',
                                   style: TextStyle(
                                       color: colors.success,
                                       fontSize: 11,
@@ -156,7 +178,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('REMOTE (theirs)',
+                              Text('BẢN TRÊN ${widget.theirsName.toUpperCase()}',
                                   style: TextStyle(
                                       color: colors.accentLight,
                                       fontSize: 11,
@@ -187,7 +209,8 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                         foregroundColor: colors.success,
                         side: BorderSide(color: colors.success),
                       ),
-                      child: const Text('Keep Mine'),
+                      child: Text('Giữ bản ${widget.oursName}',
+                          textAlign: TextAlign.center),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -198,7 +221,8 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                         foregroundColor: colors.accentLight,
                         side: BorderSide(color: colors.accentLight),
                       ),
-                      child: const Text('Keep Theirs'),
+                      child: Text('Giữ bản ${widget.theirsName}',
+                          textAlign: TextAlign.center),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -207,7 +231,7 @@ class _ConflictScreenState extends ConsumerState<ConflictScreen> {
                       onPressed: () => _resolve(Resolution.keepBoth),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: colors.accent),
-                      child: Text('Keep Both',
+                      child: Text('Giữ cả hai',
                           style: TextStyle(color: colors.textOnAccent)),
                     ),
                   ),
