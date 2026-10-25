@@ -44,6 +44,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// Lỗi khi mở note — editor chỉ đọc và cho thoát, không nhốt user lại.
   Object? _loadError;
 
+  /// Tag mới user vừa sửa, chưa ghi xuống file.
+  List<String>? _pendingTags;
+
   /// Đang hỏi user về thay đổi từ bên ngoài — không hỏi chồng thêm lần nữa.
   bool _askingExternalChange = false;
 
@@ -164,7 +167,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         return false;
       }
 
-      updated = _loadedNote!.copyWith(content: _textController.text);
+      updated = _loadedNote!.copyWith(
+        content: _textController.text,
+        tags: _pendingTags ?? _loadedNote!.tags,
+      );
       final write = repo.saveNote(updated);
       _inFlightSave = write;
       await write;
@@ -178,6 +184,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       return false;
     }
     _loadedNote = updated;
+    _pendingTags = null;
     if (!mounted) return true;
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
     ref.invalidate(currentNoteProvider(widget.filePath));
@@ -224,7 +231,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         final repo = await ref.read(noteFileRepositoryProvider.future);
         final copy = await repo.createNote(
           title: '${_loadedNote!.title} (bản sửa)',
-          tags: _loadedNote!.tags,
+          tags: _pendingTags ?? _loadedNote!.tags,
         );
         await repo.saveNote(copy.copyWith(content: mine));
         if (mounted) {
@@ -245,6 +252,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     }
     // Cả hai lựa chọn đều kết thúc bằng việc hiện bản mới trên đĩa.
     _loadedNote = onDisk;
+    _pendingTags = null;
     _lastText = onDisk.content;
     _textController.text = onDisk.content;
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
@@ -268,6 +276,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
               },
             ),
             ListTile(
+              leading: const Icon(Icons.sell_outlined),
+              title: const Text('Sửa tag'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _editTags();
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('Thông tin'),
               onTap: () {
@@ -287,6 +303,28 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         ),
       ),
     );
+  }
+
+  /// Đổi tag của note. Tag mới được ghi cùng nội dung đang gõ qua đúng đường
+  /// lưu thường (_save), nên vẫn được kiểm tra thay đổi từ bên ngoài.
+  Future<void> _editTags() async {
+    final note = _loadedNote;
+    if (note == null) return;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditTagsDialog(initial: _pendingTags ?? note.tags),
+    );
+    if (result == null || !mounted) return;
+
+    final tags = <String>[];
+    for (final raw in result.split(',')) {
+      final tag = raw.trim();
+      if (tag.isNotEmpty && !tags.contains(tag)) tags.add(tag);
+    }
+    if (listEquals(tags, note.tags) && _pendingTags == null) return;
+    _pendingTags = tags;
+    ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
+    await _save();
   }
 
   /// Chia sẻ file `.md` — lưu trước để file gửi đi là bản mới nhất.
@@ -502,6 +540,52 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Dialog sửa tag. Tự giữ controller của mình — dispose ngay sau showDialog
+/// làm hiệu ứng đóng dialog dùng controller đã hủy.
+class _EditTagsDialog extends StatefulWidget {
+  const _EditTagsDialog({required this.initial});
+
+  final List<String> initial;
+
+  @override
+  State<_EditTagsDialog> createState() => _EditTagsDialogState();
+}
+
+class _EditTagsDialogState extends State<_EditTagsDialog> {
+  late final _controller =
+      TextEditingController(text: widget.initial.join(', '));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Sửa tag'),
+      content: TextField(
+        key: const Key('edit-tags-field'),
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+            hintText: 'Các tag, cách nhau bằng dấu phẩy'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('Lưu'),
+        ),
+      ],
     );
   }
 }

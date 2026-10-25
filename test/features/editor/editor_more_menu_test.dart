@@ -118,4 +118,32 @@ void main() {
     expect(find.textContaining('ghi-chu.md'), findsOneWidget);
     expect(find.textContaining('3 từ'), findsOneWidget);
   });
+
+  testWidgets('sửa tag thì lưu tag mới xuống file, bỏ trùng và khoảng trắng',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await openMenuItem(tester, 'Sửa tag');
+    await tester.enterText(
+        find.byKey(const Key('edit-tags-field')), ' work, ý tưởng ,work,, ');
+    await tester.tap(find.text('Lưu'));
+    await tester.pumpAndSettle();
+
+    expect(repo.notes[note.filePath]!.tags, ['work', 'ý tưởng']);
+    expect(repo.notes[note.filePath]!.content, 'mot hai ba');
+  });
+
+  testWidgets('sửa tag giữ luôn nội dung đang gõ dở', (tester) async {
+    await pumpEditor(tester);
+    await tester.enterText(find.byType(TextField).first, 'dang go do');
+    await tester.pump();
+
+    await openMenuItem(tester, 'Sửa tag');
+    await tester.enterText(find.byKey(const Key('edit-tags-field')), 'a');
+    await tester.tap(find.text('Lưu'));
+    await tester.pumpAndSettle();
+
+    expect(repo.notes[note.filePath]!.tags, ['a']);
+    expect(repo.notes[note.filePath]!.content, 'dang go do');
+  });
 }
