@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
@@ -25,7 +26,8 @@ class EditorScreen extends ConsumerStatefulWidget {
   ConsumerState<EditorScreen> createState() => _EditorScreenState();
 }
 
-class _EditorScreenState extends ConsumerState<EditorScreen> {
+class _EditorScreenState extends ConsumerState<EditorScreen>
+    with WidgetsBindingObserver {
   final _pageController = PageController();
   final _textController = TextEditingController();
   Timer? _debounce;
@@ -38,6 +40,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Note đã bị xóa từ menu ⋮ — mọi lần lưu sau đó phải bị bỏ qua.
   bool _deleted = false;
   Future<void>? _inFlightSave;
+
+  /// Lỗi khi mở note — editor chỉ đọc và cho thoát, không nhốt user lại.
+  Object? _loadError;
+
+  /// Đang hỏi user về thay đổi từ bên ngoài — không hỏi chồng thêm lần nữa.
+  bool _askingExternalChange = false;
+
+  late final StateController<int> _openEditors;
   final _toolbarKey = GlobalKey();
   final _previewKey = GlobalKey();
 
@@ -45,6 +55,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void initState() {
     super.initState();
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
+    WidgetsBinding.instance.addObserver(this);
+    _openEditors = ref.read(openEditorCountProvider.notifier);
+    Future.microtask(() => _openEditors.state++);
     // Nghe thẳng controller thay vì TextField.onChanged: onChanged bỏ sót mọi
     // thay đổi do code gán (toolbar Markdown) → mất dữ liệu (B-01).
     _textController.addListener(_onControllerChanged);
@@ -80,9 +93,31 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       // Gán _lastText trước để việc nạp nội dung không bị tính là một lần sửa.
       _lastText = note.content;
       _textController.text = note.content;
+      setState(() {});
     } catch (e) {
-      // Error is surfaced via noteAsync.when() in the preview pane
+      if (mounted) setState(() => _loadError = e);
     }
+  }
+
+  /// App xuống nền (chuyển app, tắt màn hình) có thể bị hệ điều hành giết
+  /// bất cứ lúc nào — lưu ngay thay vì chờ hết debounce.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if ((state == AppLifecycleState.paused ||
+            state == AppLifecycleState.inactive) &&
+        ref.read(saveStatusProvider) == SaveStatus.unsaved) {
+      _save();
+    }
+  }
+
+  /// Rời editor (nút Back trên app bar hoặc Back hệ thống): lưu trước. Lưu lỗi
+  /// hoặc đang chờ user quyết về thay đổi bên ngoài thì ở lại.
+  Future<void> _leave() async {
+    final status = ref.read(saveStatusProvider);
+    if (_loadedNote != null && status != SaveStatus.saved && !await _save()) {
+      return;
+    }
+    if (mounted) Navigator.of(context).pop();
   }
 
   void _onControllerChanged() {
@@ -91,35 +126,130 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     _lastText = text;
     ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
     _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 3), () => _save());
+    final interval =
+        ref.read(editorPreferencesProvider).valueOrNull?.autoSaveInterval ??
+        EditorPreferences.defaultAutoSaveInterval;
+    _debounce = Timer(interval, () => _save());
   }
 
-  /// Ghi nội dung xuống file. Trả về `false` nếu ghi lỗi — khi đó trạng thái
-  /// về `unsaved` và người dùng được báo, không nuốt lỗi im lặng (B-13).
+  /// Ghi nội dung xuống file. Trả về `false` nếu không ghi — ghi lỗi (B-13:
+  /// báo user, không nuốt lỗi) hoặc file đã bị đổi từ bên ngoài.
+  ///
+  /// [_loadedNote] là bản trên đĩa lần cuối editor đọc/ghi. Trước khi ghi,
+  /// so với file hiện tại: khác nhau nghĩa là sync hay app khác vừa sửa file
+  /// → không ghi đè, hỏi user. Xem DECISIONS.md, "Editor không ghi đè thay
+  /// đổi từ bên ngoài" (2026-10-25).
   Future<bool> _save() async {
     if (!mounted || _loadedNote == null || _deleted) return false;
+    if (_askingExternalChange) return false;
     _debounce?.cancel();
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saving;
+    final NoteFile updated;
     try {
-      final updated = _loadedNote!.copyWith(content: _textController.text);
       final repo = await ref.read(noteFileRepositoryProvider.future);
+      // Note có thể vừa bị xóa trong lúc chờ ở trên (B-06).
+      if (_deleted) return false;
+
+      NoteFile? onDisk;
+      try {
+        onDisk = await repo.readNote(widget.filePath);
+      } on FileSystemException {
+        onDisk = null; // File bị xóa từ bên ngoài — ghi lại là khôi phục.
+      }
+      if (onDisk != null && _changedOutside(onDisk)) {
+        if (mounted) {
+          ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
+          _askAboutExternalChange(onDisk);
+        }
+        return false;
+      }
+
+      updated = _loadedNote!.copyWith(content: _textController.text);
       final write = repo.saveNote(updated);
       _inFlightSave = write;
       await write;
     } catch (e) {
       if (mounted) {
         ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không lưu được ghi chú: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không lưu được ghi chú: $e')));
       }
       return false;
     }
+    _loadedNote = updated;
     if (!mounted) return true;
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
     ref.invalidate(currentNoteProvider(widget.filePath));
     ref.invalidate(noteListProvider);
     return true;
+  }
+
+  bool _changedOutside(NoteFile onDisk) {
+    final mine = _loadedNote!;
+    return onDisk.content != mine.content ||
+        onDisk.title != mine.title ||
+        !listEquals(onDisk.tags, mine.tags);
+  }
+
+  Future<void> _askAboutExternalChange(NoteFile onDisk) async {
+    _askingExternalChange = true;
+    final keepMine = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Ghi chú đã thay đổi bên ngoài'),
+        content: const Text(
+          'Trong lúc bạn đang sửa, ghi chú này vừa được thay đổi ở nơi khác '
+          '(ví dụ do đồng bộ). Để không ghi đè mất bản đó, hãy chọn:',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Tải bản mới'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Lưu bản của tôi thành note mới'),
+          ),
+        ],
+      ),
+    );
+    _askingExternalChange = false;
+    if (!mounted) return;
+
+    final mine = _textController.text;
+    if (keepMine == true) {
+      try {
+        final repo = await ref.read(noteFileRepositoryProvider.future);
+        final copy = await repo.createNote(
+          title: '${_loadedNote!.title} (bản sửa)',
+          tags: _loadedNote!.tags,
+        );
+        await repo.saveNote(copy.copyWith(content: mine));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã lưu bản của bạn thành "${copy.title}".'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Không lưu được bản sao: $e')));
+        }
+        return; // Giữ nguyên nội dung đang sửa để user thử lại.
+      }
+    }
+    // Cả hai lựa chọn đều kết thúc bằng việc hiện bản mới trên đĩa.
+    _loadedNote = onDisk;
+    _lastText = onDisk.content;
+    _textController.text = onDisk.content;
+    ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
+    ref.invalidate(currentNoteProvider(widget.filePath));
+    ref.invalidate(noteListProvider);
   }
 
   void _showMoreMenu() {
@@ -165,18 +295,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       return;
     }
     final title = _loadedNote?.title ?? p.basename(widget.filePath);
-    await Share.shareXFiles(
-      [XFile(widget.filePath, mimeType: 'text/markdown')],
-      subject: title,
-    );
+    await Share.shareXFiles([
+      XFile(widget.filePath, mimeType: 'text/markdown'),
+    ], subject: title);
   }
 
   void _showInfo() {
     final note = _loadedNote;
     if (note == null) return;
     final text = _textController.text;
-    final words =
-        text.trim().isEmpty ? 0 : text.trim().split(RegExp(r'\s+')).length;
+    final words = text.trim().isEmpty
+        ? 0
+        : text.trim().split(RegExp(r'\s+')).length;
     String fmt(DateTime t) {
       final l = t.toLocal();
       String two(int n) => n.toString().padLeft(2, '0');
@@ -245,9 +375,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     } catch (e) {
       _deleted = false;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không xóa được ghi chú: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không xóa được ghi chú: $e')));
       }
       return;
     }
@@ -257,6 +387,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    Future.microtask(() => _openEditors.state--);
     _debounce?.cancel();
     _pageController.dispose();
     _textController.dispose();
@@ -271,96 +403,124 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final saveStatus = ref.watch(saveStatusProvider);
     final noteAsync = ref.watch(currentNoteProvider(widget.filePath));
 
-    return Scaffold(
-      backgroundColor: colors.bgPrimary,
-      body: SafeArea(
-        child: Column(
-          children: [
-            EditorAppBar(
-              title: noteAsync.valueOrNull?.title,
-              saveStatus: saveStatus,
-              currentPage: _currentPage,
-              onBack: () async {
-                // Lưu lỗi thì ở lại màn hình: thoát lúc này là bỏ mất nội dung.
-                if (saveStatus != SaveStatus.saved && !await _save()) return;
-                if (context.mounted) context.pop();
-              },
-              onMore: _showMoreMenu,
-            ),
-            Expanded(
-              child: PageView(
-                key: _previewKey,
-                controller: _pageController,
-                onPageChanged: (page) => setState(() => _currentPage = page),
-                children: [
-                  // Edit mode
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: TextField(
-                      controller: _textController,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontFamily: editorPrefs?.fontFamily ?? 'JetBrainsMono',
-                        fontSize: editorPrefs?.fontSize ?? 14,
-                        height: 1.6,
+    // Back hệ thống (nút/cử chỉ) cũng phải lưu trước khi rời — trước đây chỉ
+    // nút Back trên app bar làm việc này, Back hệ thống làm mất chữ vừa gõ.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave();
+      },
+      child: Scaffold(
+        backgroundColor: colors.bgPrimary,
+        body: SafeArea(
+          child: Column(
+            children: [
+              EditorAppBar(
+                title: noteAsync.valueOrNull?.title,
+                saveStatus: saveStatus,
+                currentPage: _currentPage,
+                onBack: _leave,
+                onMore: _showMoreMenu,
+              ),
+              Expanded(
+                child: PageView(
+                  key: _previewKey,
+                  controller: _pageController,
+                  onPageChanged: (page) => setState(() => _currentPage = page),
+                  children: [
+                    // Edit mode
+                    if (_loadError != null)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'Không mở được ghi chú: $_loadError',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: colors.error),
+                          ),
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: TextField(
+                          controller: _textController,
+                          // Chưa tải xong thì chưa cho gõ: chữ gõ lúc này sẽ bị
+                          // nội dung note ghi đè khi tải xong.
+                          readOnly: _loadedNote == null,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontFamily:
+                                editorPrefs?.fontFamily ?? 'JetBrainsMono',
+                            fontSize:
+                                editorPrefs?.fontSize ??
+                                EditorPreferences.defaultFontSize,
+                            height: 1.6,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Start writing...',
+                          ),
+                        ),
                       ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Start writing...',
-                      ),
-                    ),
-                  ),
-                  // Preview mode
-                  noteAsync.when(
-                    data: (_) => Markdown(
-                      data: _textController.text,
-                      padding: const EdgeInsets.all(20),
-                      styleSheet: MarkdownStyleSheet(
-                        p: TextStyle(
+                    // Preview mode
+                    noteAsync.when(
+                      data: (_) => Markdown(
+                        data: _textController.text,
+                        padding: const EdgeInsets.all(20),
+                        styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(
                             color: colors.textSecondary,
                             fontSize: 14,
-                            height: 1.6),
-                        h1: TextStyle(
+                            height: 1.6,
+                          ),
+                          h1: TextStyle(
                             color: colors.textPrimary,
                             fontSize: 24,
-                            fontWeight: FontWeight.bold),
-                        h2: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          h2: TextStyle(
                             color: colors.textPrimary,
                             fontSize: 20,
-                            fontWeight: FontWeight.bold),
-                        h3: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          h3: TextStyle(
                             color: colors.textPrimary,
                             fontSize: 16,
-                            fontWeight: FontWeight.bold),
-                        code: TextStyle(
-                          color: colors.accentLight,
-                          backgroundColor: colors.codeBg,
-                          fontFamily: 'JetBrainsMono',
-                          fontSize: 13,
-                        ),
-                        codeblockDecoration: BoxDecoration(
-                          color: colors.codeBg,
-                          borderRadius: BorderRadius.circular(8),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          code: TextStyle(
+                            color: colors.accentLight,
+                            backgroundColor: colors.codeBg,
+                            fontFamily: 'JetBrainsMono',
+                            fontSize: 13,
+                          ),
+                          codeblockDecoration: BoxDecoration(
+                            color: colors.codeBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('Error: $e')),
                     ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (_currentPage == 0)
-              MarkdownToolbar(
-                key: _toolbarKey,
-                textController: _textController,
-                visibleItemIds: editorPrefs?.toolbarItems ?? EditorPreferences.defaultToolbarItems,
-              ),
-          ],
+              if (_currentPage == 0)
+                MarkdownToolbar(
+                  key: _toolbarKey,
+                  textController: _textController,
+                  visibleItemIds:
+                      editorPrefs?.toolbarItems ??
+                      EditorPreferences.defaultToolbarItems,
+                ),
+            ],
+          ),
         ),
       ),
     );

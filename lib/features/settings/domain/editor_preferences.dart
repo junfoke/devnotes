@@ -3,9 +3,9 @@ import 'package:devnotes/core/utils/enums.dart';
 /// User-configurable preferences for the markdown editor.
 class EditorPreferences {
   const EditorPreferences({
-    this.fontSize = 16.0,
+    this.fontSize = defaultFontSize,
     this.fontFamily = 'JetBrainsMono',
-    this.autoSaveInterval = const Duration(seconds: 5),
+    this.autoSaveInterval = defaultAutoSaveInterval,
     this.toolbarItems = defaultToolbarItems,
     this.syncFrequency = SyncFrequency.manual,
     this.periodicInterval = const Duration(minutes: 30),
@@ -29,6 +29,11 @@ class EditorPreferences {
   /// Interval between automatic syncs when [syncFrequency] is
   /// [SyncFrequency.periodic].
   final Duration periodicInterval;
+
+  /// Mặc định duy nhất cho cỡ chữ và khoảng chờ tự lưu — model, repository
+  /// và editor đều dùng hai hằng này (trước đây mỗi nơi một số: 14/16, 3s/5s).
+  static const defaultFontSize = 14.0;
+  static const defaultAutoSaveInterval = Duration(seconds: 3);
 
   /// Default set of toolbar items shown in the editor.
   static const defaultToolbarItems = [

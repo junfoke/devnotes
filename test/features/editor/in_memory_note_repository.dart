@@ -46,4 +46,15 @@ class InMemoryNoteRepository extends NoteFileRepository {
   Future<void> deleteNote(String filePath) async {
     notes.remove(filePath);
   }
+
+  @override
+  Future<NoteFile> createNote({
+    required String title,
+    required List<String> tags,
+  }) async {
+    final note = seed(fileName: 'note-${notes.length + 1}.md', content: '')
+        .copyWith(title: title, tags: tags);
+    notes[note.filePath] = note;
+    return note;
+  }
 }
