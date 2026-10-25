@@ -1,6 +1,6 @@
 # Thiết kế: Bảng "Công cụ soạn thảo" trong editor
 
-> Ngày: 2026-10-25 · Trạng thái: chờ user duyệt (đã qua review của người làm)
+> Ngày: 2026-10-25 · Trạng thái: user đã duyệt; kế hoạch: docs/superpowers/plans/2026-10-25-editor-tools.md
 > Phạm vi: màn editor (`lib/features/editor/`) + Settings → Toolbar Layout.
 
 ## 1. Ý định — vì sao làm
