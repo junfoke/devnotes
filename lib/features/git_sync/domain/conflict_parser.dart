@@ -25,6 +25,10 @@ class ConflictParser {
     r'<{7} .*\n([\s\S]*?)={7}\n([\s\S]*?)>{7} .*',
   );
 
+  /// Nội dung còn ít nhất một khối `<<<<<<< … >>>>>>>` chưa giải quyết.
+  static bool hasConflicts(String content) =>
+      _conflictRegex.hasMatch(content);
+
   static List<ConflictBlock> parse(String content) {
     final blocks = <ConflictBlock>[];
     int lastEnd = 0;

@@ -14,6 +14,16 @@ class PullResult {
   bool get hasConflicts => conflicts.isNotEmpty;
 }
 
+class SwitchBranchResult {
+  /// File (đường dẫn tuyệt đối) bị conflict khi merge branch cũ vào branch
+  /// mới. Rỗng nghĩa là đã chuyển xong và đã push.
+  final List<String> conflicts;
+
+  const SwitchBranchResult({required this.conflicts});
+
+  bool get hasConflicts => conflicts.isNotEmpty;
+}
+
 abstract class GitClient {
   Future<void> clone(String url, String localPath,
       {String? username, String? password});

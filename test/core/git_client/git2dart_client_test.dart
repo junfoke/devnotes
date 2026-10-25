@@ -94,5 +94,32 @@ void main() {
             reason: 'conflict path must point to a real file');
       }
     });
+
+    // Giải quyết conflict xong rồi Sync: commit phải là merge commit (giữ lịch
+    // sử cả hai phía) và repo phải thoát trạng thái merge — MERGE_HEAD còn sót
+    // lại thì những lần pull sau dễ hỏng.
+    test('resolve xong rồi commit thì ra merge commit hai cha và hết trạng thái merge',
+        () async {
+      await createConflict();
+      final conflicted = (await client.conflictedFiles()).single;
+      File(conflicted).writeAsStringSync('mine change\n');
+      await client.markResolved(conflicted);
+
+      await client.commitAll('sync after resolve');
+
+      final repo = Repository.open(tmp.path);
+      try {
+        final head = Commit.lookup(repo: repo, oid: repo.head.target);
+        expect(head.parents.length, 2);
+        expect(repo.state, GitRepositoryState.none);
+      } finally {
+        repo.free();
+      }
+      expect(await client.conflictedFiles(), isEmpty);
+    });
+  });
+
+  test('thao tác git chạy ngoài main isolate (B-11)', () async {
+    expect(await Git2dartClient.runsInIsolate, isTrue);
   });
 }

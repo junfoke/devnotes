@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/theme_provider.dart';
+import '../features/git_sync/presentation/auto_sync_scope.dart';
 import 'router.dart';
 
 class DevNotesApp extends ConsumerWidget {
@@ -20,6 +21,8 @@ class DevNotesApp extends ConsumerWidget {
       theme: theme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) =>
+          AutoSyncScope(child: child ?? const SizedBox.shrink()),
     );
   }
 }

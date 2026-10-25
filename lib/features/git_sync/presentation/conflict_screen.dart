@@ -1,18 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/git_sync/domain/conflict_parser.dart';
+import 'package:devnotes/features/git_sync/application/git_providers.dart';
+import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 
-class ConflictScreen extends StatefulWidget {
+class ConflictScreen extends ConsumerStatefulWidget {
   final String filePath;
   const ConflictScreen({super.key, required this.filePath});
 
   @override
-  State<ConflictScreen> createState() => _ConflictScreenState();
+  ConsumerState<ConflictScreen> createState() => _ConflictScreenState();
 }
 
-class _ConflictScreenState extends State<ConflictScreen> {
+class _ConflictScreenState extends ConsumerState<ConflictScreen> {
   late String _rawContent;
   late List<ConflictBlock> _blocks;
   bool _loading = true;
@@ -29,10 +32,29 @@ class _ConflictScreenState extends State<ConflictScreen> {
     setState(() => _loading = false);
   }
 
+  /// Ghi bản đã giải quyết, báo git là file này xong, rồi sang file conflict
+  /// kế tiếp — hoặc quay về nếu đã hết. Commit để lần Sync sau lo.
   Future<void> _resolve(Resolution resolution) async {
+    final messenger = ScaffoldMessenger.of(context);
     final resolved = ConflictParser.resolveAll(_rawContent, resolution);
     await File(widget.filePath).writeAsString(resolved);
-    if (mounted) context.pop(true);
+
+    final client = await ref.read(gitClientProvider.future);
+    await client.markResolved(widget.filePath);
+    final remaining = await client.conflictedFiles();
+    ref.invalidate(noteListProvider);
+    if (!mounted) return;
+
+    if (remaining.isNotEmpty) {
+      messenger.showSnackBar(SnackBar(
+          content: Text('Còn ${remaining.length} note xung đột.')));
+      context.pushReplacement(
+          '/conflict/${Uri.encodeComponent(remaining.first)}');
+    } else {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Đã giải quyết hết xung đột — bấm Sync để hoàn tất.')));
+      context.pop(true);
+    }
   }
 
   @override

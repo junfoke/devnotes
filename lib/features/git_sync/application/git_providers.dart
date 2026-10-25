@@ -37,6 +37,8 @@ class SyncStateNotifier extends StateNotifier<SyncState> {
         lastSyncAt: DateTime.now(),
       );
   void setError() => state = state.copyWith(status: SyncStatus.error);
+  void setConflict() => state = state.copyWith(status: SyncStatus.conflict);
+  void setStatus(SyncStatus status) => state = state.copyWith(status: status);
   void setBranch(String branch) => state = state.copyWith(branchName: branch);
 }
 

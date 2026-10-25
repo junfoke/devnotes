@@ -16,6 +16,9 @@ import 'package:devnotes/features/workspace/application/search_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/search_results_list.dart';
 import 'package:devnotes/features/workspace/application/collections_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/create_collection_dialog.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/collection_actions.dart';
+import 'package:devnotes/features/git_sync/application/sync_controller.dart';
+import 'package:devnotes/features/git_sync/application/sync_runner.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -73,6 +76,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     _searchController.dispose();
     ref.read(searchQueryProvider.notifier).state = '';
     super.dispose();
+  }
+
+  void _showSyncSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
   }
 
   void _createCollection() async {
@@ -194,57 +203,22 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   return;
                 }
 
-                ref.read(syncStateProvider.notifier).setSyncing();
+                final outcome = await ref.read(syncControllerProvider).sync();
+                if (!context.mounted) return;
 
-                try {
-                  final gitClient = await ref.read(gitClientProvider.future);
-                  await gitClient.initializeRepo(
-                    remoteUrl: config.remoteUrl,
-                    username: config.username,
-                    password: config.pat,
-                    branch: config.branch,
-                  );
-
-                  final syncService = await ref.read(syncServiceProvider.future);
-                  final result = await syncService.sync(config);
-
-                  if (!context.mounted) return;
-
-                  if (result.conflicts.isNotEmpty) {
-                    ref.read(syncStateProvider.notifier).setError();
-                    context.push('/conflict/${Uri.encodeComponent(result.conflicts.first)}');
-                  } else if (result.success) {
-                    ref.read(syncStateProvider.notifier).setSynced();
-                    ref.invalidate(noteListProvider);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Synced — ${result.filesChanged} file(s) changed'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  } else {
-                    ref.read(syncStateProvider.notifier).setError();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Sync failed: ${result.error ?? "Unknown error"}'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ref.read(syncStateProvider.notifier).setError();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Sync error: $e'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                } finally {
-                  // SyncService vừa ghi thêm bản ghi vào sync_log — bỏ cache để
-                  // lần mở sheet kế tiếp thấy lần sync này.
-                  ref.invalidate(syncHistoryProvider);
-                  ref.invalidate(currentBranchProvider);
+                final result = outcome.result;
+                if (outcome.skipped == SyncSkipReason.alreadyRunning) {
+                  _showSyncSnack('Đang sync, chờ lần hiện tại xong đã.');
+                } else if (outcome.error != null) {
+                  _showSyncSnack('Sync error: ${outcome.error}');
+                } else if (result == null) {
+                  // Bỏ qua vì lý do khác — không có gì để báo.
+                } else if (result.conflicts.isNotEmpty) {
+                  context.push('/conflict/${Uri.encodeComponent(result.conflicts.first)}');
+                } else if (result.success) {
+                  _showSyncSnack('Synced — ${result.filesChanged} file(s) changed');
+                } else {
+                  _showSyncSnack('Sync failed: ${result.error ?? "Unknown error"}');
                 }
               },
               onGitStatusTap: () async {
@@ -302,6 +276,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               onSelect: (id) =>
                   ref.read(selectedCollectionProvider.notifier).state = id,
               onAdd: _createCollection,
+              onLongPress: (col) =>
+                  CollectionActions.showMenu(context, ref, col),
             ),
             const SizedBox(height: 8),
             Expanded(

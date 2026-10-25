@@ -6,6 +6,7 @@ import 'package:devnotes/core/theme/app_colors.dart';
 import 'package:devnotes/core/git_client/remote_check.dart';
 import 'package:devnotes/features/git_sync/application/git_providers.dart';
 import 'package:devnotes/features/git_sync/domain/git_config.dart';
+import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 
 class GitSetupScreen extends ConsumerStatefulWidget {
   const GitSetupScreen({super.key});
@@ -21,6 +22,7 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
   final _branchController = TextEditingController(text: 'main');
   bool _loading = false;
   bool _checking = false;
+  bool _switching = false;
 
   /// Kết quả lần kiểm tra kết nối gần nhất, null khi chưa kiểm tra lần nào.
   RemoteCheckResult? _checkResult;
@@ -154,6 +156,125 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
     }
   }
 
+  /// Cảnh báo khi repo trên máy đang ở branch khác branch đã cấu hình (B-14),
+  /// kèm nút chuyển. Repo chưa tồn tại thì provider trả về đúng branch cấu
+  /// hình, nên không hiện gì.
+  Widget _buildBranchMismatch(AppColorScheme colors, GitConfig config) {
+    final local = ref.watch(currentBranchProvider).valueOrNull;
+    if (local == null || local == config.branch) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      key: const Key('branch-mismatch'),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: colors.warning.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.warning.withAlpha(80)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber, color: colors.warning, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Branch không khớp cấu hình',
+                    style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Ghi chú trên máy đang ở branch "$local", nhưng cấu hình là '
+            '"${config.branch}". Sync hiện đang đẩy lên "$local".',
+            style: TextStyle(
+                color: colors.textSecondary, fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed:
+                  _switching ? null : () => _switchBranch(local, config),
+              child: _switching
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text('Chuyển sang "${config.branch}"'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _switchBranch(String from, GitConfig config) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Chuyển sang "${config.branch}"?'),
+        content: Text(
+          'Ghi chú của "$from" sẽ được gộp vào "${config.branch}" rồi đẩy lên '
+          'remote. Không note nào bị xóa; branch "$from" vẫn được giữ lại làm '
+          'bản dự phòng.\n\nNếu cùng một note bị sửa khác nhau ở hai branch, '
+          'bạn sẽ được chuyển tới màn hình giải quyết xung đột.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Chuyển'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _switching = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final client = await ref.read(gitClientProvider.future);
+      final result = await client.switchBranch(
+        config.branch,
+        username: config.username,
+        password: config.pat,
+      );
+      ref.invalidate(currentBranchProvider);
+      ref.invalidate(noteListProvider);
+      ref.read(syncStateProvider.notifier).setBranch(config.branch);
+      if (!mounted) return;
+      if (result.hasConflicts) {
+        messenger.showSnackBar(SnackBar(
+          content: Text('Đã chuyển sang "${config.branch}", còn '
+              '${result.conflicts.length} note xung đột. Giải quyết xong '
+              'rồi bấm Sync.'),
+        ));
+        context.push(
+            '/conflict/${Uri.encodeComponent(result.conflicts.first)}');
+      } else {
+        messenger.showSnackBar(SnackBar(
+          content: Text('Đã chuyển sang "${config.branch}" và đẩy lên remote.'),
+        ));
+      }
+    } catch (e) {
+      ref.invalidate(currentBranchProvider);
+      messenger.showSnackBar(
+          SnackBar(content: Text('Chuyển branch thất bại: $e')));
+    } finally {
+      if (mounted) setState(() => _switching = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
@@ -237,6 +358,8 @@ class _GitSetupScreenState extends ConsumerState<GitSetupScreen> {
                     ],
                   ),
                 ),
+              if (configAsync.valueOrNull case final config?)
+                _buildBranchMismatch(colors, config),
               // Form fields
               _buildField('Git Remote URL', _urlController,
                   'https://github.com/user/devnotes.git', colors),
