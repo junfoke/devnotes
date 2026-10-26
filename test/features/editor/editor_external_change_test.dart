@@ -4,6 +4,8 @@
 // Quyết định: DECISIONS.md — "Editor không ghi đè thay đổi từ bên ngoài"
 // (2026-10-25). Trước đây autosave luôn ghi nội dung đang hiện — bản sửa trên
 // máy khác vừa kéo về bị xóa mất mà không có conflict nào.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +21,7 @@ import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
   group('editor nằm dưới editor khác', _backgroundEditorTests);
+  group('lưu chồng nhau', _overlappingSaveTests);
 
   late InMemoryNoteRepository repo;
   late NoteFile note;
@@ -258,5 +261,58 @@ void _backgroundEditorTests() {
 
     expect(find.text('home'), findsOneWidget);
     expect(repo.savedPaths, isEmpty);
+  });
+}
+
+/// Lần ghi dừng ở [gate] cho tới khi test mở — giả lập đĩa chậm.
+class _SlowSaveRepository extends InMemoryNoteRepository {
+  Completer<void>? gate;
+
+  @override
+  Future<void> saveNote(NoteFile note) async {
+    final g = gate;
+    if (g != null) await g.future;
+    await super.saveNote(note);
+  }
+}
+
+// App xuống nền đúng lúc autosave đang ghi dở: lần lưu thứ hai phải chờ lần
+// đầu xong rồi mới xét — không thì nó đọc file vừa được ghi, so với bản cũ
+// và hỏi nhầm "thay đổi bên ngoài".
+void _overlappingSaveTests() {
+  testWidgets('lưu chồng lúc đang ghi dở không hỏi nhầm, không ghi hai lần',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'tooltip_editor': true});
+    final repo = _SlowSaveRepository();
+    final note = repo.seed(fileName: 'ghi-chu.md', content: 'ban goc');
+    final container = ProviderContainer(overrides: [
+      noteFileRepositoryProvider.overrideWith((ref) async => repo),
+    ]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
+        theme: AppTheme.light(),
+        home: EditorScreen(filePath: note.filePath),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    repo.gate = Completer<void>();
+    await tester.enterText(find.byType(TextField).first, 'ban dang sua');
+    await tester.pump(const Duration(seconds: 4)); // Autosave bắt đầu ghi.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    repo.gate!.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ghi chú đã thay đổi bên ngoài'), findsNothing);
+    expect(repo.savedPaths, [note.filePath]);
+    expect(repo.notes[note.filePath]!.content, 'ban dang sua');
+    expect(container.read(saveStatusProvider), SaveStatus.saved);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
   });
 }

@@ -186,7 +186,28 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// so với file hiện tại: khác nhau nghĩa là sync hay app khác vừa sửa file
   /// → không ghi đè, hỏi user. Xem DECISIONS.md, "Editor không ghi đè thay
   /// đổi từ bên ngoài" (2026-10-25).
+  ///
+  /// Các lần gọi chạy nối tiếp: gọi khi lần trước còn đang ghi (app xuống nền
+  /// giữa lúc autosave) thì chờ nó xong rồi mới xét lại — không thì lần sau
+  /// đọc file vừa được ghi, so với bản cũ và hỏi nhầm "thay đổi bên ngoài".
   Future<bool> _save() async {
+    final running = _currentSave;
+    if (running != null) {
+      await running;
+      return _save();
+    }
+    final save = _saveOnce();
+    _currentSave = save;
+    try {
+      return await save;
+    } finally {
+      if (identical(_currentSave, save)) _currentSave = null;
+    }
+  }
+
+  Future<bool>? _currentSave;
+
+  Future<bool> _saveOnce() async {
     if (!mounted || _loadedNote == null || _deleted) return false;
     if (_askingExternalChange) return false;
     _debounce?.cancel();
