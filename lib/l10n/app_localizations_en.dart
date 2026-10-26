@@ -1076,6 +1076,18 @@ class AppLocalizationsEn extends AppLocalizations {
       other: '$words words',
       one: '1 word',
     );
-    return '$_temp0 · $chars chars · ~$minutes min read';
+    String _temp1 = intl.Intl.pluralLogic(
+      chars,
+      locale: localeName,
+      other: '$chars chars',
+      one: '1 char',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: ' · ~$minutes min read',
+      zero: '',
+    );
+    return '$_temp0 · $_temp1$_temp2';
   }
 }

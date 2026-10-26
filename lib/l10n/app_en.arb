@@ -517,7 +517,7 @@
   },
   "outlineTitle": "Outline",
   "outlineEmpty": "No headings in this note",
-  "editorStatsLine": "{words, plural, =1{1 word} other{{words} words}} · {chars} chars · ~{minutes} min read",
+  "editorStatsLine": "{words, plural, =1{1 word} other{{words} words}} · {chars, plural, =1{1 char} other{{chars} chars}}{minutes, plural, =0{} other{ · ~{minutes} min read}}",
   "@editorStatsLine": {
     "placeholders": {
       "words": { "type": "int" },

@@ -1805,7 +1805,7 @@ abstract class AppLocalizations {
   /// No description provided for @editorStatsLine.
   ///
   /// In en, this message translates to:
-  /// **'{words, plural, =1{1 word} other{{words} words}} · {chars} chars · ~{minutes} min read'**
+  /// **'{words, plural, =1{1 word} other{{words} words}} · {chars, plural, =1{1 char} other{{chars} chars}}{minutes, plural, =0{} other{ · ~{minutes} min read}}'**
   String editorStatsLine(int words, int chars, int minutes);
 }
 

@@ -47,4 +47,15 @@ void main() {
     final vi = await AppLocalizations.delegate.load(const Locale('vi'));
     expect(vi.outlineTitle, 'Mục lục');
   });
+
+  test('dòng thống kê: tiếng Anh chia số ít/nhiều, note rỗng không ghi '
+      '"~0 phút đọc"', () async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    final vi = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(en.editorStatsLine(1, 1, 1), '1 word · 1 char · ~1 min read');
+    expect(en.editorStatsLine(3, 10, 2), '3 words · 10 chars · ~2 min read');
+    expect(en.editorStatsLine(0, 0, 0), '0 words · 0 chars');
+    expect(vi.editorStatsLine(3, 10, 1), '3 từ · 10 ký tự · ~1 phút đọc');
+    expect(vi.editorStatsLine(0, 0, 0), '0 từ · 0 ký tự');
+  });
 }

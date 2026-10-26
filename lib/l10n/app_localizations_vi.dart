@@ -1064,6 +1064,17 @@ class AppLocalizationsVi extends AppLocalizations {
       locale: localeName,
       other: '$words từ',
     );
-    return '$_temp0 · $chars ký tự · ~$minutes phút đọc';
+    String _temp1 = intl.Intl.pluralLogic(
+      chars,
+      locale: localeName,
+      other: '$chars ký tự',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: ' · ~$minutes phút đọc',
+      zero: '',
+    );
+    return '$_temp0 · $_temp1$_temp2';
   }
 }
