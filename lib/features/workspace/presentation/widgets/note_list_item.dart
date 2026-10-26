@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
-import 'package:devnotes/core/utils/enums.dart';
 
 class NoteListItem extends StatelessWidget {
   final NoteFile note;
@@ -17,34 +17,18 @@ class NoteListItem extends StatelessWidget {
     required this.onLongPress,
   });
 
-  String _timeAgo(DateTime date) {
+  String _timeAgo(AppLocalizations l, DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'just now';
-  }
-
-  Color _syncDotColor(BuildContext context) {
-    final colors = Theme.of(context).appColors;
-    switch (note.syncStatus) {
-      case SyncStatus.synced:
-        return colors.success;
-      case SyncStatus.pending:
-        return colors.warning;
-      case SyncStatus.conflict:
-      case SyncStatus.error:
-        return colors.error;
-      case SyncStatus.success:
-        return colors.success;
-      default:
-        return colors.textMuted;
-    }
+    if (diff.inDays > 0) return l.timeDaysAgo(diff.inDays);
+    if (diff.inHours > 0) return l.timeHoursAgo(diff.inHours);
+    if (diff.inMinutes > 0) return l.timeMinutesAgo(diff.inMinutes);
+    return l.timeJustNow;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return Dismissible(
       key: Key(note.filePath),
@@ -72,18 +56,9 @@ class NoteListItem extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _syncDotColor(context),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            note.title.isEmpty ? 'Untitled' : note.title,
+                            note.title.isEmpty ? l.untitled : note.title,
                             style: TextStyle(
                               color: colors.textPrimary,
                               fontSize: 16,
@@ -123,7 +98,7 @@ class NoteListItem extends StatelessWidget {
                 ),
               ),
               Text(
-                _timeAgo(note.updatedAt),
+                _timeAgo(l, note.updatedAt),
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: 12,

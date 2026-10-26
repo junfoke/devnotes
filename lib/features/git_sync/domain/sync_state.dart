@@ -50,7 +50,6 @@ class SyncState {
     required this.branchName,
     required this.status,
     this.lastSyncAt,
-    this.history = const [],
   });
 
   /// The currently checked-out git branch.
@@ -59,24 +58,23 @@ class SyncState {
   /// Current synchronisation status.
   final SyncStatus status;
 
-  /// Timestamp of the most recent successful sync.
+  /// Timestamp of the most recent successful sync *in this session*.
+  ///
+  /// History that survives a restart lives in SQLite — see
+  /// `syncHistoryProvider` / `lastSuccessfulSyncProvider`. This state
+  /// deliberately holds no history list: one source of truth only.
   final DateTime? lastSyncAt;
-
-  /// Ordered list of past sync operations (most recent last).
-  final List<SyncLogEntry> history;
 
   SyncState copyWith({
     String? branchName,
     SyncStatus? status,
     Object? lastSyncAt = _sentinel,
-    List<SyncLogEntry>? history,
   }) {
     return SyncState(
       branchName: branchName ?? this.branchName,
       status: status ?? this.status,
       lastSyncAt:
           lastSyncAt == _sentinel ? this.lastSyncAt : lastSyncAt as DateTime?,
-      history: history ?? this.history,
     );
   }
 }

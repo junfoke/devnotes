@@ -22,8 +22,13 @@ enum SyncAction {
 
 /// How frequently automatic syncing should occur.
 enum SyncFrequency {
+  /// Chỉ sync khi user bấm nút Sync.
   manual,
-  onSave,
+
+  /// Tự sync khi mở app và khi quay lại app (cách nhau ≥ 5 phút).
+  onOpen,
+
+  /// Như [onOpen], cộng thêm sync định kỳ trong lúc app đang mở.
   periodic,
 }
 

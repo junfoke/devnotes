@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class CreateNoteDialog extends StatefulWidget {
@@ -12,6 +13,9 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
   final _titleController = TextEditingController();
   final _tagsController = TextEditingController();
 
+  /// Validation message shown under the title field, null when valid.
+  String? _titleError;
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -22,10 +26,11 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text('New Note', style: TextStyle(color: colors.textPrimary)),
+      title: Text(l.newNote, style: TextStyle(color: colors.textPrimary)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -33,9 +38,13 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
             controller: _titleController,
             autofocus: true,
             style: TextStyle(color: colors.textPrimary),
+            onChanged: (_) {
+              if (_titleError != null) setState(() => _titleError = null);
+            },
             decoration: InputDecoration(
-              hintText: 'Note title',
+              hintText: l.noteTitleHint,
               hintStyle: TextStyle(color: colors.textMuted),
+              errorText: _titleError,
             ),
           ),
           const SizedBox(height: 12),
@@ -43,7 +52,7 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
             controller: _tagsController,
             style: TextStyle(color: colors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Tags (comma separated)',
+              hintText: l.tagsHint,
               hintStyle: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -52,12 +61,17 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+          child: Text(l.commonCancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: () {
             final title = _titleController.text.trim();
-            if (title.isEmpty) return;
+            // Tiêu đề rỗng phải báo lỗi rõ ràng, không im lặng.
+            if (title.isEmpty) {
+              setState(() => _titleError = l.titleRequired);
+              return;
+            }
             final tags = _tagsController.text
                 .split(',')
                 .map((t) => t.trim())
@@ -65,7 +79,7 @@ class _CreateNoteDialogState extends State<CreateNoteDialog> {
                 .toList();
             Navigator.pop(context, {'title': title, 'tags': tags});
           },
-          child: Text('Create', style: TextStyle(color: colors.accent)),
+          child: Text(l.commonCreate, style: TextStyle(color: colors.accent)),
         ),
       ],
     );

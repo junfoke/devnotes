@@ -10,13 +10,52 @@ class NoteFileRepository {
 
   final String workspacePath;
 
-  /// Converts a title to a safe lowercase filename (without extension).
+  /// Base name used when a title produces no usable file name.
+  /// See DECISIONS.md, "Tên file sinh từ tiêu đề note".
+  static const _fallbackFileName = 'untitled';
+
+  /// Accented characters folded to their ASCII base letter, grouped by target.
+  /// Covers Vietnamese plus the common Latin-1/Latin Extended-A accents.
+  static const _asciiFoldings = <String, String>{
+    'a': 'àáâãäåāăąạảấầẩẫậắằẳẵặ',
+    'e': 'èéêëēĕėęěẹẻẽếềểễệ',
+    'i': 'ìíîïĩīįỉị',
+    'o': 'òóôõöøōŏőơọỏốồổỗộớờởỡợ',
+    'u': 'ùúûüũūŭůưụủứừửữự',
+    'y': 'ỳýÿỷỹỵ',
+    'd': 'đ',
+    'c': 'çćč',
+    'n': 'ñńň',
+    's': 'śš',
+    'z': 'źżž',
+  };
+
+  static final Map<int, String> _foldMap = {
+    for (final entry in _asciiFoldings.entries)
+      for (final rune in entry.value.runes) rune: entry.key,
+  };
+
+  /// Replaces accented letters with their ASCII base so file names stay
+  /// portable across git hosts and operating systems — see DECISIONS.md,
+  /// "Tên file sinh từ tiêu đề note".
+  /// Assumes [input] is already lowercase — `Đ` lowercases to `đ` first.
+  static String _foldToAscii(String input) {
+    final buffer = StringBuffer();
+    for (final rune in input.runes) {
+      buffer.write(_foldMap[rune] ?? String.fromCharCode(rune));
+    }
+    return buffer.toString();
+  }
+
+  /// Converts a title to a safe lowercase ASCII filename (without extension).
+  /// Falls back to [_fallbackFileName] when nothing usable remains, so a title
+  /// made only of emoji or punctuation never yields a hidden ".md" file.
   String _sanitizeFileName(String title) {
-    return title
-        .toLowerCase()
+    final base = _foldToAscii(title.toLowerCase())
         .replaceAll(RegExp(r'[^\w\s-]'), '')
         .trim()
         .replaceAll(RegExp(r'\s+'), '-');
+    return base.isEmpty ? _fallbackFileName : base;
   }
 
   /// Generates a unique .md file path inside [workspacePath].
@@ -63,19 +102,27 @@ class NoteFileRepository {
     );
   }
 
-  /// Lists all .md files in [workspacePath], sorted by [updatedAt] descending.
-  Future<List<NoteFile>> listNotes() async {
-    final dir = Directory(workspacePath);
-    final mdFiles = dir
+  /// Paths of all top-level .md files in [workspacePath], without reading them.
+  Future<List<String>> listNotePaths() async {
+    return Directory(workspacePath)
         .listSync()
         .whereType<File>()
         .where((f) => f.path.endsWith('.md'))
+        .map((f) => f.path)
         .toList();
+  }
 
+  /// Lists all .md files in [workspacePath], sorted by [updatedAt] descending.
+  Future<List<NoteFile>> listNotes() async {
     final notes = <NoteFile>[];
-    for (final file in mdFiles) {
-      final note = await readNote(file.path);
-      notes.add(note);
+    for (final path in await listNotePaths()) {
+      try {
+        notes.add(await readNote(path));
+      } on FileSystemException {
+        continue; // một file lỗi I/O không được chặn cả danh sách
+      } on FormatException {
+        continue; // nội dung không phải UTF-8 hợp lệ
+      }
     }
 
     notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -83,9 +130,18 @@ class NoteFileRepository {
   }
 
   /// Reads and parses a single .md file at [filePath].
+  ///
+  /// The file name and its on-disk modification time are passed to the parser
+  /// as fallbacks so `.md` files without (complete) frontmatter still load —
+  /// see DECISIONS.md, "File .md thiếu hoặc hỏng frontmatter".
   Future<NoteFile> readNote(String filePath) async {
-    final raw = await File(filePath).readAsString();
-    final parsed = FrontmatterParser.parse(raw);
+    final file = File(filePath);
+    final raw = await file.readAsString();
+    final parsed = FrontmatterParser.parse(
+      raw,
+      fallbackTitle: p.basenameWithoutExtension(filePath),
+      fallbackTimestamp: await file.lastModified(),
+    );
 
     return NoteFile(
       filePath: filePath,
@@ -109,6 +165,43 @@ class NoteFileRepository {
       content: note.content,
     );
     await File(note.filePath).writeAsString(raw);
+  }
+
+  /// Applies [edit] to the body of the file at [filePath] — everything after a
+  /// valid frontmatter block, or the whole file if there is none / it is
+  /// broken — and writes the result back byte-for-byte: frontmatter (incl.
+  /// `updatedAt`), whitespace and line endings stay untouched. Returns `false`
+  /// without writing when [edit] changes nothing.
+  ///
+  /// The write is atomic: a temp file in the same directory is renamed over
+  /// the original, so a crash never leaves a half-written note. Used to
+  /// rewrite links in notes the user never opened — see DECISIONS.md, "Link
+  /// giữa các note và tự sửa link khi đổi tên" (2026-10-25).
+  Future<bool> rewriteBody(
+    String filePath,
+    String Function(String body) edit,
+  ) async {
+    final raw = await File(filePath).readAsString();
+    final start = FrontmatterParser.bodyStart(raw);
+    final body = raw.substring(start);
+    final newBody = edit(body);
+    if (newBody == body) return false;
+
+    final tmp = File(
+      p.join(p.dirname(filePath), '.${p.basename(filePath)}.rewrite.tmp'),
+    );
+    try {
+      await tmp.writeAsString(raw.substring(0, start) + newBody, flush: true);
+      await tmp.rename(filePath);
+    } catch (_) {
+      try {
+        if (tmp.existsSync()) await tmp.delete();
+      } catch (_) {
+        // Không dọn được file tạm thì thôi — bản gốc vẫn nguyên vẹn.
+      }
+      rethrow;
+    }
+    return true;
   }
 
   /// Deletes the file at [filePath].

@@ -1,14 +1,28 @@
 import 'package:devnotes/core/utils/enums.dart';
 
+/// Giãn dòng của editor: hệ số nhân với cỡ chữ.
+enum EditorLineHeight {
+  compact(1.35),
+  normal(1.6),
+  relaxed(1.9);
+
+  const EditorLineHeight(this.value);
+  final double value;
+}
+
 /// User-configurable preferences for the markdown editor.
 class EditorPreferences {
   const EditorPreferences({
-    this.fontSize = 16.0,
+    this.fontSize = defaultFontSize,
     this.fontFamily = 'JetBrainsMono',
-    this.autoSaveInterval = const Duration(seconds: 5),
+    this.autoSaveInterval = defaultAutoSaveInterval,
     this.toolbarItems = defaultToolbarItems,
     this.syncFrequency = SyncFrequency.manual,
     this.periodicInterval = const Duration(minutes: 30),
+    this.lineHeight = EditorLineHeight.normal,
+    this.wordWrap = true,
+    this.focusMode = false,
+    this.hiddenTools = const [],
   });
 
   /// Font size in logical pixels used in the editor.
@@ -30,8 +44,41 @@ class EditorPreferences {
   /// [SyncFrequency.periodic].
   final Duration periodicInterval;
 
+  /// Giãn dòng áp dụng cho mọi note.
+  final EditorLineHeight lineHeight;
+
+  /// Tự xuống dòng khi dòng dài hơn chiều rộng.
+  final bool wordWrap;
+
+  /// Chế độ tập trung (ẩn bớt thành phần giao diện khi soạn).
+  final bool focusMode;
+
+  /// Id các công cụ bị ẩn khỏi bảng Công cụ soạn thảo.
+  final List<String> hiddenTools;
+
+  /// Giá trị [fontFamily] nghĩa là dùng font mặc định của app.
+  static const systemFont = 'system';
+
+  /// Font dùng khi dựng TextStyle; null = font mặc định của app.
+  String? get fontFamilyOrNull => fontFamily == systemFont ? null : fontFamily;
+
+  /// Các nút được thêm vào ghim mặc định ở đợt Công cụ soạn thảo.
+  static const pinnedAddedByToolsUpdate = ['undo', 'redo', 'indent', 'outdent'];
+
+  /// Mặc định duy nhất cho cỡ chữ và khoảng chờ tự lưu — model, repository
+  /// và editor đều dùng hai hằng này (trước đây mỗi nơi một số: 14/16, 3s/5s).
+  static const defaultFontSize = 14.0;
+
+  /// Khoảng cỡ chữ cho phép (Settings và bảng Công cụ soạn thảo dùng chung).
+  static const minFontSize = 12.0;
+  static const maxFontSize = 24.0;
+  static const defaultAutoSaveInterval = Duration(seconds: 3);
+
   /// Default set of toolbar items shown in the editor.
+  /// Ruling R5: 4 nút chỉnh sửa đứng đầu để luôn trong tầm một chạm, kể cả
+  /// trên điện thoại hẹp.
   static const defaultToolbarItems = [
+    ...pinnedAddedByToolsUpdate,
     'h1',
     'h2',
     'h3',
@@ -57,6 +104,10 @@ class EditorPreferences {
     List<String>? toolbarItems,
     SyncFrequency? syncFrequency,
     Duration? periodicInterval,
+    EditorLineHeight? lineHeight,
+    bool? wordWrap,
+    bool? focusMode,
+    List<String>? hiddenTools,
   }) {
     return EditorPreferences(
       fontSize: fontSize ?? this.fontSize,
@@ -65,6 +116,10 @@ class EditorPreferences {
       toolbarItems: toolbarItems ?? this.toolbarItems,
       syncFrequency: syncFrequency ?? this.syncFrequency,
       periodicInterval: periodicInterval ?? this.periodicInterval,
+      lineHeight: lineHeight ?? this.lineHeight,
+      wordWrap: wordWrap ?? this.wordWrap,
+      focusMode: focusMode ?? this.focusMode,
+      hiddenTools: hiddenTools ?? this.hiddenTools,
     );
   }
 }

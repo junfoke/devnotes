@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class EmptyState extends StatelessWidget {
@@ -9,6 +10,7 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return Center(
       child: Column(
@@ -17,7 +19,7 @@ class EmptyState extends StatelessWidget {
           Icon(Icons.note_add_outlined, size: 80, color: colors.textMuted),
           const SizedBox(height: 16),
           Text(
-            'No notes yet',
+            l.emptyNotesTitle,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: 18,
@@ -26,7 +28,7 @@ class EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first note to get started',
+            l.emptyNotesSubtitle,
             style: TextStyle(color: colors.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -40,7 +42,7 @@ class EmptyState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Create your first note'),
+            child: Text(l.emptyNotesButton),
           ),
         ],
       ),

@@ -68,15 +68,22 @@ class Collection extends Equatable {
     };
   }
 
+  /// Icons a collection can have. Release builds tree-shake the icon font
+  /// down to icons used as constants, so [fromJson] looks the stored
+  /// code point up here instead of building a non-constant [IconData].
+  static const icons = [Icons.folder];
+
   /// Deserialise from a JSON-compatible map produced by [toJson].
+  ///
+  /// An unknown icon falls back to [Icons.folder].
   factory Collection.fromJson(Map<String, dynamic> json) {
+    final codePoint = json['icon'] as int?;
     return Collection(
       id: json['id'] as String,
       name: json['name'] as String,
-      icon: IconData(
-        json['icon'] as int,
-        fontFamily: json['iconFontFamily'] as String?,
-        fontPackage: json['iconFontPackage'] as String?,
+      icon: icons.firstWhere(
+        (i) => i.codePoint == codePoint,
+        orElse: () => Icons.folder,
       ),
       color: Color(json['color'] as int),
       filterTags: (json['filterTags'] as List?)?.cast<String>() ?? [],
