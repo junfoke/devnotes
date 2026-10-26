@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -503,9 +504,43 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     onFindReplace: () {
       if (mounted) setState(() => _showFind = true);
     },
+    currentFilePath: widget.filePath,
   );
 
   void _runTool(String id) => _toolRunner.run(id);
+
+  /// Bấm link tới note khác trong preview: lưu chữ đang sửa trước (lưu lỗi
+  /// hoặc đang hỏi về thay đổi bên ngoài thì ở lại), rồi mở note đó trong app.
+  /// Không có note tên đó trong workspace thì báo "Không tìm thấy note".
+  Future<void> _openLinkedNote(String fileName) async {
+    String? target;
+    try {
+      final repo = await ref.read(noteFileRepositoryProvider.future);
+      for (final path in await repo.listNotePaths()) {
+        if (p.basename(path) == fileName) {
+          target = path;
+          break;
+        }
+      }
+    } catch (_) {
+      target = null; // Không liệt kê được workspace — coi như không thấy.
+    }
+    if (!mounted) return;
+    if (target == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.noteNotFound(fileName))),
+      );
+      return;
+    }
+    // Link tới chính note đang mở: đã ở đây rồi.
+    if (p.basename(target) == p.basename(widget.filePath)) return;
+    if (_loadedNote != null &&
+        ref.read(saveStatusProvider) != SaveStatus.saved &&
+        !await _save()) {
+      return;
+    }
+    if (mounted) context.push('/editor/${Uri.encodeComponent(target)}');
+  }
 
   /// Cuộn ô soạn tới [range] mà không lấy focus (thanh tìm đang giữ focus).
   /// Tắt tự xuống dòng thì vùng cuộn ngang bên ngoài cuộn theo hết mức có thể.
@@ -628,6 +663,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       data: (_) => MarkdownPreview(
                         data: _textController.text,
                         onToggleChecklist: _loadedNote == null ? null : _toggleChecklist,
+                        onOpenNote: _openLinkedNote,
                         // Font hệ thống: khối code trong preview vẫn dùng
                         // font đơn cách mặc định.
                         fontFamily:

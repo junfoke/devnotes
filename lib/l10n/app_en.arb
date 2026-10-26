@@ -502,5 +502,15 @@
     "placeholders": { "n": { "type": "int" } }
   },
   "codeLanguageTitle": "Code block language",
-  "templatePickerTitle": "Note templates"
+  "templatePickerTitle": "Note templates",
+  "notePickerTitle": "Choose a note to link",
+  "notePickerEmpty": "No other notes yet",
+  "noteNotFound": "Note not found: {file}",
+  "@noteNotFound": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "noteLinksUpdateFailed": "Renamed, but couldn't update links in: {files}",
+  "@noteLinksUpdateFailed": {
+    "placeholders": { "files": { "type": "String" } }
+  }
 }

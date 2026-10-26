@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
@@ -168,12 +169,21 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       RenameNoteDialog(currentTitle: note.title),
                 );
                 if (newTitle != null) {
-                  await _guard(
+                  final result = await _guard(
                     (l, e) => l.noteRenameFailed(e),
                     () => ref
                         .read(noteActionsProvider)
                         .rename(note.filePath, newTitle),
                   );
+                  // Note không sửa được link (đọc/ghi lỗi) phải báo, không
+                  // để link gãy lặng lẽ.
+                  final failed = result?.failedFiles ?? const <String>[];
+                  if (failed.isNotEmpty && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(context.l10n.noteLinksUpdateFailed(
+                          failed.map(p.basename).join(', '))),
+                    ));
+                  }
                 }
               },
             ),

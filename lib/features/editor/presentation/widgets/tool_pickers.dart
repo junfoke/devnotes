@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/features/editor/domain/note_templates.dart';
+import 'package:devnotes/features/workspace/domain/note_file.dart';
 
 /// Ngôn ngữ khối code gợi ý.
 const codeLanguages = [
@@ -234,6 +235,50 @@ Future<void> showSymbolsSheet(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SymbolRow(onInsert: onInsert),
+      ),
+    ),
+  );
+}
+
+/// Chọn một note để chèn link tới nó. Trả về `filePath`; hủy trả về null.
+Future<String?> showNotePicker(BuildContext context, List<NoteFile> notes) {
+  return showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        key: const Key('note-picker'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Text(
+              ctx.l10n.notePickerTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (notes.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Text(ctx.l10n.notePickerEmpty),
+            )
+          else
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final n in notes)
+                    ListTile(
+                      key: Key('note-pick-${n.filePath}'),
+                      leading: const Icon(Icons.description_outlined),
+                      title: Text(n.title),
+                      onTap: () => Navigator.pop(ctx, n.filePath),
+                    ),
+                ],
+              ),
+            ),
+        ],
       ),
     ),
   );

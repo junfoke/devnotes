@@ -2,12 +2,16 @@ import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/features/editor/domain/editor_tool.dart';
+import 'package:devnotes/features/editor/domain/note_links.dart';
 import 'package:devnotes/features/editor/domain/text_ops.dart';
 import 'package:devnotes/features/editor/domain/toolbar_item.dart';
 import 'package:devnotes/features/editor/presentation/editor_display_actions.dart';
 import 'package:devnotes/features/editor/presentation/widgets/tool_pickers.dart';
+import 'package:devnotes/features/workspace/application/workspace_providers.dart';
+import 'package:devnotes/features/workspace/domain/note_file.dart';
 
 /// Thực thi một công cụ soạn thảo theo id.
 ///
@@ -22,12 +26,16 @@ class EditorToolRunner {
   /// Hiện thanh tìm & thay thế của editor (`find_replace`).
   final VoidCallback? onFindReplace;
 
+  /// Note đang mở — không hiện trong bộ chọn `note_link`.
+  final String? currentFilePath;
+
   EditorToolRunner({
     required this.text,
     required this.undo,
     required this.context,
     required this.ref,
     this.onFindReplace,
+    this.currentFilePath,
   });
 
   /// Đổi cài đặt hiển thị — dùng chung với nhóm Hiển thị của bảng công cụ.
@@ -62,6 +70,8 @@ class EditorToolRunner {
         await _insertCodeBlock();
       case 'symbols':
         await showSymbolsSheet(context, onInsert: insertSymbol);
+      case 'note_link':
+        await _insertNoteLink();
       case 'template':
         await _insertTemplate();
       // Nhóm Hiển thị khi được ghim lên thanh công cụ (ruling R2).
@@ -118,6 +128,30 @@ class EditorToolRunner {
     final t = await showTemplatePicker(context, lang);
     if (t == null || !context.mounted) return;
     _insert(t.body, asBlock: true);
+  }
+
+  /// Chèn `[Tiêu đề](ten-file.md)` tới note được chọn — xem DECISIONS.md,
+  /// "Link giữa các note và tự sửa link khi đổi tên" (2026-10-25).
+  Future<void> _insertNoteLink() async {
+    final List<NoteFile> notes;
+    try {
+      notes = [
+        for (final n in await ref.read(noteListProvider.future))
+          if (n.filePath != currentFilePath) n,
+      ];
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.errorWithDetail('$e'))),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    final path = await showNotePicker(context, notes);
+    if (path == null || !context.mounted) return;
+    final note = notes.firstWhere((n) => n.filePath == path);
+    _insert(noteLink(note.title, p.basename(path)));
   }
 
   /// Chèn cú pháp Markdown quanh vùng chọn. Không có con trỏ thì chèn cuối.

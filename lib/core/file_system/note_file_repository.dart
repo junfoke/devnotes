@@ -102,19 +102,22 @@ class NoteFileRepository {
     );
   }
 
-  /// Lists all .md files in [workspacePath], sorted by [updatedAt] descending.
-  Future<List<NoteFile>> listNotes() async {
-    final dir = Directory(workspacePath);
-    final mdFiles = dir
+  /// Paths of all top-level .md files in [workspacePath], without reading them.
+  Future<List<String>> listNotePaths() async {
+    return Directory(workspacePath)
         .listSync()
         .whereType<File>()
         .where((f) => f.path.endsWith('.md'))
+        .map((f) => f.path)
         .toList();
+  }
 
+  /// Lists all .md files in [workspacePath], sorted by [updatedAt] descending.
+  Future<List<NoteFile>> listNotes() async {
     final notes = <NoteFile>[];
-    for (final file in mdFiles) {
+    for (final path in await listNotePaths()) {
       try {
-        notes.add(await readNote(file.path));
+        notes.add(await readNote(path));
       } on FileSystemException {
         continue; // một file lỗi I/O không được chặn cả danh sách
       } on FormatException {

@@ -177,4 +177,22 @@ void main() {
 
     expect(editor(t).text, startsWith('## Nhật ký'));
   });
+
+  testWidgets('link tới note: chọn note khác chèn [Tiêu đề](ten-file.md)', (
+    t,
+  ) async {
+    final b = repo.seed(fileName: 'note-b.md', content: 'B');
+    repo.notes[b.filePath] = b.copyWith(title: 'Note [B]');
+    await pumpEditor(t, 'x ');
+    editor(t).selection = const TextSelection.collapsed(offset: 2);
+    await openSheet(t);
+    await tapInSheet(t, l.editorToolNoteLink);
+
+    // Note đang mở không nằm trong danh sách chọn.
+    expect(find.byKey(const Key('note-pick-/memory/ghi-chu.md')), findsNothing);
+    await t.tap(find.byKey(const Key('note-pick-/memory/note-b.md')));
+    await t.pumpAndSettle();
+
+    expect(editor(t).text, r'x [Note \[B\]](note-b.md)');
+  });
 }

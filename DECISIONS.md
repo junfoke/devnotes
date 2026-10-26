@@ -28,6 +28,11 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 ---
 
+## 2026-10-25 — Link giữa các note và tự sửa link khi đổi tên
+**Chốt:** Link tới note khác ghi Markdown chuẩn tương đối `[Tiêu đề](ten-file.md)` (`[`/`]` trong tiêu đề escape `\`, khoảng trắng tên file `%20`); preview bấm link `.md` tương đối thì mở note trong app. Đổi tên note làm đổi tên file thì sau khi đổi tên xong, duyệt mọi note top-level (kể cả chính nó), chỉ đổi phần tên file trong đích `](…)` (giữ `./`, `#anchor`, title), không đụng khối code/code giữa dòng/chữ thường, ghi qua `saveNote` chỉ khi nội dung đổi; note đọc/ghi lỗi thì bỏ qua và báo; đổi tên lỗi thì không đụng note nào; tên file không đổi thì không duyệt.
+**Vì:** Link đọc được trên GitHub và không bao giờ gãy khi đổi tên (giống Obsidian); đây là thao tác ghi vào NHIỀU file của user nên chỉ được đổi đúng đích link, không ghi thừa (nhiễu sync), và một note hỏng không được chặn cả lượt. User chọn 2026-10-25 (spec mục 6, 6b).
+**Test:** `test/features/editor/note_links_test.dart`, `test/features/workspace/rename_rewrites_links_test.dart`
+
 ## 2026-10-25 — Sync theo thứ tự commit → pull → push
 **Chốt:** Mỗi lần sync: (0) xử lý file còn đánh dấu conflict (xem mục bên dưới) → (1) có thay đổi trên máy thì commit trước (đang dở merge thì là merge commit) → (2) pull; conflict thì dừng, chưa push → (3) push. Pull fast-forward thì checkout cây đích trước rồi mới dời branch; repo chưa có commit thì lấy nguyên branch từ remote. Thay cho: "Sync theo thứ tự pull → commit → push" (phần kế thừa).
 **Vì:** Pull khi còn file sửa dở thì checkout fast-forward bị chặn giữa chừng, lần commit sau lùi mất toàn bộ thay đổi từ remote; và giải quyết conflict xong thì lần Sync kế tiếp luôn lỗi. Commit trước là cách git chuẩn: hai phía cùng sửa một note luôn thành conflict để user chọn. User chọn 2026-10-25.

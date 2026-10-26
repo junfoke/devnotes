@@ -1753,6 +1753,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note templates'**
   String get templatePickerTitle;
+
+  /// No description provided for @notePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a note to link'**
+  String get notePickerTitle;
+
+  /// No description provided for @notePickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No other notes yet'**
+  String get notePickerEmpty;
+
+  /// No description provided for @noteNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Note not found: {file}'**
+  String noteNotFound(String file);
+
+  /// No description provided for @noteLinksUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed, but couldn\'t update links in: {files}'**
+  String noteLinksUpdateFailed(String files);
 }
 
 class _AppLocalizationsDelegate

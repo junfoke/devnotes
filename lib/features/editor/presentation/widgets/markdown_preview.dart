@@ -9,12 +9,14 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/domain/checklist_toggle.dart';
+import 'package:devnotes/features/editor/domain/note_links.dart';
 
 /// Trang xem trước Markdown của editor.
 ///
 /// - Cỡ chữ và font theo Settings → Font & Size (trước đây cứng 14px).
 /// - Khối code ```lang được tô màu cú pháp theo ngôn ngữ.
-/// - Bấm link thì mở bằng trình duyệt / app tương ứng.
+/// - Bấm link thì mở bằng trình duyệt / app tương ứng; link `.md` tương đối
+///   (link tới note khác) thì báo [onOpenNote] để mở trong app.
 /// - Bấm ô checklist thì báo [onToggleChecklist] (ô thứ mấy, trạng thái mới).
 class MarkdownPreview extends StatelessWidget {
   const MarkdownPreview({
@@ -23,12 +25,16 @@ class MarkdownPreview extends StatelessWidget {
     required this.fontFamily,
     required this.fontSize,
     this.onToggleChecklist,
+    this.onOpenNote,
   });
 
   final String data;
   final String fontFamily;
   final double fontSize;
   final void Function(int index, bool checked)? onToggleChecklist;
+
+  /// Bấm link tới note khác: tên file note (đã bỏ `./`, `#anchor`, giải mã).
+  final void Function(String fileName)? onOpenNote;
 
   Future<void> _openLink(BuildContext context, String? href) async {
     final uri = href == null ? null : Uri.tryParse(href);
@@ -83,7 +89,14 @@ class MarkdownPreview extends StatelessWidget {
         );
       },
       padding: const EdgeInsets.all(20),
-      onTapLink: (_, href, __) => _openLink(context, href),
+      onTapLink: (_, href, __) {
+        final note = href == null ? null : linkedNoteFileName(href);
+        if (note != null && onOpenNote != null) {
+          onOpenNote!(note);
+        } else {
+          _openLink(context, href);
+        }
+      },
       builders: {
         'code': _CodeBlockBuilder(dark: dark, textStyle: codeStyle),
       },

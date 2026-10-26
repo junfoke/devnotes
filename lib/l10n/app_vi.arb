@@ -289,5 +289,9 @@
   "tablePickerInsert": "Chèn",
   "tableColumnHeader": "Cột {n}",
   "codeLanguageTitle": "Ngôn ngữ khối code",
-  "templatePickerTitle": "Mẫu ghi chú"
+  "templatePickerTitle": "Mẫu ghi chú",
+  "notePickerTitle": "Chọn note để liên kết",
+  "notePickerEmpty": "Chưa có note nào khác",
+  "noteNotFound": "Không tìm thấy note: {file}",
+  "noteLinksUpdateFailed": "Đã đổi tên, nhưng không sửa được link trong: {files}"
 }

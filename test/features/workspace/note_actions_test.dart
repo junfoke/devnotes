@@ -39,9 +39,9 @@ void main() {
 
   test('đổi tên qua lại nhiều lần thì lần nào cũng đổi thật', () async {
     var note = await actions().create(title: 'A', tags: const []);
-    note = await actions().rename(note.filePath, 'B');
-    note = await actions().rename(note.filePath, 'A');
-    note = await actions().rename(note.filePath, 'B');
+    note = (await actions().rename(note.filePath, 'B')).note;
+    note = (await actions().rename(note.filePath, 'A')).note;
+    note = (await actions().rename(note.filePath, 'B')).note;
 
     expect(note.title, 'B');
     expect(repo.notes.keys, [note.filePath]);

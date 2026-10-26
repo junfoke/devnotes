@@ -34,20 +34,47 @@ class InMemoryNoteRepository extends NoteFileRepository {
   /// Đặt `true` để mọi lần đọc đều lỗi (giả lập file hỏng, mất quyền...).
   bool failOnRead = false;
 
+  /// Đường dẫn các note đọc lỗi riêng lẻ (file hỏng, mất quyền...).
+  final Set<String> unreadable = {};
+
+  /// Đường dẫn các note ghi lỗi riêng lẻ.
+  final Set<String> unwritable = {};
+
+  /// Đặt `true` để đổi tên lỗi (không đụng note nào).
+  bool failOnRename = false;
+
+  /// Đường dẫn của mọi lần ghi thành công, theo thứ tự.
+  final List<String> savedPaths = [];
+
+  @override
+  Future<List<String>> listNotePaths() async => notes.keys.toList();
+
+  @override
+  Future<List<NoteFile>> listNotes() async {
+    final list = notes.values.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return list;
+  }
+
   @override
   Future<NoteFile> readNote(String filePath) async {
-    if (failOnRead) {
+    if (failOnRead || unreadable.contains(filePath)) {
       throw const FileSystemException('Permission denied');
     }
-    return notes[filePath]!;
+    final note = notes[filePath];
+    if (note == null) {
+      throw FileSystemException('Not found', filePath);
+    }
+    return note;
   }
 
   @override
   Future<void> saveNote(NoteFile note) async {
-    if (failOnSave) {
+    if (failOnSave || unwritable.contains(note.filePath)) {
       throw const FileSystemException('No space left on device');
     }
     notes[note.filePath] = note;
+    savedPaths.add(note.filePath);
   }
 
   @override
@@ -57,6 +84,9 @@ class InMemoryNoteRepository extends NoteFileRepository {
 
   @override
   Future<NoteFile> renameNote(String oldPath, String newTitle) async {
+    if (failOnRename) {
+      throw const FileSystemException('Permission denied');
+    }
     final old = notes.remove(oldPath)!;
     final renamed = old.copyWith(
       filePath: '$workspacePath/${newTitle.toLowerCase()}.md',

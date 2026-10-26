@@ -1038,4 +1038,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get templatePickerTitle => 'Note templates';
+
+  @override
+  String get notePickerTitle => 'Choose a note to link';
+
+  @override
+  String get notePickerEmpty => 'No other notes yet';
+
+  @override
+  String noteNotFound(String file) {
+    return 'Note not found: $file';
+  }
+
+  @override
+  String noteLinksUpdateFailed(String files) {
+    return 'Renamed, but couldn\'t update links in: $files';
+  }
 }

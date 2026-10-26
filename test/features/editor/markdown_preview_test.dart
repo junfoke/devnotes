@@ -68,6 +68,32 @@ void main() {
     expect(find.byType(HighlightView), findsNothing);
   });
 
+  testWidgets('link .md tương đối gọi onOpenNote với tên file, link web thì '
+      'không', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('vi'),
+      theme: AppTheme.light(),
+      home: Scaffold(
+        body: MarkdownPreview(
+          data: '[B](./ghi%20chu.md#muc)',
+          fontFamily: 'JetBrainsMono',
+          fontSize: 14,
+          onOpenNote: opened.add,
+        ),
+      ),
+    ));
+
+    final md = tester.widget<Markdown>(find.byType(Markdown));
+    md.onTapLink!('B', './ghi%20chu.md#muc', '');
+    md.onTapLink!('Web', 'mailto:a@b.md', '');
+    await tester.pumpAndSettle();
+
+    expect(opened, ['ghi chu.md']);
+  });
+
   testWidgets('cỡ chữ đoạn văn và tiêu đề theo cài đặt', (tester) async {
     await _pump(tester, '# Tiêu đề\n\nXin chào', size: 20);
 

@@ -1027,4 +1027,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get templatePickerTitle => 'Mẫu ghi chú';
+
+  @override
+  String get notePickerTitle => 'Chọn note để liên kết';
+
+  @override
+  String get notePickerEmpty => 'Chưa có note nào khác';
+
+  @override
+  String noteNotFound(String file) {
+    return 'Không tìm thấy note: $file';
+  }
+
+  @override
+  String noteLinksUpdateFailed(String files) {
+    return 'Đã đổi tên, nhưng không sửa được link trong: $files';
+  }
 }

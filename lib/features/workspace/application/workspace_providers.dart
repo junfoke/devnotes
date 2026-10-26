@@ -1,5 +1,8 @@
 // lib/features/workspace/application/workspace_providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:devnotes/core/file_system/note_file_repository.dart';
+import 'package:devnotes/features/editor/domain/note_links.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 
@@ -30,11 +33,52 @@ class NoteActions {
     return note;
   }
 
-  Future<NoteFile> rename(String filePath, String newTitle) async {
+  /// Đổi tên note rồi sửa mọi link tới nó trong các note (kể cả chính nó).
+  ///
+  /// Đổi tên lỗi thì ném lỗi và không note nào khác bị đụng. Sau đó, note nào
+  /// đọc hoặc ghi lỗi thì nằm trong `failedFiles` (đường dẫn) và vòng lặp đi
+  /// tiếp. Xem DECISIONS.md, "Link giữa các note và tự sửa link khi đổi tên"
+  /// (2026-10-25).
+  Future<({NoteFile note, List<String> failedFiles})> rename(
+    String filePath,
+    String newTitle,
+  ) async {
     final repo = await _ref.read(noteFileRepositoryProvider.future);
     final note = await repo.renameNote(filePath, newTitle);
+    final from = p.basename(filePath);
+    final to = p.basename(note.filePath);
+    final failed = from == to
+        ? const <String>[]
+        : await _rewriteLinks(repo, from: from, to: to);
     _ref.invalidate(noteListProvider);
-    return note;
+    return (note: note, failedFiles: failed);
+  }
+
+  Future<List<String>> _rewriteLinks(
+    NoteFileRepository repo, {
+    required String from,
+    required String to,
+  }) async {
+    final failed = <String>[];
+    final List<String> paths;
+    try {
+      paths = await repo.listNotePaths();
+    } catch (_) {
+      // Không liệt kê được thư mục: báo cả workspace là chưa sửa được.
+      return [repo.workspacePath];
+    }
+    for (final path in paths) {
+      try {
+        final note = await repo.readNote(path);
+        final updated = rewriteNoteLinks(note.content, from: from, to: to);
+        // Không đổi gì thì không ghi — tránh nhiễu khi sync.
+        if (updated == note.content) continue;
+        await repo.saveNote(note.copyWith(content: updated));
+      } catch (_) {
+        failed.add(path);
+      }
+    }
+    return failed;
   }
 
   Future<void> delete(String filePath) async {
