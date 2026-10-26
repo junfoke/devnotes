@@ -37,6 +37,10 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
   final _query = TextEditingController();
   final _replacement = TextEditingController();
 
+  /// `autofocus` không đủ: ô soạn thường đang giữ focus lúc mở thanh, mà
+  /// autofocus chỉ có tác dụng khi chưa có gì được focus.
+  final _queryFocus = FocusNode();
+
   List<TextRange> _matches = const [];
 
   /// Kết quả đang chọn, -1 nếu chưa chọn kết quả nào.
@@ -49,6 +53,9 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
     super.initState();
     widget.text.addListener(_onEditorChanged);
     _query.addListener(_onQueryChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _queryFocus.requestFocus();
+    });
   }
 
   @override
@@ -65,6 +72,7 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
     widget.text.clearHighlights(notify: false);
     _query.dispose();
     _replacement.dispose();
+    _queryFocus.dispose();
     super.dispose();
   }
 
@@ -209,7 +217,7 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
                   child: TextField(
                     key: const Key('find-query'),
                     controller: _query,
-                    autofocus: true,
+                    focusNode: _queryFocus,
                     style: fieldStyle,
                     decoration: decoration(l.findQueryHint),
                     textInputAction: TextInputAction.search,

@@ -172,6 +172,19 @@ void main() {
     expect(find.byType(FindReplaceBar), findsNothing);
   });
 
+  // Bug (emulator 26/10): đang gõ trong ô soạn rồi mở Tìm và thay — autofocus
+  // không có tác dụng vì ô soạn vẫn giữ focus, chữ gõ tiếp rơi vào note.
+  testWidgets('mở tìm khi ô soạn đang focus thì ô tìm nhận focus', (t) async {
+    await pumpEditor(t, 'x y x');
+    await t.tap(find.byType(TextField).first);
+    await t.pump();
+    expect(editableState(t).widget.focusNode.hasFocus, isTrue);
+
+    await runFromSheet(t, l.editorToolFindReplace);
+
+    expect(findFieldHasFocus(t), isTrue);
+  });
+
   // Ruling R8: ô tìm giữ focus nên vùng chọn của ô soạn không được tô — kết
   // quả phải được tô thẳng trong chữ của note, không thì user bấm "Thay" mà
   // không thấy chữ nào sẽ bị thay.
