@@ -133,7 +133,12 @@ void main() {
       );
     });
 
-    tearDown(() {
+    tearDown(() async {
+      // rename() invalidate noteListProvider → danh sách được đọc lại trong
+      // nền. Phải chờ xong: Windows không cho xóa file đang mở đọc.
+      if (container.exists(noteListProvider)) {
+        await container.read(noteListProvider.future);
+      }
       container.dispose();
       dir.deleteSync(recursive: true);
     });
