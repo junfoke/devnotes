@@ -40,7 +40,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// Đổi mỗi khi nạp nội dung từ đĩa (mở note, tải lại bản bên ngoài) để
   /// TextField dựng lại và lịch sử hoàn tác bắt đầu từ nội dung vừa nạp —
   /// hoàn tác không được đưa note về trống.
-  int _historyGeneration = 0;
+  ///
+  /// Là GlobalKey để TextField giữ nguyên state (lịch sử hoàn tác, focus)
+  /// khi cây bên trên đổi hình — bật/tắt tự xuống dòng bọc/bỏ vùng cuộn ngang.
+  GlobalKey _fieldKey = GlobalKey();
   Timer? _debounce;
   int _currentPage = 0;
   NoteFile? _loadedNote;
@@ -122,7 +125,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       selection: TextSelection.collapsed(offset: content.length),
     );
     _undoController.value = UndoHistoryValue.empty;
-    _historyGeneration++;
+    _fieldKey = GlobalKey();
   }
 
   /// App xuống nền (chuyển app, tắt màn hình) có thể bị hệ điều hành giết
@@ -501,7 +504,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   Widget _buildTextField(EditorPreferences? editorPrefs) {
     final colors = Theme.of(context).appColors;
     final field = TextField(
-      key: ValueKey(_historyGeneration),
+      key: _fieldKey,
       controller: _textController,
       undoController: _undoController,
       // Chưa tải xong thì chưa cho gõ: chữ gõ lúc này sẽ bị

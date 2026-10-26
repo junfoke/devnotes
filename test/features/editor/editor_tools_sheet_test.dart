@@ -350,6 +350,40 @@ void main() {
     );
   });
 
+  testWidgets('bật/tắt tự xuống dòng giữa chừng không mất lịch sử hoàn tác', (
+    tester,
+  ) async {
+    await setUpWith({
+      'editor_tools_migrated_v1': true,
+      'editor_toolbar_items': ['undo', 'word_wrap'],
+    });
+    await pumpEditor(tester);
+    await tester.enterText(find.byType(TextField).first, 'noi dung them');
+    await tester.pump(const Duration(seconds: 1));
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+
+    Future<void> tapPinned(String label) async {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(EditorToolbar),
+          matching: find.byTooltip(label),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await tapPinned(l.editorToolWordWrap); // Tắt.
+    expect(prefs.getBool('editor_word_wrap'), isFalse);
+    await tapPinned(l.editorToolWordWrap); // Bật lại.
+    expect(prefs.getBool('editor_word_wrap'), isTrue);
+
+    await tapPinned(l.editorToolUndo);
+    expect(field(tester).controller!.text, 'noi dung');
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('nút hiển thị ghim trên thanh công cụ cũng chạy (ruling R2)', (
     tester,
   ) async {
