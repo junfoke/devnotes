@@ -121,6 +121,21 @@ void main() {
     expect(find.text('Ghi chú đã thay đổi bên ngoài'), findsNothing);
   });
 
+  // Bug (thấy trên emulator 26/10): file thật đọc lên bị cắt xuống dòng cuối,
+  // nên note kết thúc bằng Enter bị báo nhầm "thay đổi bên ngoài" ở lần lưu
+  // thứ hai — chọn "Tải bản mới" là mất chữ vừa gõ.
+  testWidgets('note kết thúc bằng xuống dòng lưu lần hai không bị báo nhầm',
+      (tester) async {
+    repo.trimLikeDisk = true;
+    await pumpEditor(tester);
+
+    await typeAndWaitAutosave(tester, 'lan 1\n');
+    await typeAndWaitAutosave(tester, 'lan 1\nlan 2\n');
+
+    expect(find.text('Ghi chú đã thay đổi bên ngoài'), findsNothing);
+    expect(repo.notes[note.filePath]!.content, 'lan 1\nlan 2');
+  });
+
   testWidgets('editor mở thì đếm là đang có editor (để hoãn sync tự động)',
       (tester) async {
     await pumpEditor(tester);

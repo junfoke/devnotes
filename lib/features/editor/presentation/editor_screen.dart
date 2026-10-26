@@ -224,9 +224,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     return true;
   }
 
+  /// Thân note đọc từ file đã bị FrontmatterParser cắt khoảng trắng đầu/cuối,
+  /// nên so sau khi trim — không thì note kết thúc bằng Enter bị báo nhầm là
+  /// đổi từ bên ngoài ở lần lưu thứ hai.
   bool _changedOutside(NoteFile onDisk) {
     final mine = _loadedNote!;
-    return onDisk.content != mine.content ||
+    return onDisk.content.trim() != mine.content.trim() ||
         onDisk.title != mine.title ||
         !listEquals(onDisk.tags, mine.tags);
   }

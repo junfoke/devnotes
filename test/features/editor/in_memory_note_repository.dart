@@ -46,6 +46,10 @@ class InMemoryNoteRepository extends NoteFileRepository {
   /// Đường dẫn của mọi lần ghi thành công, theo thứ tự.
   final List<String> savedPaths = [];
 
+  /// Đặt `true` để đọc lại giống file thật: FrontmatterParser cắt khoảng
+  /// trắng đầu/cuối thân note, nên nội dung đọc lên có thể khác chữ vừa ghi.
+  bool trimLikeDisk = false;
+
   @override
   Future<List<String>> listNotePaths() async => notes.keys.toList();
 
@@ -73,7 +77,8 @@ class InMemoryNoteRepository extends NoteFileRepository {
     if (failOnSave || unwritable.contains(note.filePath)) {
       throw const FileSystemException('No space left on device');
     }
-    notes[note.filePath] = note;
+    notes[note.filePath] =
+        trimLikeDisk ? note.copyWith(content: note.content.trim()) : note;
     savedPaths.add(note.filePath);
   }
 

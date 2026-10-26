@@ -39,7 +39,7 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 **Test:** `test/core/git_client/sync_flow_ac_test.dart`, `test/features/git_sync/sync_service_ac_test.dart`
 
 ## 2026-10-25 — Editor không ghi đè thay đổi từ bên ngoài
-**Chốt:** Sync tự động hoãn khi đang có editor mở, chạy ngay khi editor cuối cùng đóng. Trước mỗi lần lưu, editor so file trên đĩa với bản nó đọc/ghi lần cuối (nội dung, tiêu đề, tags): khác thì không ghi, hỏi "Tải bản mới" hoặc "Lưu bản của tôi thành note mới" (tiêu đề thêm " (bản sửa)"). Back hệ thống và app xuống nền cũng lưu; editor chưa tải xong note thì chưa cho gõ.
+**Chốt:** Sync tự động hoãn khi đang có editor mở, chạy ngay khi editor cuối cùng đóng. Trước mỗi lần lưu, editor so file trên đĩa với bản nó đọc/ghi lần cuối (nội dung, tiêu đề, tags): khác thì không ghi, hỏi "Tải bản mới" hoặc "Lưu bản của tôi thành note mới" (tiêu đề thêm " (bản sửa)"). Back hệ thống và app xuống nền cũng lưu; editor chưa tải xong note thì chưa cho gõ. Nội dung so sau khi cắt khoảng trắng đầu/cuối (file đọc lên đã bị cắt như vậy) — bổ sung 2026-10-26.
 **Vì:** Sync kéo bản mới về trong lúc editor mở, autosave ghi nội dung cũ trên màn hình đè lên — bản sửa trên máy khác mất mà không có conflict nào. User chọn "hoãn sync + chặn ghi đè" 2026-10-25.
 **Test:** `test/features/editor/editor_external_change_test.dart`
 
