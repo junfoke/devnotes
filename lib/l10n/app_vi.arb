@@ -262,5 +262,19 @@
   "editorToolTemplate": "Mẫu",
   "editorToolOutline": "Dàn ý",
   "editorToolStats": "Thống kê",
-  "editorToolsButton": "Công cụ soạn thảo"
+  "editorToolsButton": "Công cụ soạn thảo",
+  "editorToolGroupDisplay": "Hiển thị",
+  "editorToolGroupEdit": "Chỉnh sửa",
+  "editorToolGroupInsert": "Chèn",
+  "editorToolGroupView": "Xem",
+  "editorToolGroupFormat": "Định dạng",
+  "editorFontSystem": "Font hệ thống",
+  "lineHeightCompact": "Gọn",
+  "lineHeightNormal": "Vừa",
+  "lineHeightRelaxed": "Thoáng",
+  "editorToolsCustomize": "Tùy chỉnh",
+  "editorToolsDone": "Xong",
+  "editorToolsPin": "Ghim",
+  "editorToolsShowInSheet": "Hiện trong bảng",
+  "editorToolsCustomizeHint": "Ghim công cụ lên thanh công cụ, hoặc ẩn khỏi bảng này. Mục bị ẩn vẫn liệt kê ở đây để bật lại."
 }

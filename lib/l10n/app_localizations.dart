@@ -1591,6 +1591,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Editor tools'**
   String get editorToolsButton;
+
+  /// No description provided for @editorToolGroupDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Display'**
+  String get editorToolGroupDisplay;
+
+  /// No description provided for @editorToolGroupEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editorToolGroupEdit;
+
+  /// No description provided for @editorToolGroupInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get editorToolGroupInsert;
+
+  /// No description provided for @editorToolGroupView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get editorToolGroupView;
+
+  /// No description provided for @editorToolGroupFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get editorToolGroupFormat;
+
+  /// No description provided for @editorFontSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System font'**
+  String get editorFontSystem;
+
+  /// No description provided for @lineHeightCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get lineHeightCompact;
+
+  /// No description provided for @lineHeightNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get lineHeightNormal;
+
+  /// No description provided for @lineHeightRelaxed.
+  ///
+  /// In en, this message translates to:
+  /// **'Relaxed'**
+  String get lineHeightRelaxed;
+
+  /// No description provided for @editorToolsCustomize.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize'**
+  String get editorToolsCustomize;
+
+  /// No description provided for @editorToolsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get editorToolsDone;
+
+  /// No description provided for @editorToolsPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get editorToolsPin;
+
+  /// No description provided for @editorToolsShowInSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in sheet'**
+  String get editorToolsShowInSheet;
+
+  /// No description provided for @editorToolsCustomizeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.'**
+  String get editorToolsCustomizeHint;
 }
 
 class _AppLocalizationsDelegate

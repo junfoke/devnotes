@@ -14,6 +14,7 @@ import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dar
 import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
 import 'package:devnotes/features/editor/presentation/editor_tool_runner.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_toolbar.dart';
+import 'package:devnotes/features/editor/presentation/widgets/editor_tools_sheet.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
@@ -486,13 +487,52 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     super.dispose();
   }
 
-  void _runTool(String id) {
-    EditorToolRunner(
-      text: _textController,
-      undo: _undoController,
-      context: context,
-      ref: ref,
-    ).run(id);
+  EditorToolRunner get _toolRunner => EditorToolRunner(
+    text: _textController,
+    undo: _undoController,
+    context: context,
+    ref: ref,
+  );
+
+  void _runTool(String id) => _toolRunner.run(id);
+
+  /// Ô soạn. Tắt tự xuống dòng thì đặt trong vùng cuộn ngang, rộng ít nhất
+  /// bằng màn hình và rộng theo dòng dài nhất — dòng dài không bị bẻ.
+  Widget _buildTextField(EditorPreferences? editorPrefs) {
+    final colors = Theme.of(context).appColors;
+    final field = TextField(
+      key: ValueKey(_historyGeneration),
+      controller: _textController,
+      undoController: _undoController,
+      // Chưa tải xong thì chưa cho gõ: chữ gõ lúc này sẽ bị
+      // nội dung note ghi đè khi tải xong.
+      readOnly: _loadedNote == null,
+      maxLines: null,
+      expands: true,
+      textAlignVertical: TextAlignVertical.top,
+      style: TextStyle(
+        color: colors.textPrimary,
+        fontFamily: editorPrefs == null
+            ? 'JetBrainsMono'
+            : editorPrefs.fontFamilyOrNull,
+        fontSize: editorPrefs?.fontSize ?? EditorPreferences.defaultFontSize,
+        height: (editorPrefs?.lineHeight ?? EditorLineHeight.normal).value,
+      ),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        hintText: context.l10n.editorHint,
+      ),
+    );
+    if (editorPrefs?.wordWrap ?? true) return field;
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: IntrinsicWidth(child: field),
+        ),
+      ),
+    );
   }
 
   @override
@@ -516,13 +556,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         body: SafeArea(
           child: Column(
             children: [
-              EditorAppBar(
-                title: noteAsync.valueOrNull?.title,
-                saveStatus: saveStatus,
-                currentPage: _currentPage,
-                onBack: _leave,
-                onMore: _showMoreMenu,
-              ),
+              // Chế độ tập trung ẩn thanh tiêu đề. Lối thoát: công tắc trong
+              // bảng ⋯; Back hệ thống vẫn đi qua _leave (PopScope ở trên).
+              if (!(editorPrefs?.focusMode ?? false))
+                EditorAppBar(
+                  title: noteAsync.valueOrNull?.title,
+                  saveStatus: saveStatus,
+                  currentPage: _currentPage,
+                  onBack: _leave,
+                  onMore: _showMoreMenu,
+                ),
               Expanded(
                 child: PageView(
                   key: _previewKey,
@@ -542,31 +585,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                         ),
                       )
                     else
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: TextField(
-                          key: ValueKey(_historyGeneration),
-                          controller: _textController,
-                          undoController: _undoController,
-                          // Chưa tải xong thì chưa cho gõ: chữ gõ lúc này sẽ bị
-                          // nội dung note ghi đè khi tải xong.
-                          readOnly: _loadedNote == null,
-                          maxLines: null,
-                          expands: true,
-                          textAlignVertical: TextAlignVertical.top,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontFamily:
-                                editorPrefs?.fontFamily ?? 'JetBrainsMono',
-                            fontSize:
-                                editorPrefs?.fontSize ??
-                                EditorPreferences.defaultFontSize,
-                            height: 1.6,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: l.editorHint,
-                          ),
+                      // Giữ trang soạn sống khi sang preview: TextField và
+                      // lịch sử hoàn tác không bị dựng lại (ruling R6).
+                      _KeepAlivePage(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: _buildTextField(editorPrefs),
                         ),
                       ),
                     // Preview mode
@@ -574,8 +598,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       data: (_) => MarkdownPreview(
                         data: _textController.text,
                         onToggleChecklist: _loadedNote == null ? null : _toggleChecklist,
+                        // Font hệ thống: khối code trong preview vẫn dùng
+                        // font đơn cách mặc định.
                         fontFamily:
-                            editorPrefs?.fontFamily ?? 'JetBrainsMono',
+                            editorPrefs?.fontFamilyOrNull ?? 'JetBrainsMono',
                         fontSize: editorPrefs?.fontSize ??
                             EditorPreferences.defaultFontSize,
                       ),
@@ -595,14 +621,36 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       EditorPreferences.defaultToolbarItems,
                   enabled: _loadedNote != null,
                   onTool: _runTool,
-                  // Bảng "Công cụ soạn thảo" được gắn ở task sau.
-                  onOpenSheet: () {},
+                  onOpenSheet: () =>
+                      showEditorToolsSheet(context, runner: _toolRunner),
                 ),
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+/// Giữ một trang của PageView sống khi nó trượt khỏi màn hình.
+class _KeepAlivePage extends StatefulWidget {
+  const _KeepAlivePage({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 

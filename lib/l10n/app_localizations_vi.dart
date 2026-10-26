@@ -943,4 +943,47 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get editorToolsButton => 'Công cụ soạn thảo';
+
+  @override
+  String get editorToolGroupDisplay => 'Hiển thị';
+
+  @override
+  String get editorToolGroupEdit => 'Chỉnh sửa';
+
+  @override
+  String get editorToolGroupInsert => 'Chèn';
+
+  @override
+  String get editorToolGroupView => 'Xem';
+
+  @override
+  String get editorToolGroupFormat => 'Định dạng';
+
+  @override
+  String get editorFontSystem => 'Font hệ thống';
+
+  @override
+  String get lineHeightCompact => 'Gọn';
+
+  @override
+  String get lineHeightNormal => 'Vừa';
+
+  @override
+  String get lineHeightRelaxed => 'Thoáng';
+
+  @override
+  String get editorToolsCustomize => 'Tùy chỉnh';
+
+  @override
+  String get editorToolsDone => 'Xong';
+
+  @override
+  String get editorToolsPin => 'Ghim';
+
+  @override
+  String get editorToolsShowInSheet => 'Hiện trong bảng';
+
+  @override
+  String get editorToolsCustomizeHint =>
+      'Ghim công cụ lên thanh công cụ, hoặc ẩn khỏi bảng này. Mục bị ẩn vẫn liệt kê ở đây để bật lại.';
 }

@@ -954,4 +954,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorToolsButton => 'Editor tools';
+
+  @override
+  String get editorToolGroupDisplay => 'Display';
+
+  @override
+  String get editorToolGroupEdit => 'Edit';
+
+  @override
+  String get editorToolGroupInsert => 'Insert';
+
+  @override
+  String get editorToolGroupView => 'View';
+
+  @override
+  String get editorToolGroupFormat => 'Format';
+
+  @override
+  String get editorFontSystem => 'System font';
+
+  @override
+  String get lineHeightCompact => 'Compact';
+
+  @override
+  String get lineHeightNormal => 'Normal';
+
+  @override
+  String get lineHeightRelaxed => 'Relaxed';
+
+  @override
+  String get editorToolsCustomize => 'Customize';
+
+  @override
+  String get editorToolsDone => 'Done';
+
+  @override
+  String get editorToolsPin => 'Pin';
+
+  @override
+  String get editorToolsShowInSheet => 'Show in sheet';
+
+  @override
+  String get editorToolsCustomizeHint =>
+      'Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.';
 }

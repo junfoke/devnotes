@@ -68,6 +68,10 @@ class EditorPreferences {
   /// Mặc định duy nhất cho cỡ chữ và khoảng chờ tự lưu — model, repository
   /// và editor đều dùng hai hằng này (trước đây mỗi nơi một số: 14/16, 3s/5s).
   static const defaultFontSize = 14.0;
+
+  /// Khoảng cỡ chữ cho phép (Settings và bảng Công cụ soạn thảo dùng chung).
+  static const minFontSize = 12.0;
+  static const maxFontSize = 24.0;
   static const defaultAutoSaveInterval = Duration(seconds: 3);
 
   /// Default set of toolbar items shown in the editor.

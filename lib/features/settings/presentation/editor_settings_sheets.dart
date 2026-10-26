@@ -32,8 +32,8 @@ class FontSettingsSheet extends ConsumerStatefulWidget {
   final EditorPreferences initial;
 
   static const fontFamilies = ['JetBrainsMono', 'FiraCode'];
-  static const minSize = 12.0;
-  static const maxSize = 24.0;
+  static const minSize = EditorPreferences.minFontSize;
+  static const maxSize = EditorPreferences.maxFontSize;
 
   @override
   ConsumerState<FontSettingsSheet> createState() => _FontSettingsSheetState();

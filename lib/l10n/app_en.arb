@@ -472,5 +472,19 @@
   "editorToolTemplate": "Template",
   "editorToolOutline": "Outline",
   "editorToolStats": "Statistics",
-  "editorToolsButton": "Editor tools"
+  "editorToolsButton": "Editor tools",
+  "editorToolGroupDisplay": "Display",
+  "editorToolGroupEdit": "Edit",
+  "editorToolGroupInsert": "Insert",
+  "editorToolGroupView": "View",
+  "editorToolGroupFormat": "Format",
+  "editorFontSystem": "System font",
+  "lineHeightCompact": "Compact",
+  "lineHeightNormal": "Normal",
+  "lineHeightRelaxed": "Relaxed",
+  "editorToolsCustomize": "Customize",
+  "editorToolsDone": "Done",
+  "editorToolsPin": "Pin",
+  "editorToolsShowInSheet": "Show in sheet",
+  "editorToolsCustomizeHint": "Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back."
 }
