@@ -1717,6 +1717,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close find'**
   String get findClose;
+
+  /// No description provided for @tablePickerColumns.
+  ///
+  /// In en, this message translates to:
+  /// **'Columns'**
+  String get tablePickerColumns;
+
+  /// No description provided for @tablePickerRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows'**
+  String get tablePickerRows;
+
+  /// No description provided for @tablePickerInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get tablePickerInsert;
+
+  /// No description provided for @tableColumnHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Column {n}'**
+  String tableColumnHeader(int n);
+
+  /// No description provided for @codeLanguageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Code block language'**
+  String get codeLanguageTitle;
+
+  /// No description provided for @templatePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Note templates'**
+  String get templatePickerTitle;
 }
 
 class _AppLocalizationsDelegate

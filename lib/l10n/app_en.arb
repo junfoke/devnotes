@@ -493,5 +493,14 @@
   "findNext": "Next match",
   "findReplaceOne": "Replace",
   "findReplaceAll": "Replace all",
-  "findClose": "Close find"
+  "findClose": "Close find",
+  "tablePickerColumns": "Columns",
+  "tablePickerRows": "Rows",
+  "tablePickerInsert": "Insert",
+  "tableColumnHeader": "Column {n}",
+  "@tableColumnHeader": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "codeLanguageTitle": "Code block language",
+  "templatePickerTitle": "Note templates"
 }

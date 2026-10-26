@@ -283,5 +283,11 @@
   "findNext": "Kết quả sau",
   "findReplaceOne": "Thay",
   "findReplaceAll": "Thay hết",
-  "findClose": "Đóng tìm kiếm"
+  "findClose": "Đóng tìm kiếm",
+  "tablePickerColumns": "Số cột",
+  "tablePickerRows": "Số hàng",
+  "tablePickerInsert": "Chèn",
+  "tableColumnHeader": "Cột {n}",
+  "codeLanguageTitle": "Ngôn ngữ khối code",
+  "templatePickerTitle": "Mẫu ghi chú"
 }

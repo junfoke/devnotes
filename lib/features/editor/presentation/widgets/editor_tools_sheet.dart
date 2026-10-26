@@ -6,6 +6,7 @@ import 'package:devnotes/features/editor/domain/editor_tool.dart';
 import 'package:devnotes/features/editor/presentation/editor_display_actions.dart';
 import 'package:devnotes/features/editor/presentation/editor_tool_labels.dart';
 import 'package:devnotes/features/editor/presentation/editor_tool_runner.dart';
+import 'package:devnotes/features/editor/presentation/widgets/tool_pickers.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 
@@ -161,13 +162,26 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
                 runSpacing: 4,
                 children: [
                   for (final t in tools)
-                    _SheetToolButton(
-                      tool: t,
-                      label: editorToolLabel(l, t.id),
-                      onTap: () => _runTool(t.id),
-                    ),
+                    if (t.id != 'symbols')
+                      _SheetToolButton(
+                        tool: t,
+                        label: editorToolLabel(l, t.id),
+                        onTap: () => _runTool(t.id),
+                      ),
                 ],
               ),
+            if (tools.any((t) => t.id == 'symbols')) ...[
+              const SizedBox(height: 8),
+              Text(
+                editorToolLabel(l, 'symbols'),
+                style: TextStyle(
+                  color: Theme.of(context).appColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 4),
+              SymbolRow(onInsert: widget.runner.insertSymbol),
+            ],
           ];
         }(),
     ];

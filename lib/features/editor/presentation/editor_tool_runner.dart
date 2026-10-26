@@ -1,10 +1,13 @@
 import 'dart:math';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/features/editor/domain/editor_tool.dart';
 import 'package:devnotes/features/editor/domain/text_ops.dart';
 import 'package:devnotes/features/editor/domain/toolbar_item.dart';
 import 'package:devnotes/features/editor/presentation/editor_display_actions.dart';
+import 'package:devnotes/features/editor/presentation/widgets/tool_pickers.dart';
 
 /// Thực thi một công cụ soạn thảo theo id.
 ///
@@ -51,6 +54,16 @@ class EditorToolRunner {
         text.value = deleteLines(text.value);
       case 'find_replace':
         onFindReplace?.call();
+      case 'date_time':
+        _insert(DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()));
+      case 'table':
+        await _insertTable();
+      case 'code_block':
+        await _insertCodeBlock();
+      case 'symbols':
+        await showSymbolsSheet(context, onInsert: insertSymbol);
+      case 'template':
+        await _insertTemplate();
       // Nhóm Hiển thị khi được ghim lên thanh công cụ (ruling R2).
       case 'font':
         await display.cycleFont();
@@ -70,6 +83,41 @@ class EditorToolRunner {
         final item = markdownItemFor(id);
         if (item != null) _insertSyntax(item);
     }
+  }
+
+  /// Chèn ký tự tại con trỏ (hàng chip `symbols`).
+  void insertSymbol(String symbol) => _insert(symbol);
+
+  void _insert(String s, {bool asBlock = false}) {
+    text.value = insertAtCursor(text.value, s, asBlock: asBlock);
+  }
+
+  Future<void> _insertTable() async {
+    final l = context.l10n;
+    final picked = await showTablePicker(context);
+    if (picked == null || !context.mounted) return;
+    final headers = [
+      for (var i = 1; i <= picked.columns; i++) l.tableColumnHeader(i),
+    ];
+    _insert(buildTable(headers, picked.rows), asBlock: true);
+  }
+
+  Future<void> _insertCodeBlock() async {
+    final lang = await showCodeLanguagePicker(context);
+    if (lang == null || !context.mounted) return;
+    final v = insertAtCursor(text.value, buildCodeBlock(lang), asBlock: true);
+    // Con trỏ vào dòng trống giữa khối: trước "\n```" cuối.
+    text.value = TextEditingValue(
+      text: v.text,
+      selection: TextSelection.collapsed(offset: v.selection.baseOffset - 4),
+    );
+  }
+
+  Future<void> _insertTemplate() async {
+    final lang = Localizations.localeOf(context).languageCode;
+    final t = await showTemplatePicker(context, lang);
+    if (t == null || !context.mounted) return;
+    _insert(t.body, asBlock: true);
   }
 
   /// Chèn cú pháp Markdown quanh vùng chọn. Không có con trỏ thì chèn cuối.

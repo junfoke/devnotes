@@ -1018,4 +1018,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get findClose => 'Close find';
+
+  @override
+  String get tablePickerColumns => 'Columns';
+
+  @override
+  String get tablePickerRows => 'Rows';
+
+  @override
+  String get tablePickerInsert => 'Insert';
+
+  @override
+  String tableColumnHeader(int n) {
+    return 'Column $n';
+  }
+
+  @override
+  String get codeLanguageTitle => 'Code block language';
+
+  @override
+  String get templatePickerTitle => 'Note templates';
 }

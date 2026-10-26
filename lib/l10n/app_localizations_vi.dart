@@ -1007,4 +1007,24 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get findClose => 'Đóng tìm kiếm';
+
+  @override
+  String get tablePickerColumns => 'Số cột';
+
+  @override
+  String get tablePickerRows => 'Số hàng';
+
+  @override
+  String get tablePickerInsert => 'Chèn';
+
+  @override
+  String tableColumnHeader(int n) {
+    return 'Cột $n';
+  }
+
+  @override
+  String get codeLanguageTitle => 'Ngôn ngữ khối code';
+
+  @override
+  String get templatePickerTitle => 'Mẫu ghi chú';
 }
