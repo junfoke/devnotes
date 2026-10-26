@@ -130,6 +130,51 @@ void main() {
     });
   });
 
+  group('rewriteNoteLinks bảo thủ với khối code', () {
+    String rw(String s) => rewriteNoteLinks(s, from: 'a.md', to: 'b.md');
+
+    test('fence trong blockquote không bị sửa', () {
+      const s = '> ```\n> [A](a.md)\n> ```\n[A](a.md)';
+      expect(rw(s), '> ```\n> [A](a.md)\n> ```\n[A](b.md)');
+    });
+
+    test(
+      'fence thụt lề (trong danh sách, ≥4 khoảng trắng, tab) không bị sửa',
+      () {
+        const s =
+            '- mục\n    ```\n    [A](a.md)\n    ```\n'
+            '\t~~~\n\t[A](a.md)\n\t~~~\n[A](a.md)';
+        expect(
+          rw(s),
+          '- mục\n    ```\n    [A](a.md)\n    ```\n'
+          '\t~~~\n\t[A](a.md)\n\t~~~\n[A](b.md)',
+        );
+      },
+    );
+
+    test('khối code thụt 4 khoảng trắng / tab sau dòng trống không bị sửa', () {
+      const s =
+          'Đoạn\n\n    [A](a.md)\n\n    [A](a.md)\n\t[A](a.md)\n'
+          'Hết [A](a.md)';
+      expect(
+        rw(s),
+        'Đoạn\n\n    [A](a.md)\n\n    [A](a.md)\n\t[A](a.md)\n'
+        'Hết [A](b.md)',
+      );
+    });
+
+    test('khối code thụt lề ngay đầu file không bị sửa', () {
+      expect(rw('    [A](a.md)\n'), '    [A](a.md)\n');
+    });
+
+    test(
+      'dòng thụt lề nối tiếp đoạn văn (không sau dòng trống) vẫn được sửa',
+      () {
+        expect(rw('Đoạn\n    [A](a.md)'), 'Đoạn\n    [A](b.md)');
+      },
+    );
+  });
+
   group('linkedNoteFileName', () {
     test('link https và link không phải .md không phải link note', () {
       expect(linkedNoteFileName('https://x.com/a.md'), isNull);

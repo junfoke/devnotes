@@ -167,6 +167,43 @@ class NoteFileRepository {
     await File(note.filePath).writeAsString(raw);
   }
 
+  /// Applies [edit] to the body of the file at [filePath] — everything after a
+  /// valid frontmatter block, or the whole file if there is none / it is
+  /// broken — and writes the result back byte-for-byte: frontmatter (incl.
+  /// `updatedAt`), whitespace and line endings stay untouched. Returns `false`
+  /// without writing when [edit] changes nothing.
+  ///
+  /// The write is atomic: a temp file in the same directory is renamed over
+  /// the original, so a crash never leaves a half-written note. Used to
+  /// rewrite links in notes the user never opened — see DECISIONS.md, "Link
+  /// giữa các note và tự sửa link khi đổi tên" (2026-10-25).
+  Future<bool> rewriteBody(
+    String filePath,
+    String Function(String body) edit,
+  ) async {
+    final raw = await File(filePath).readAsString();
+    final start = FrontmatterParser.bodyStart(raw);
+    final body = raw.substring(start);
+    final newBody = edit(body);
+    if (newBody == body) return false;
+
+    final tmp = File(
+      p.join(p.dirname(filePath), '.${p.basename(filePath)}.rewrite.tmp'),
+    );
+    try {
+      await tmp.writeAsString(raw.substring(0, start) + newBody, flush: true);
+      await tmp.rename(filePath);
+    } catch (_) {
+      try {
+        if (tmp.existsSync()) await tmp.delete();
+      } catch (_) {
+        // Không dọn được file tạm thì thôi — bản gốc vẫn nguyên vẹn.
+      }
+      rethrow;
+    }
+    return true;
+  }
+
   /// Deletes the file at [filePath].
   Future<void> deleteNote(String filePath) async {
     await File(filePath).delete();

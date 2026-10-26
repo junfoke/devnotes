@@ -158,6 +158,77 @@ void main() {
         expect(File(b.filePath).existsSync(), isFalse);
       },
     );
+
+    test(
+      'note chứa link được ghi nguyên văn từng byte, chỉ đổi đích link '
+      '(frontmatter lạ, không frontmatter, CRLF, dòng trống đầu/cuối)',
+      () async {
+        final b = await repo.createNote(title: 'B', tags: const []);
+        // (i) README không frontmatter (file của tool khác).
+        const readme = '# Dự án\n\nXem [B](./b.md#cai-dat) và b.md.\n';
+        // (ii) Frontmatter có khóa lạ + CRLF.
+        const extra =
+            '---\r\ntitle: "Ghi chú"\r\naliases: [x]\r\n'
+            'updatedAt: "2020-01-01T00:00:00.000Z"\r\nauthor: tri\r\n---\r\n'
+            '\r\nLink [B](b.md "t")\r\n```\r\n[B](b.md)\r\n```\r\n';
+        // (iii) Dòng trống đầu thân và xuống dòng cuối file.
+        const padded = '---\ntitle: "P"\ntags: []\n---\n\n\n\n[B](b.md)\n\n';
+        // (iv) Frontmatter hỏng → cả file là thân, không chèn khối mới.
+        const broken = '---\ntitle: [chưa đóng\n---\n[B](b.md)\n';
+        final files = {
+          'readme.md': readme,
+          'extra.md': extra,
+          'padded.md': padded,
+          'broken-fm.md': broken,
+          'khong-lien-quan.md': '---\ntitle: "K"\n---\n[C](c.md)\n',
+        };
+        final stamps = <String, DateTime>{};
+        for (final e in files.entries) {
+          final f = File(p.join(dir.path, e.key))..writeAsStringSync(e.value);
+          stamps[e.key] = f.lastModifiedSync();
+        }
+
+        final result = await container
+            .read(noteActionsProvider)
+            .rename(b.filePath, 'Moi');
+
+        expect(result.failedFiles, isEmpty);
+        String read(String name) =>
+            File(p.join(dir.path, name)).readAsStringSync();
+        expect(
+          read('readme.md'),
+          '# Dự án\n\nXem [B](./moi.md#cai-dat) và b.md.\n',
+        );
+        expect(
+          read('extra.md'),
+          '---\r\ntitle: "Ghi chú"\r\naliases: [x]\r\n'
+          'updatedAt: "2020-01-01T00:00:00.000Z"\r\nauthor: tri\r\n---\r\n'
+          '\r\nLink [B](moi.md "t")\r\n```\r\n[B](b.md)\r\n```\r\n',
+        );
+        expect(
+          read('padded.md'),
+          '---\ntitle: "P"\ntags: []\n---\n\n\n\n[B](moi.md)\n\n',
+        );
+        expect(
+          read('broken-fm.md'),
+          '---\ntitle: [chưa đóng\n---\n[B](moi.md)\n',
+        );
+        // Note không đổi nội dung thì không bị ghi lại.
+        expect(read('khong-lien-quan.md'), files['khong-lien-quan.md']);
+        expect(
+          File(p.join(dir.path, 'khong-lien-quan.md')).lastModifiedSync(),
+          stamps['khong-lien-quan.md'],
+        );
+        // Không sót file tạm của lần ghi nguyên tử.
+        expect(
+          dir
+              .listSync()
+              .map((f) => p.basename(f.path))
+              .where((n) => n.endsWith('.tmp')),
+          isEmpty,
+        );
+      },
+    );
   });
 
   group('mở link note từ preview', () {

@@ -69,6 +69,15 @@ class FrontmatterParser {
     );
   }
 
+  /// Offset where the body of [raw] starts, using the same rule as [parse]:
+  /// right after a frontmatter block whose YAML parses, otherwise 0 (no or
+  /// broken frontmatter → the whole file is body).
+  static int bodyStart(String raw) {
+    final match = _frontmatterRegex.firstMatch(raw);
+    if (match == null || _tryLoadYaml(match.group(1)!) == null) return 0;
+    return match.end;
+  }
+
   static String serialize({
     required String title,
     required List<String> tags,

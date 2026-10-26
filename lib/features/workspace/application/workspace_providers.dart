@@ -69,11 +69,13 @@ class NoteActions {
     }
     for (final path in paths) {
       try {
-        final note = await repo.readNote(path);
-        final updated = rewriteNoteLinks(note.content, from: from, to: to);
-        // Không đổi gì thì không ghi — tránh nhiễu khi sync.
-        if (updated == note.content) continue;
-        await repo.saveNote(note.copyWith(content: updated));
+        // Ghi nguyên văn từng byte, chỉ đổi đích link: không serialize lại
+        // frontmatter, không bump updatedAt, không trim. Không đổi gì thì
+        // không ghi — tránh nhiễu khi sync.
+        await repo.rewriteBody(
+          path,
+          (body) => rewriteNoteLinks(body, from: from, to: to),
+        );
       } catch (_) {
         failed.add(path);
       }

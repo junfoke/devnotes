@@ -77,6 +77,23 @@ class InMemoryNoteRepository extends NoteFileRepository {
     savedPaths.add(note.filePath);
   }
 
+  /// Sửa thân note tại chỗ (không đổi tiêu đề, tag, ngày) — như bản thật.
+  @override
+  Future<bool> rewriteBody(
+    String filePath,
+    String Function(String body) edit,
+  ) async {
+    final note = await readNote(filePath);
+    final updated = edit(note.content);
+    if (updated == note.content) return false;
+    if (failOnSave || unwritable.contains(filePath)) {
+      throw const FileSystemException('No space left on device');
+    }
+    notes[filePath] = note.copyWith(content: updated);
+    savedPaths.add(filePath);
+    return true;
+  }
+
   @override
   Future<void> deleteNote(String filePath) async {
     notes.remove(filePath);

@@ -46,8 +46,10 @@ String? linkedNoteFileName(String href) {
 ///
 /// Chỉ đụng đúng phần tên file trong đích link: giữ tiền tố `./`, `#anchor`,
 /// title `"…"` và dạng `<…>`. Không đụng link trong khối code (``` hoặc ~~~,
-/// kể cả khối chưa đóng) và trong code giữa dòng, không đụng chữ thường trùng
-/// tên file. Không có gì để đổi thì trả về đúng [content].
+/// kể cả khối chưa đóng, thụt lề hay trong blockquote; khối thụt 4 khoảng
+/// trắng / tab) và trong code giữa dòng, không đụng chữ thường trùng tên
+/// file. Link kiểu tham chiếu `[x]: a.md` không được sửa. Không có gì để đổi
+/// thì trả về đúng [content].
 String rewriteNoteLinks(
   String content, {
   required String from,
@@ -57,6 +59,10 @@ String rewriteNoteLinks(
   var changed = false;
   String? fenceChar;
   var fenceLength = 0;
+  // Khối code thụt lề: dòng thụt ≥4 khoảng trắng / tab sau dòng trống (hoặc
+  // đầu file) hay nối tiếp một dòng code thụt lề.
+  var prevBlank = true;
+  var inIndented = false;
 
   for (var i = 0; i < lines.length; i++) {
     final line = lines[i];
@@ -69,14 +75,27 @@ String rewriteNoteLinks(
           fence[1]!.length >= fenceLength &&
           line.substring(fence.end).trim().isEmpty) {
         fenceChar = null;
+        prevBlank = false;
       }
       continue;
     }
     if (fence != null) {
       fenceChar = fence[1]![0];
       fenceLength = fence[1]!.length;
+      inIndented = false;
       continue;
     }
+    if (line.trim().isEmpty) {
+      prevBlank = true;
+      continue;
+    }
+    if (_indented.hasMatch(line) && (prevBlank || inIndented)) {
+      inIndented = true;
+      prevBlank = false;
+      continue;
+    }
+    inIndented = false;
+    prevBlank = false;
     final rewritten = _rewriteLine(line, from, to);
     if (rewritten != line) {
       lines[i] = rewritten;
@@ -86,7 +105,12 @@ String rewriteNoteLinks(
   return changed ? lines.join('\n') : content;
 }
 
-final _fence = RegExp(r'^ {0,3}(`{3,}|~{3,})');
+/// Fence mở/đóng khối code. Cố ý bảo thủ: chấp nhận mọi khoảng trắng và dấu
+/// `>` (blockquote) phía trước — coi nhầm là code chỉ để sót một link chưa
+/// sửa, còn sửa nhầm trong code thì im lặng làm hỏng dữ liệu.
+final _fence = RegExp(r'^[ \t>]*(`{3,}|~{3,})');
+
+final _indented = RegExp(r'^( {4}|\t)');
 
 String _rewriteLine(String line, String from, String to) {
   final out = StringBuffer();
