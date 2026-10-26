@@ -16,11 +16,15 @@ class EditorToolRunner {
   final BuildContext context;
   final WidgetRef ref;
 
+  /// Hiện thanh tìm & thay thế của editor (`find_replace`).
+  final VoidCallback? onFindReplace;
+
   EditorToolRunner({
     required this.text,
     required this.undo,
     required this.context,
     required this.ref,
+    this.onFindReplace,
   });
 
   /// Đổi cài đặt hiển thị — dùng chung với nhóm Hiển thị của bảng công cụ.
@@ -37,6 +41,16 @@ class EditorToolRunner {
         text.value = indentLines(text.value);
       case 'outdent':
         text.value = outdentLines(text.value);
+      case 'move_up':
+        text.value = moveLines(text.value, up: true);
+      case 'move_down':
+        text.value = moveLines(text.value, up: false);
+      case 'duplicate_line':
+        text.value = duplicateLines(text.value);
+      case 'delete_line':
+        text.value = deleteLines(text.value);
+      case 'find_replace':
+        onFindReplace?.call();
       // Nhóm Hiển thị khi được ghim lên thanh công cụ (ruling R2).
       case 'font':
         await display.cycleFont();

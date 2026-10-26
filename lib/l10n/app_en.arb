@@ -486,5 +486,12 @@
   "editorToolsDone": "Done",
   "editorToolsPin": "Pin",
   "editorToolsShowInSheet": "Show in sheet",
-  "editorToolsCustomizeHint": "Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back."
+  "editorToolsCustomizeHint": "Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.",
+  "findQueryHint": "Find",
+  "findReplacementHint": "Replace with",
+  "findPrevious": "Previous match",
+  "findNext": "Next match",
+  "findReplaceOne": "Replace",
+  "findReplaceAll": "Replace all",
+  "findClose": "Close find"
 }

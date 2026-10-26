@@ -1675,6 +1675,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.'**
   String get editorToolsCustomizeHint;
+
+  /// No description provided for @findQueryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get findQueryHint;
+
+  /// No description provided for @findReplacementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with'**
+  String get findReplacementHint;
+
+  /// No description provided for @findPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get findPrevious;
+
+  /// No description provided for @findNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get findNext;
+
+  /// No description provided for @findReplaceOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get findReplaceOne;
+
+  /// No description provided for @findReplaceAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get findReplaceAll;
+
+  /// No description provided for @findClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close find'**
+  String get findClose;
 }
 
 class _AppLocalizationsDelegate

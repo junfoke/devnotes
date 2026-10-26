@@ -276,5 +276,12 @@
   "editorToolsDone": "Xong",
   "editorToolsPin": "Ghim",
   "editorToolsShowInSheet": "Hiện trong bảng",
-  "editorToolsCustomizeHint": "Ghim công cụ lên thanh công cụ, hoặc ẩn khỏi bảng này. Mục bị ẩn vẫn liệt kê ở đây để bật lại."
+  "editorToolsCustomizeHint": "Ghim công cụ lên thanh công cụ, hoặc ẩn khỏi bảng này. Mục bị ẩn vẫn liệt kê ở đây để bật lại.",
+  "findQueryHint": "Tìm",
+  "findReplacementHint": "Thay bằng",
+  "findPrevious": "Kết quả trước",
+  "findNext": "Kết quả sau",
+  "findReplaceOne": "Thay",
+  "findReplaceAll": "Thay hết",
+  "findClose": "Đóng tìm kiếm"
 }

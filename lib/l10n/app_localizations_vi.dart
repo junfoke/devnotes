@@ -986,4 +986,25 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get editorToolsCustomizeHint =>
       'Ghim công cụ lên thanh công cụ, hoặc ẩn khỏi bảng này. Mục bị ẩn vẫn liệt kê ở đây để bật lại.';
+
+  @override
+  String get findQueryHint => 'Tìm';
+
+  @override
+  String get findReplacementHint => 'Thay bằng';
+
+  @override
+  String get findPrevious => 'Kết quả trước';
+
+  @override
+  String get findNext => 'Kết quả sau';
+
+  @override
+  String get findReplaceOne => 'Thay';
+
+  @override
+  String get findReplaceAll => 'Thay hết';
+
+  @override
+  String get findClose => 'Đóng tìm kiếm';
 }

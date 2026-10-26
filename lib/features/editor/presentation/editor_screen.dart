@@ -15,6 +15,7 @@ import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.d
 import 'package:devnotes/features/editor/presentation/editor_tool_runner.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_toolbar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_tools_sheet.dart';
+import 'package:devnotes/features/editor/presentation/widgets/find_replace_bar.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
@@ -63,6 +64,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   /// Đang hỏi user về thay đổi từ bên ngoài — không hỏi chồng thêm lần nữa.
   bool _askingExternalChange = false;
+
+  /// Đang hiện thanh tìm & thay thế (công cụ `find_replace`).
+  bool _showFind = false;
 
   late final StateController<int> _openEditors;
   final _toolbarKey = GlobalKey();
@@ -495,6 +499,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     undo: _undoController,
     context: context,
     ref: ref,
+    onFindReplace: () {
+      if (mounted) setState(() => _showFind = true);
+    },
   );
 
   void _runTool(String id) => _toolRunner.run(id);
@@ -616,6 +623,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                   ],
                 ),
               ),
+              if (_currentPage == 0 && _showFind)
+                FindReplaceBar(
+                  text: _textController,
+                  onClose: () => setState(() => _showFind = false),
+                ),
               if (_currentPage == 0)
                 EditorToolbar(
                   key: _toolbarKey,

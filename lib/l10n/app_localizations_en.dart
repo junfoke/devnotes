@@ -997,4 +997,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editorToolsCustomizeHint =>
       'Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.';
+
+  @override
+  String get findQueryHint => 'Find';
+
+  @override
+  String get findReplacementHint => 'Replace with';
+
+  @override
+  String get findPrevious => 'Previous match';
+
+  @override
+  String get findNext => 'Next match';
+
+  @override
+  String get findReplaceOne => 'Replace';
+
+  @override
+  String get findReplaceAll => 'Replace all';
+
+  @override
+  String get findClose => 'Close find';
 }
