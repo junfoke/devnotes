@@ -18,6 +18,8 @@ import 'in_memory_note_repository.dart';
 import 'package:devnotes/l10n/app_localizations.dart';
 
 void main() {
+  group('editor nằm dưới editor khác', _backgroundEditorTests);
+
   late InMemoryNoteRepository repo;
   late NoteFile note;
   late ProviderContainer container;
@@ -180,5 +182,81 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text('ban moi sau khi sync'), findsOneWidget);
+  });
+}
+
+// Editor A vẫn nằm dưới editor B (mở note qua link). Trạng thái lưu là một
+// provider chung, nên trước đây A tưởng mình "chưa lưu" theo B: app xuống nền
+// hay rời A đều ghi lại file của A (đổi updatedAt, nhiễu sync) và có thể bật
+// hộp thoại "thay đổi bên ngoài" cho một note A không hề sửa.
+void _backgroundEditorTests() {
+  late InMemoryNoteRepository repo;
+  late NoteFile a;
+  late NoteFile b;
+  late ProviderContainer container;
+  final navKey = GlobalKey<NavigatorState>();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'tooltip_editor': true});
+    repo = InMemoryNoteRepository();
+    a = repo.seed(fileName: 'a.md', content: 'note a');
+    b = repo.seed(fileName: 'b.md', content: 'note b');
+    container = ProviderContainer(overrides: [
+      noteFileRepositoryProvider.overrideWith((ref) async => repo),
+    ]);
+  });
+
+  tearDown(() => container.dispose());
+
+  Future<void> pumpAThenB(WidgetTester tester) async {
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        navigatorKey: navKey,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('vi'),
+        theme: AppTheme.light(),
+        home: const Scaffold(body: Text('home')),
+      ),
+    ));
+    navKey.currentState!.push(MaterialPageRoute<void>(
+        builder: (_) => EditorScreen(filePath: a.filePath)));
+    await tester.pumpAndSettle();
+    navKey.currentState!.push(MaterialPageRoute<void>(
+        builder: (_) => EditorScreen(filePath: b.filePath)));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('app xuống nền chỉ lưu editor có sửa, không ghi lại note bên dưới',
+      (tester) async {
+    await pumpAThenB(tester);
+    await tester.enterText(find.byType(TextField).first, 'b da sua');
+    await tester.pump();
+    // Note A vừa được sync kéo bản mới về: A không sửa gì nên không được hỏi.
+    repo.notes[a.filePath] = a.copyWith(content: 'a ban moi');
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pumpAndSettle();
+
+    expect(repo.savedPaths, [b.filePath]);
+    expect(repo.notes[a.filePath]!.content, 'a ban moi');
+    expect(find.text('Ghi chú đã thay đổi bên ngoài'), findsNothing);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
+
+  testWidgets('rời editor không sửa gì thì không ghi file dù trạng thái chung '
+      'đang "chưa lưu"', (tester) async {
+    await pumpAThenB(tester);
+    container.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    container.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('home'), findsOneWidget);
+    expect(repo.savedPaths, isEmpty);
   });
 }

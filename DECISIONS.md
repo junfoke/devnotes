@@ -28,6 +28,11 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 ---
 
+## 2026-10-26 — Editor không sửa gì thì không ghi file
+**Chốt:** Mỗi editor tự biết mình có sửa hay chưa (chữ khác bản đọc/ghi lần cuối, so nguyên văn, hoặc có tag vừa sửa) — không dựa vào trạng thái lưu dùng chung. App xuống nền, rời editor, chia sẻ, mở link: editor không sửa gì thì không đọc lại, không ghi file và không hỏi "thay đổi bên ngoài". Bổ sung cho mục 2026-10-25 "Editor không ghi đè thay đổi từ bên ngoài".
+**Vì:** Mở note qua link thì editor cũ vẫn nằm bên dưới; trạng thái "chưa lưu" của editor trên làm editor dưới ghi lại file không hề sửa (đổi `updatedAt`, nhiễu sync), bật hộp thoại cho note không sửa, và còn chiếm lượt lưu khiến editor trên không được lưu khi app xuống nền.
+**Test:** `test/features/editor/editor_external_change_test.dart` (nhóm "editor nằm dưới editor khác")
+
 ## 2026-10-26 — Chèn khối (bảng, khối code, mẫu) luôn cách chữ một dòng trống
 **Chốt:** Chèn bảng / khối code / mẫu note: nếu phía trước (hoặc phía sau) khối còn chữ thì giữa khối và chữ đó có đúng một dòng trống — tự thêm `\n` cho đủ, không thêm khi đã có dòng trống (dòng chỉ có khoảng trắng tính là trống); đầu/cuối note không thêm gì. Con trỏ nằm ngay sau khối. Thay cho cách cũ chỉ xuống dòng một lần.
 **Vì:** Markdown (GFM) nuốt dòng chữ dính ngay sau bảng thành một hàng của bảng, bảng ngay sau mục danh sách thành phần nối tiếp của mục, `---` sau đoạn văn thành tiêu đề — note lưu ra hiển thị sai trên GitHub và trong preview. Phát hiện khi review cuối nhánh công cụ soạn thảo.

@@ -134,13 +134,27 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     _fieldKey = GlobalKey();
   }
 
+  /// Editor này có thay đổi chưa ghi: chữ khác bản đọc/ghi lần cuối hoặc tag
+  /// vừa sửa. So nguyên văn (không trim) — [_loadedNote] luôn được gán đúng
+  /// chữ đang hiện khi nạp/ghi, nên không có chênh lệch giả, còn thêm/bớt
+  /// khoảng trắng cuối vẫn được tính là sửa.
+  ///
+  /// Không dựa vào [saveStatusProvider]: provider đó dùng chung cho mọi
+  /// editor, editor nằm dưới (mở note khác qua link) sẽ tưởng mình chưa lưu
+  /// theo editor bên trên rồi ghi lại file không hề sửa.
+  bool get _dirty {
+    final note = _loadedNote;
+    if (note == null) return false;
+    return _textController.text != note.content || _pendingTags != null;
+  }
+
   /// App xuống nền (chuyển app, tắt màn hình) có thể bị hệ điều hành giết
   /// bất cứ lúc nào — lưu ngay thay vì chờ hết debounce.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if ((state == AppLifecycleState.paused ||
             state == AppLifecycleState.inactive) &&
-        ref.read(saveStatusProvider) == SaveStatus.unsaved) {
+        _dirty) {
       _save();
     }
   }
@@ -148,10 +162,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   /// Rời editor (nút Back trên app bar hoặc Back hệ thống): lưu trước. Lưu lỗi
   /// hoặc đang chờ user quyết về thay đổi bên ngoài thì ở lại.
   Future<void> _leave() async {
-    final status = ref.read(saveStatusProvider);
-    if (_loadedNote != null && status != SaveStatus.saved && !await _save()) {
-      return;
-    }
+    if (_dirty && !await _save()) return;
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -168,7 +179,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
   }
 
   /// Ghi nội dung xuống file. Trả về `false` nếu không ghi — ghi lỗi (B-13:
-  /// báo user, không nuốt lỗi) hoặc file đã bị đổi từ bên ngoài.
+  /// báo user, không nuốt lỗi) hoặc file đã bị đổi từ bên ngoài. Không có gì
+  /// thay đổi ([_dirty] sai) thì trả về `true` mà không đọc hay ghi file.
   ///
   /// [_loadedNote] là bản trên đĩa lần cuối editor đọc/ghi. Trước khi ghi,
   /// so với file hiện tại: khác nhau nghĩa là sync hay app khác vừa sửa file
@@ -178,6 +190,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     if (!mounted || _loadedNote == null || _deleted) return false;
     if (_askingExternalChange) return false;
     _debounce?.cancel();
+    if (!_dirty) {
+      ref.read(saveStatusProvider.notifier).state = SaveStatus.saved;
+      return true;
+    }
     ref.read(saveStatusProvider.notifier).state = SaveStatus.saving;
     final NoteFile updated;
     try {
