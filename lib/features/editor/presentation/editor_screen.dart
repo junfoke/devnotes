@@ -13,6 +13,7 @@ import 'package:devnotes/features/editor/domain/checklist_toggle.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/markdown_preview.dart';
 import 'package:devnotes/features/editor/presentation/editor_tool_runner.dart';
+import 'package:devnotes/features/editor/presentation/highlight_text_controller.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_toolbar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_tools_sheet.dart';
 import 'package:devnotes/features/editor/presentation/widgets/find_replace_bar.dart';
@@ -35,7 +36,7 @@ class EditorScreen extends ConsumerStatefulWidget {
 class _EditorScreenState extends ConsumerState<EditorScreen>
     with WidgetsBindingObserver {
   final _pageController = PageController();
-  final _textController = TextEditingController();
+  final _textController = HighlightTextEditingController();
   final _undoController = UndoHistoryController();
 
   /// Đổi mỗi khi nạp nội dung từ đĩa (mở note, tải lại bản bên ngoài) để
@@ -506,6 +507,25 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
 
   void _runTool(String id) => _toolRunner.run(id);
 
+  /// Cuộn ô soạn tới [range] mà không lấy focus (thanh tìm đang giữ focus).
+  /// Tắt tự xuống dòng thì vùng cuộn ngang bên ngoài cuộn theo hết mức có thể.
+  void _revealInEditor(TextRange range) {
+    EditableTextState? editable;
+    void visit(Element e) {
+      if (e is StatefulElement && e.state is EditableTextState) {
+        editable = e.state as EditableTextState;
+      } else {
+        e.visitChildren(visit);
+      }
+    }
+
+    _fieldKey.currentContext?.visitChildElements(visit);
+    // Hiện cuối trước rồi đầu sau: đoạn dài hơn khung nhìn thì ít nhất thấy
+    // phần đầu.
+    editable?.bringIntoView(TextPosition(offset: range.end));
+    editable?.bringIntoView(TextPosition(offset: range.start));
+  }
+
   /// Ô soạn. Tắt tự xuống dòng thì đặt trong vùng cuộn ngang, rộng ít nhất
   /// bằng màn hình và rộng theo dòng dài nhất — dòng dài không bị bẻ.
   Widget _buildTextField(EditorPreferences? editorPrefs) {
@@ -627,6 +647,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                 FindReplaceBar(
                   text: _textController,
                   onClose: () => setState(() => _showFind = false),
+                  onReveal: _revealInEditor,
                 ),
               if (_currentPage == 0)
                 EditorToolbar(

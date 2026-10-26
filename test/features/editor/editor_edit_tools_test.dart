@@ -73,6 +73,46 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  EditableTextState editableState(WidgetTester tester) =>
+      tester.state<EditableTextState>(
+        find.descendant(
+          of: find.byType(TextField).first,
+          matching: find.byType(EditableText),
+        ),
+      );
+
+  /// Các đoạn chữ có màu nền (được tô) trong chữ ô soạn đang vẽ.
+  List<TextSpan> highlightedSpans(WidgetTester tester) {
+    final out = <TextSpan>[];
+    editableState(tester).renderEditable.text!.visitChildren((span) {
+      if (span is TextSpan && span.style?.backgroundColor != null) {
+        out.add(span);
+      }
+      return true;
+    });
+    return out;
+  }
+
+  /// Focus vẫn ở ô tìm (không chuyển sang ô soạn).
+  bool findFieldHasFocus(WidgetTester tester) => tester
+      .widget<EditableText>(
+        find.descendant(
+          of: find.byKey(const Key('find-query')),
+          matching: find.byType(EditableText),
+        ),
+      )
+      .focusNode
+      .hasFocus;
+
+  ScrollPosition editorScroll(WidgetTester tester) => tester
+      .state<ScrollableState>(
+        find.descendant(
+          of: find.byType(TextField).first,
+          matching: find.byType(Scrollable),
+        ),
+      )
+      .position;
+
   Future<void> flushAutosave(WidgetTester tester) async {
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
@@ -130,6 +170,67 @@ void main() {
     await t.tap(find.byTooltip(l.findClose));
     await t.pumpAndSettle();
     expect(find.byType(FindReplaceBar), findsNothing);
+  });
+
+  // Ruling R8: ô tìm giữ focus nên vùng chọn của ô soạn không được tô — kết
+  // quả phải được tô thẳng trong chữ của note, không thì user bấm "Thay" mà
+  // không thấy chữ nào sẽ bị thay.
+  testWidgets('kết quả được tô trong ô soạn, kết quả đang chọn tô đậm hơn; '
+      'đóng thanh thì hết tô', (t) async {
+    await pumpEditor(t, 'x y x');
+    await runFromSheet(t, l.editorToolFindReplace);
+    await t.enterText(find.byKey(const Key('find-query')), 'x');
+    await t.pump();
+
+    final spans = highlightedSpans(t);
+    expect(spans.map((s) => s.text), ['x', 'x']);
+    final current = spans[0].style!.backgroundColor;
+    final other = spans[1].style!.backgroundColor;
+    expect(current, isNotNull);
+    expect(other, isNotNull);
+    expect(current, isNot(other));
+    // Ô tìm vẫn giữ focus, nội dung note không đổi.
+    expect(findFieldHasFocus(t), isTrue);
+    expect(editor(t).text, 'x y x');
+
+    await t.tap(find.byTooltip(l.findNext));
+    await t.pump();
+    final after = highlightedSpans(t);
+    expect(after[0].style!.backgroundColor, other);
+    expect(after[1].style!.backgroundColor, current);
+
+    await t.tap(find.byTooltip(l.findClose));
+    await t.pumpAndSettle();
+    expect(highlightedSpans(t), isEmpty);
+    expect(container.read(saveStatusProvider), SaveStatus.saved);
+  });
+
+  testWidgets('chuyển tới kết quả ở cuối note dài thì ô soạn cuộn tới đó', (
+    t,
+  ) async {
+    final lines = [for (var i = 0; i < 300; i++) 'dong $i', 'dich den'];
+    await pumpEditor(t, lines.join('\n'));
+    // Nạp xong con trỏ ở cuối — đưa về đầu để thấy việc cuộn.
+    editorScroll(t).jumpTo(0);
+    await t.pump();
+    await runFromSheet(t, l.editorToolFindReplace);
+    editorScroll(t).jumpTo(0);
+    await t.pump();
+    expect(editorScroll(t).pixels, 0);
+
+    await t.enterText(find.byKey(const Key('find-query')), 'dich den');
+    await t.pumpAndSettle();
+
+    expect(editorScroll(t).pixels, greaterThan(0));
+    // Kết quả nằm trong khung nhìn của ô soạn.
+    final editable = editableState(t).renderEditable;
+    final caret = editable.getLocalRectForCaret(
+      TextPosition(offset: editor(t).text.indexOf('dich den')),
+    );
+    expect(caret.top, greaterThanOrEqualTo(0));
+    // Sai số dưới 1px do chiều cao dòng lẻ.
+    expect(caret.bottom, lessThanOrEqualTo(editable.size.height + 1));
+    expect(findFieldHasFocus(t), isTrue);
   });
 
   testWidgets('thay thay chỗ đang chọn rồi sang kết quả kế tiếp', (t) async {

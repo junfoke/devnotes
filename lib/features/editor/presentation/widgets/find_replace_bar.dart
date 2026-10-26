@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/domain/text_ops.dart';
+import 'package:devnotes/features/editor/presentation/highlight_text_controller.dart';
 
 /// Thanh tìm & thay thế trong note, nằm ngay trên thanh công cụ.
 ///
@@ -9,12 +10,24 @@ import 'package:devnotes/features/editor/domain/text_ops.dart';
 /// vùng chọn của [text]; mọi lần thay chỉ gán `text.value` để tự lưu và lớp
 /// chặn ghi đè thay đổi bên ngoài vẫn bắt được. "Thay hết" là một lần gán
 /// duy nhất → hoàn tác một lần là về nội dung cũ.
+///
+/// Ô tìm giữ focus nên ô soạn không tô vùng chọn: mọi kết quả được tô thẳng
+/// trong chữ qua [text] (kết quả đang chọn tô đậm hơn) và [onReveal] cuộn ô
+/// soạn tới kết quả đang chọn (ruling R8). Đóng thanh thì hết tô.
 class FindReplaceBar extends StatefulWidget {
-  const FindReplaceBar({super.key, required this.text, required this.onClose});
+  const FindReplaceBar({
+    super.key,
+    required this.text,
+    required this.onClose,
+    this.onReveal,
+  });
 
-  /// Controller của ô soạn.
-  final TextEditingController text;
+  /// Controller của ô soạn. Không đổi trong suốt đời thanh.
+  final HighlightTextEditingController text;
   final VoidCallback onClose;
+
+  /// Cuộn ô soạn để thấy đoạn chữ này.
+  final ValueChanged<TextRange>? onReveal;
 
   @override
   State<FindReplaceBar> createState() => _FindReplaceBarState();
@@ -41,17 +54,15 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
   @override
   void didUpdateWidget(FindReplaceBar old) {
     super.didUpdateWidget(old);
-    if (old.text != widget.text) {
-      old.text.removeListener(_onEditorChanged);
-      widget.text.addListener(_onEditorChanged);
-      _lastText = widget.text.text;
-      _recompute();
-    }
+    assert(old.text == widget.text, 'Không hỗ trợ đổi controller ô soạn.');
   }
 
   @override
   void dispose() {
     widget.text.removeListener(_onEditorChanged);
+    // Đang tháo cây widget — không dựng lại ô soạn lúc này; EditorScreen tự
+    // dựng lại sau khi ẩn thanh (đóng thanh, sang trang preview).
+    widget.text.clearHighlights(notify: false);
     _query.dispose();
     _replacement.dispose();
     super.dispose();
@@ -78,6 +89,7 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
       _matches = findAll(widget.text.text, _query.text);
       _current = -1;
     });
+    _syncHighlights();
   }
 
   void _select(int index) {
@@ -87,6 +99,28 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
       baseOffset: m.start,
       extentOffset: m.end,
     );
+    _syncHighlights();
+    widget.onReveal?.call(m);
+  }
+
+  /// Tô mọi kết quả trong ô soạn, kết quả đang chọn đậm hơn.
+  void _syncHighlights() {
+    if (_matches.isEmpty) {
+      widget.text.clearHighlights();
+      return;
+    }
+    final colors = Theme.of(context).appColors;
+    widget.text.setHighlights(
+      _matches,
+      current: _current,
+      color: colors.warning.withValues(alpha: 0.25),
+      currentColor: colors.accent.withValues(alpha: 0.45),
+    );
+  }
+
+  void _close() {
+    widget.text.clearHighlights();
+    widget.onClose();
   }
 
   /// Vị trí con trỏ để tìm kết quả kế tiếp khi chưa chọn kết quả nào.
@@ -199,7 +233,7 @@ class _FindReplaceBarState extends State<FindReplaceBar> {
                 ),
                 IconButton(
                   tooltip: l.findClose,
-                  onPressed: widget.onClose,
+                  onPressed: _close,
                   icon: const Icon(Icons.close),
                 ),
               ],
