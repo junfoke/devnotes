@@ -85,7 +85,7 @@ void main() {
 
     expect(
       editor(t).text,
-      'abc\n| Cột 1 | Cột 2 | Cột 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |',
+      'abc\n\n| Cột 1 | Cột 2 | Cột 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |',
     );
   });
 

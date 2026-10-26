@@ -28,6 +28,11 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 ---
 
+## 2026-10-26 — Chèn khối (bảng, khối code, mẫu) luôn cách chữ một dòng trống
+**Chốt:** Chèn bảng / khối code / mẫu note: nếu phía trước (hoặc phía sau) khối còn chữ thì giữa khối và chữ đó có đúng một dòng trống — tự thêm `\n` cho đủ, không thêm khi đã có dòng trống (dòng chỉ có khoảng trắng tính là trống); đầu/cuối note không thêm gì. Con trỏ nằm ngay sau khối. Thay cho cách cũ chỉ xuống dòng một lần.
+**Vì:** Markdown (GFM) nuốt dòng chữ dính ngay sau bảng thành một hàng của bảng, bảng ngay sau mục danh sách thành phần nối tiếp của mục, `---` sau đoạn văn thành tiêu đề — note lưu ra hiển thị sai trên GitHub và trong preview. Phát hiện khi review cuối nhánh công cụ soạn thảo.
+**Test:** `test/features/editor/text_ops_test.dart`
+
 ## 2026-10-25 — Link giữa các note và tự sửa link khi đổi tên
 **Chốt:** Link tới note khác ghi Markdown chuẩn tương đối `[Tiêu đề](ten-file.md)` (`[`/`]` trong tiêu đề escape `\`, khoảng trắng tên file `%20`); preview bấm link `.md` tương đối thì mở note trong app. Đổi tên note làm đổi tên file thì sau khi đổi tên xong, duyệt mọi note top-level (kể cả chính nó), chỉ đổi phần tên file trong đích `](…)` (giữ `./`, `#anchor`, title); không đụng link trong khối code (bảo thủ: fence thụt lề/trong blockquote, khối thụt 4 khoảng trắng/tab, code giữa dòng) và chữ thường; link kiểu tham chiếu `[x]: a.md` và link vào thư mục con không được sửa. Ghi bằng `rewriteBody`: giữ nguyên từng byte ngoài đích link — frontmatter (kể cả khóa lạ, `updatedAt`), file không/hỏng frontmatter, khoảng trắng, xuống dòng CRLF — ghi nguyên tử (file tạm rồi rename) và chỉ ghi khi nội dung đổi; note đọc/ghi lỗi thì bỏ qua và báo; đổi tên lỗi thì không đụng note nào; tên file không đổi thì không duyệt.
 **Vì:** Link đọc được trên GitHub và không bao giờ gãy khi đổi tên (giống Obsidian); đây là thao tác ghi vào NHIỀU file của user nên chỉ được đổi đúng đích link, không ghi thừa (nhiễu sync), và một note hỏng không được chặn cả lượt. User chọn 2026-10-25 (spec mục 6, 6b).

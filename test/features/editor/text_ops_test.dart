@@ -81,20 +81,53 @@ void main() {
     expect(r.selection, const TextSelection.collapsed(offset: 2));
   });
 
-  test('chèn dạng khối tự thêm xuống dòng khi không ở đầu dòng', () {
-    expect(insertAtCursor(_v('ab', 2), '---', asBlock: true).text, 'ab\n---');
-    expect(insertAtCursor(_v('ab\n', 3), '---', asBlock: true).text, 'ab\n---');
+  // Khối (bảng, mẫu, khối code) luôn cách chữ phía trước một dòng trống:
+  // không thì bảng sau một mục danh sách thành phần nối tiếp của mục đó,
+  // `---` sau đoạn văn thành tiêu đề setext.
+  test('chèn dạng khối cách chữ phía trước đúng một dòng trống', () {
+    expect(
+        insertAtCursor(_v('ab', 2), '---', asBlock: true).text, 'ab\n\n---');
+    expect(insertAtCursor(_v('ab\n', 3), '---', asBlock: true).text,
+        'ab\n\n---');
+    expect(insertAtCursor(_v('ab\n\n', 4), '---', asBlock: true).text,
+        'ab\n\n---');
   });
 
-  // Chèn bảng / khối code giữa dòng: phần chữ còn lại phải xuống dòng mới,
-  // không dính vào hàng cuối bảng hay dấu ``` đóng khối (hỏng Markdown).
-  test('chèn dạng khối giữa dòng đẩy phần chữ sau xuống dòng mới', () {
+  test('chèn dạng khối vào note rỗng không thêm dòng nào', () {
+    final v = insertAtCursor(_v('', 0), '| a |', asBlock: true);
+    expect(v.text, '| a |');
+    expect(v.selection, const TextSelection.collapsed(offset: 5));
+  });
+
+  // Chèn bảng / khối code giữa dòng: phần chữ còn lại phải sang đoạn mới,
+  // cách khối một dòng trống — GFM nuốt dòng chữ dính ngay sau bảng vào bảng.
+  test('chèn dạng khối giữa dòng tách phần chữ sau bằng một dòng trống', () {
     final v = insertAtCursor(_v('ab cd', 2), '```\n\n```', asBlock: true);
-    expect(v.text, 'ab\n```\n\n```\n cd');
-    // Con trỏ ngay sau khối, trước dấu xuống dòng tự thêm.
-    expect(v.selection.baseOffset, 'ab\n```\n\n```'.length);
+    expect(v.text, 'ab\n\n```\n\n```\n\n cd');
+    // Con trỏ ngay sau khối, trước các dấu xuống dòng tự thêm.
+    expect(v.selection.baseOffset, 'ab\n\n```\n\n```'.length);
+  });
+
+  test('chèn dạng khối cuối dòng khi dòng sau còn chữ', () {
+    final v = insertAtCursor(_v('ab\ncd', 2), '| a |', asBlock: true);
+    expect(v.text, 'ab\n\n| a |\n\ncd');
+    expect(v.selection.baseOffset, 'ab\n\n| a |'.length);
     expect(insertAtCursor(_v('ab\ncd', 3), 'X', asBlock: true).text,
-        'ab\nX\ncd');
+        'ab\n\nX\n\ncd');
+  });
+
+  test('chèn dạng khối không chồng thêm dòng trống đã có', () {
+    // Con trỏ trên dòng trống giữa hai đoạn.
+    expect(insertAtCursor(_v('ab\n\ncd', 3), 'X', asBlock: true).text,
+        'ab\n\nX\n\ncd');
+    expect(insertAtCursor(_v('ab\n\n\n\ncd', 4), 'X', asBlock: true).text,
+        'ab\n\nX\n\ncd');
+    // Khối tự kết thúc bằng xuống dòng (mẫu note) chỉ cần thêm một.
+    expect(insertAtCursor(_v('ab\n\ncd', 4), 'X\n', asBlock: true).text,
+        'ab\n\nX\n\ncd');
+    // Phía sau chỉ còn khoảng trắng thì không thêm gì.
+    expect(insertAtCursor(_v('ab\n\n', 4), 'X', asBlock: true).text,
+        'ab\n\nX');
   });
 
   test('tìm theo nghĩa đen với ký tự đặc biệt', () {

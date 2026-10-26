@@ -148,28 +148,50 @@ TextEditingValue deleteLines(TextEditingValue v) {
       text: out, selection: TextSelection.collapsed(offset: from));
 }
 
-/// Thay vùng chọn bằng [text]; [asBlock] thì tự thêm `\n` trước nếu không ở
-/// đầu dòng, và `\n` sau nếu phần chữ phía sau còn trên cùng dòng (không để
-/// nó dính vào hàng cuối bảng hay dấu ``` đóng khối). Con trỏ nằm ngay sau
-/// [text], trước dấu `\n` tự thêm.
+/// Thay vùng chọn bằng [text]. [asBlock] (bảng, khối code, mẫu note): khối
+/// luôn cách chữ phía trước và phía sau đúng một dòng trống — tự thêm `\n` cho
+/// đủ, không chồng thêm khi đã có dòng trống (dòng chỉ có khoảng trắng tính là
+/// trống). Thiếu dòng trống thì GFM nuốt dòng chữ ngay sau vào bảng, bảng sau
+/// mục danh sách thành phần nối tiếp của mục đó. Đầu/cuối note không thêm gì.
+/// Con trỏ nằm ngay sau [text], trước các dấu `\n` tự thêm phía sau.
 TextEditingValue insertAtCursor(TextEditingValue v, String text,
     {bool asBlock = false}) {
   final sel = _sel(v);
   final lo = math.min(sel.baseOffset, sel.extentOffset).clamp(0, v.text.length);
   final hi = math.max(sel.baseOffset, sel.extentOffset).clamp(0, v.text.length);
-  final prefix = asBlock && lo > 0 && v.text[lo - 1] != '\n' ? '\n' : '';
-  final suffix = asBlock &&
-          hi < v.text.length &&
-          v.text[hi] != '\n' &&
-          !text.endsWith('\n')
-      ? '\n'
-      : '';
+  var prefix = '';
+  var suffix = '';
+  if (asBlock) {
+    final before = v.text.substring(0, lo);
+    final after = v.text.substring(hi);
+    final lastInk = before.lastIndexOf(RegExp(r'\S'));
+    if (lastInk != -1) {
+      final have = _countNl(before.substring(lastInk + 1)) +
+          _countNl(text.substring(0, _leadingWs(text)));
+      if (have < 2) prefix = '\n' * (2 - have);
+    }
+    final firstInk = after.indexOf(RegExp(r'\S'));
+    if (firstInk != -1) {
+      final have = _countNl(after.substring(0, firstInk)) +
+          _countNl(text.substring(text.length - _trailingWs(text)));
+      if (have < 2) suffix = '\n' * (2 - have);
+    }
+  }
   return TextEditingValue(
     text: v.text.replaceRange(lo, hi, '$prefix$text$suffix'),
     selection:
         TextSelection.collapsed(offset: lo + prefix.length + text.length),
   );
 }
+
+int _countNl(String s) => '\n'.allMatches(s).length;
+
+int _leadingWs(String s) {
+  final i = s.indexOf(RegExp(r'\S'));
+  return i == -1 ? s.length : i;
+}
+
+int _trailingWs(String s) => s.length - (s.lastIndexOf(RegExp(r'\S')) + 1);
 
 /// Bảng Markdown: số cột = số tiêu đề, [rows] hàng trống.
 String buildTable(List<String> headers, int rows) {
