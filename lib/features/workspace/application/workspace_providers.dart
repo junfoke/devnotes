@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:devnotes/core/file_system/note_file_repository.dart';
 import 'package:devnotes/features/editor/domain/note_links.dart';
+import 'package:devnotes/features/git_sync/application/sync_controller.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 
@@ -39,19 +40,27 @@ class NoteActions {
   /// đọc hoặc ghi lỗi thì nằm trong `failedFiles` (đường dẫn) và vòng lặp đi
   /// tiếp. Xem DECISIONS.md, "Link giữa các note và tự sửa link khi đổi tên"
   /// (2026-10-25).
+  ///
+  /// Cả lượt đổi tên + sửa link chạy dưới khóa sync ([SyncController.exclusive]):
+  /// đang sync thì ném `GitBusyException` trước khi đụng file nào; đang đổi
+  /// tên thì sync (bấm tay hay tự động) bị bỏ qua. Xem DECISIONS.md, "Đổi tên
+  /// note giữ khóa sync" (2026-10-26).
   Future<({NoteFile note, List<String> failedFiles})> rename(
     String filePath,
     String newTitle,
   ) async {
     final repo = await _ref.read(noteFileRepositoryProvider.future);
-    final note = await repo.renameNote(filePath, newTitle);
-    final from = p.basename(filePath);
-    final to = p.basename(note.filePath);
-    final failed = from == to
-        ? const <String>[]
-        : await _rewriteLinks(repo, from: from, to: to);
+    final result = await _ref.read(syncControllerProvider).exclusive(() async {
+      final note = await repo.renameNote(filePath, newTitle);
+      final from = p.basename(filePath);
+      final to = p.basename(note.filePath);
+      final failed = from == to
+          ? const <String>[]
+          : await _rewriteLinks(repo, from: from, to: to);
+      return (note: note, failedFiles: failed);
+    });
     _ref.invalidate(noteListProvider);
-    return (note: note, failedFiles: failed);
+    return result;
   }
 
   Future<List<String>> _rewriteLinks(

@@ -99,8 +99,10 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       return await op();
     } catch (e) {
       if (mounted) {
+        // Lỗi do app ném ra (vd. đang sync nên đổi tên báo bận) được dịch.
+        final l = context.l10n;
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(failMessage(context.l10n, '$e'))));
+            SnackBar(content: Text(failMessage(l, describeError(l, e)))));
       }
       return null;
     }

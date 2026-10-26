@@ -28,6 +28,11 @@ Mục mới thêm **lên đầu** danh sách. Không sửa mục cũ — nếu �
 
 ---
 
+## 2026-10-26 — Đổi tên note giữ khóa sync
+**Chốt:** Cả lượt đổi tên note + sửa link trong các note khác chạy dưới cùng khóa với sync (`SyncRunner.exclusive`, khóa dùng chung cho nút Sync, sync tự động, chuyển branch, giải quyết conflict). Đang sync thì đổi tên báo "Đang đồng bộ, thử lại sau" và không đụng file nào; đang đổi tên thì sync bấm tay hay tự động bị bỏ qua (tự động sẽ chạy ở lần kích hoạt kế tiếp). Bổ sung cho mục 2026-10-25 "Link giữa các note và tự sửa link khi đổi tên".
+**Vì:** Đổi tên ghi vào nhiều file; chạy chồng với sync thì pull có thể ghi đè đúng file đang được sửa link, hoặc commit chụp lúc mới sửa được một nửa số link — link gãy trên máy khác. Dùng lại khóa sẵn có thay vì cơ chế "hoãn như editor đang mở" vì khóa chặn được cả sync bấm tay và sync đã chạy từ trước.
+**Test:** `test/features/workspace/rename_sync_lock_test.dart`
+
 ## 2026-10-26 — Editor không sửa gì thì không ghi file
 **Chốt:** Mỗi editor tự biết mình có sửa hay chưa (chữ khác bản đọc/ghi lần cuối, so nguyên văn, hoặc có tag vừa sửa) — không dựa vào trạng thái lưu dùng chung. App xuống nền, rời editor, chia sẻ, mở link: editor không sửa gì thì không đọc lại, không ghi file và không hỏi "thay đổi bên ngoài". Bổ sung cho mục 2026-10-25 "Editor không ghi đè thay đổi từ bên ngoài".
 **Vì:** Mở note qua link thì editor cũ vẫn nằm bên dưới; trạng thái "chưa lưu" của editor trên làm editor dưới ghi lại file không hề sửa (đổi `updatedAt`, nhiễu sync), bật hộp thoại cho note không sửa, và còn chiếm lượt lưu khiến editor trên không được lưu khi app xuống nền.
