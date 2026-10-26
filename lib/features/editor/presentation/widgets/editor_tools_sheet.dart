@@ -233,11 +233,7 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
             for (final family in EditorDisplayActions.fontCycle)
               ChoiceChip(
                 label: Text(
-                  switch (family) {
-                    'JetBrainsMono' => 'JetBrains Mono',
-                    'FiraCode' => 'Fira Code',
-                    _ => l.editorFontSystem,
-                  },
+                  EditorDisplayActions.fontLabel(l, family),
                   style: TextStyle(
                     fontFamily: family == EditorPreferences.systemFont
                         ? null

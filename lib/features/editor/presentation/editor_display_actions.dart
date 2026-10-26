@@ -35,6 +35,15 @@ class EditorDisplayActions {
     EditorPreferences.systemFont,
   ];
 
+  /// Tên hiển thị của một font trong [fontCycle] (bảng công cụ và Settings).
+  static String fontLabel(AppLocalizations l, String family) =>
+      switch (family) {
+        'JetBrainsMono' => 'JetBrains Mono',
+        'FiraCode' => 'Fira Code',
+        EditorPreferences.systemFont => l.editorFontSystem,
+        _ => family,
+      };
+
   /// Các lần đổi chạy nối tiếp: bấm A+ hai lần thật nhanh phải ra +2, không
   /// được để lần sau đọc bản cũ rồi ghi đè lần trước.
   /// Hàng đợi gắn với từng ProviderContainer (mỗi app/test một hàng).

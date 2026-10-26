@@ -34,7 +34,8 @@ class FontSettingsSheet extends ConsumerStatefulWidget {
 
   final EditorPreferences initial;
 
-  static const fontFamilies = ['JetBrainsMono', 'FiraCode'];
+  /// Cùng danh sách với nhóm Hiển thị trong bảng công cụ (có Font hệ thống).
+  static const fontFamilies = EditorDisplayActions.fontCycle;
   static const minSize = EditorPreferences.minFontSize;
   static const maxSize = EditorPreferences.maxFontSize;
 
@@ -85,10 +86,12 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
                       contentPadding: EdgeInsets.zero,
                       value: family,
                       title: Text(
-                        family,
+                        EditorDisplayActions.fontLabel(l, family),
                         style: TextStyle(
                           color: colors.textPrimary,
-                          fontFamily: family,
+                          fontFamily: family == EditorPreferences.systemFont
+                              ? null
+                              : family,
                         ),
                       ),
                     ),
@@ -128,7 +131,7 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
                 l.fontPreviewSample,
                 style: TextStyle(
                   color: colors.textPrimary,
-                  fontFamily: _prefs.fontFamily,
+                  fontFamily: _prefs.fontFamilyOrNull,
                   fontSize: size,
                   height: 1.6,
                 ),
