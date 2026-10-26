@@ -86,6 +86,17 @@ void main() {
     expect(insertAtCursor(_v('ab\n', 3), '---', asBlock: true).text, 'ab\n---');
   });
 
+  // Chèn bảng / khối code giữa dòng: phần chữ còn lại phải xuống dòng mới,
+  // không dính vào hàng cuối bảng hay dấu ``` đóng khối (hỏng Markdown).
+  test('chèn dạng khối giữa dòng đẩy phần chữ sau xuống dòng mới', () {
+    final v = insertAtCursor(_v('ab cd', 2), '```\n\n```', asBlock: true);
+    expect(v.text, 'ab\n```\n\n```\n cd');
+    // Con trỏ ngay sau khối, trước dấu xuống dòng tự thêm.
+    expect(v.selection.baseOffset, 'ab\n```\n\n```'.length);
+    expect(insertAtCursor(_v('ab\ncd', 3), 'X', asBlock: true).text,
+        'ab\nX\ncd');
+  });
+
   test('tìm theo nghĩa đen với ký tự đặc biệt', () {
     expect(findAll('a.b a*b (x)', '.').length, 1);
     expect(findAll('a.b a*b (x)', '(x)').single,

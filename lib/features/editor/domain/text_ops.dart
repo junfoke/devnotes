@@ -149,17 +149,25 @@ TextEditingValue deleteLines(TextEditingValue v) {
 }
 
 /// Thay vùng chọn bằng [text]; [asBlock] thì tự thêm `\n` trước nếu không ở
-/// đầu dòng. Con trỏ nằm sau phần vừa chèn.
+/// đầu dòng, và `\n` sau nếu phần chữ phía sau còn trên cùng dòng (không để
+/// nó dính vào hàng cuối bảng hay dấu ``` đóng khối). Con trỏ nằm ngay sau
+/// [text], trước dấu `\n` tự thêm.
 TextEditingValue insertAtCursor(TextEditingValue v, String text,
     {bool asBlock = false}) {
   final sel = _sel(v);
   final lo = math.min(sel.baseOffset, sel.extentOffset).clamp(0, v.text.length);
   final hi = math.max(sel.baseOffset, sel.extentOffset).clamp(0, v.text.length);
   final prefix = asBlock && lo > 0 && v.text[lo - 1] != '\n' ? '\n' : '';
-  final insert = '$prefix$text';
+  final suffix = asBlock &&
+          hi < v.text.length &&
+          v.text[hi] != '\n' &&
+          !text.endsWith('\n')
+      ? '\n'
+      : '';
   return TextEditingValue(
-    text: v.text.replaceRange(lo, hi, insert),
-    selection: TextSelection.collapsed(offset: lo + insert.length),
+    text: v.text.replaceRange(lo, hi, '$prefix$text$suffix'),
+    selection:
+        TextSelection.collapsed(offset: lo + prefix.length + text.length),
   );
 }
 
