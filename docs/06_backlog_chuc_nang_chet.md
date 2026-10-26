@@ -257,7 +257,7 @@ Hai agent rà toàn bộ thay đổi và toàn app; mọi mục dưới đây đ
 
 **Bảng công cụ soạn thảo (2026-10-25/26)**
 - ✅ Nút `⋯` mở bảng 38 công cụ (hiển thị, chỉnh sửa, chèn, xem, định dạng); hoàn tác/làm lại, thụt/lùi lề ghim sẵn.
-- ✅ Tìm & thay thế, mục lục, thống kê, chèn ngày giờ/bảng/khối code/ký tự/mẫu ghi chú.
+- ✅ Tìm & thay thế, mục lục, thống kê; nhóm Chèn: ngày giờ/ký tự/mẫu ghi chú; bảng/khối code nằm trong nhóm Định dạng.
 - ✅ Link giữa các note, mở trong app; đổi tên note tự sửa link trỏ tới nó.
 - ✅ Ghim/ẩn từng công cụ; Settings → Toolbar Layout thống nhất với bảng (cùng `EditorPreferences`, mục ẩn vẫn liệt kê để bật lại, mục ghim kéo thả đổi thứ tự).
 

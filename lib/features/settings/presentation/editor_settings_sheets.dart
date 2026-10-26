@@ -10,7 +10,8 @@ import 'package:devnotes/features/editor/presentation/editor_tool_labels.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 
-/// Lưu [prefs] và báo cho editor đọc lại ở lần mở note kế tiếp.
+/// Lưu [prefs] rồi làm mới [editorPreferencesProvider] — editor đang mở áp
+/// dụng ngay.
 Future<void> _savePrefs(WidgetRef ref, EditorPreferences prefs) async {
   try {
     await ref.read(preferencesRepoProvider).saveEditorPreferences(prefs);

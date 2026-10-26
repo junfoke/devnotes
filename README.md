@@ -11,7 +11,7 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 - Auto-save with 3-second debounce after each keystroke
 - Save status indicator (green = saved, yellow = saving, gray = unsaved)
 - Scrollable toolbar with Markdown syntax actions (headings, bold, italic, strikethrough, links, images, inline/block code, checklists, lists, quotes, tables, horizontal rules) plus undo/redo and indent/outdent
-- A `⋯` tools sheet with 38 tools in 5 groups: display (font, size, line spacing, word wrap, focus mode, theme), edit, insert (date/time, tables, code blocks, symbols, note templates, links to other notes), view (outline, word/character stats) and format
+- A `⋯` tools sheet with 38 tools in 5 groups: display (font, size, line spacing, word wrap, focus mode, theme), edit, insert (date/time, symbols, note templates, links to other notes), view (outline, word/character stats) and format (Markdown buttons, including tables and code blocks)
 - Find & replace inside a note
 - Links between notes (`[Title](file.md)`) that open in the app and are rewritten automatically when the target note is renamed
 - Pin any tool to the toolbar or hide it from the sheet — configurable from the sheet or from Settings
