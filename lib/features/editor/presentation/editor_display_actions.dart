@@ -115,6 +115,10 @@ class EditorDisplayActions {
     return p.copyWith(toolbarItems: items);
   });
 
+  /// Đặt lại thứ tự các nút đang ghim (dùng khi kéo thả trong Settings).
+  Future<void> setPinnedOrder(List<String> ids) =>
+      update((p) => p.copyWith(toolbarItems: ids));
+
   /// Hiện [id] trong bảng Công cụ soạn thảo, hoặc ẩn khỏi bảng.
   Future<void> setShownInSheet(String id, bool shown) => update((p) {
     final hidden = [...p.hiddenTools]..remove(id);

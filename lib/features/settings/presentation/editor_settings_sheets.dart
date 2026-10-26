@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/utils/enums.dart';
-import 'package:devnotes/features/editor/domain/toolbar_item.dart';
+import 'package:devnotes/features/editor/domain/editor_tool.dart';
+import 'package:devnotes/features/editor/presentation/editor_display_actions.dart';
+import 'package:devnotes/features/editor/presentation/widgets/editor_tools_sheet.dart';
 import 'package:devnotes/features/editor/presentation/editor_tool_labels.dart';
 import 'package:devnotes/features/settings/application/settings_providers.dart';
 import 'package:devnotes/features/settings/domain/editor_preferences.dart';
@@ -138,46 +140,79 @@ class _FontSettingsSheetState extends ConsumerState<FontSettingsSheet> {
   }
 }
 
-/// Bottom sheet bật/tắt và sắp xếp các nút trên thanh công cụ Markdown.
-class ToolbarLayoutSheet extends ConsumerStatefulWidget {
+/// Bottom sheet cấu hình thanh công cụ và bảng Công cụ soạn thảo: liệt kê mọi
+/// công cụ, mục ghim nằm trên cùng (kéo để đổi thứ tự), mỗi mục có công tắc
+/// "Ghim" và "Hiện trong bảng".
+///
+/// Dùng chung [EditorPreferences] và [EditorDisplayActions] với bảng ⋯ của
+/// editor nên đổi ở đâu cũng phản ánh ở chỗ kia. Mục ẩn khỏi bảng vẫn được
+/// liệt kê ở đây để bật lại.
+class ToolbarLayoutSheet extends ConsumerWidget {
   const ToolbarLayoutSheet({super.key, required this.initial});
 
+  /// Cài đặt lúc mở sheet; chỉ dùng khi provider chưa tải xong.
   final EditorPreferences initial;
 
   @override
-  ConsumerState<ToolbarLayoutSheet> createState() => _ToolbarLayoutSheetState();
-}
-
-class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
-  /// Thứ tự hiển thị: các nút đang bật trước (theo thứ tự đã lưu), rồi tới
-  /// các nút đang tắt.
-  late final List<ToolbarItem> _order;
-  late final Set<String> _visible;
-
-  @override
-  void initState() {
-    super.initState();
-    final saved = widget.initial.toolbarItems;
-    _visible = saved.toSet();
-    _order = [
-      for (final id in saved)
-        ...ToolbarItem.allItems.where((item) => item.id == id),
-      ...ToolbarItem.allItems.where((item) => !_visible.contains(item.id)),
-    ];
-  }
-
-  void _persist() {
-    final ids = [
-      for (final item in _order)
-        if (_visible.contains(item.id)) item.id,
-    ];
-    _savePrefs(ref, widget.initial.copyWith(toolbarItems: ids));
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).appColors;
     final l = context.l10n;
+    final prefs = ref.watch(editorPreferencesProvider).valueOrNull ?? initial;
+    final actions = EditorDisplayActions(context);
+    final pinnedIds = prefs.toolbarItems.toSet();
+    final hidden = prefs.hiddenTools.toSet();
+    final byId = {for (final t in EditorTool.all) t.id: t};
+    // Id lạ (không còn trong EditorTool.all) bị bỏ qua.
+    final pinned = [
+      for (final id in prefs.toolbarItems)
+        if (byId.containsKey(id)) byId[id]!,
+    ];
+    final small = TextStyle(color: colors.textMuted, fontSize: 12);
+
+    Widget row(EditorTool t, {Widget? leading}) => Row(
+      key: ValueKey('layout-row-${t.id}'),
+      children: [
+        SizedBox(width: 40, child: leading ?? const SizedBox.shrink()),
+        SizedBox(
+          width: 32,
+          child: EditorToolGlyph(tool: t, color: colors.textSecondary),
+        ),
+        Expanded(
+          child: Text(
+            editorToolLabel(l, t.id),
+            style: TextStyle(color: colors.textPrimary),
+          ),
+        ),
+        SizedBox(
+          width: 72,
+          child: Switch(
+            key: Key('pin-${t.id}'),
+            value: pinnedIds.contains(t.id),
+            onChanged: (v) => actions.setPinned(t.id, v),
+          ),
+        ),
+        SizedBox(
+          width: 72,
+          child: Switch(
+            key: Key('show-${t.id}'),
+            value: !hidden.contains(t.id),
+            onChanged: (v) => actions.setShownInSheet(t.id, v),
+          ),
+        ),
+      ],
+    );
+
+    Widget sectionTitle(String text) => Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: colors.textMuted,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
 
     return SafeArea(
       child: SizedBox(
@@ -198,50 +233,77 @@ class _ToolbarLayoutSheetState extends ConsumerState<ToolbarLayoutSheet> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                l.toolbarLayoutHint,
-                style: TextStyle(color: colors.textMuted, fontSize: 12),
-              ),
+              child: Text(l.toolbarLayoutHint, style: small),
             ),
             Expanded(
-              child: ReorderableListView.builder(
-                itemCount: _order.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) newIndex--;
-                    _order.insert(newIndex, _order.removeAt(oldIndex));
-                  });
-                  _persist();
-                },
-                itemBuilder: (context, index) {
-                  final item = _order[index];
-                  return CheckboxListTile(
-                    key: ValueKey(item.id),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: _visible.contains(item.id),
-                    onChanged: (checked) {
-                      setState(() {
-                        checked == true
-                            ? _visible.add(item.id)
-                            : _visible.remove(item.id);
-                      });
-                      _persist();
-                    },
-                    secondary: item.icon != null
-                        ? Icon(item.icon, color: colors.textSecondary)
-                        : Text(
-                            item.label,
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontWeight: FontWeight.bold,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                children: [
+                  Row(
+                    children: [
+                      const Spacer(),
+                      for (final text in [
+                        l.editorToolsPin,
+                        l.editorToolsShowInSheet,
+                      ])
+                        SizedBox(
+                          width: 72,
+                          child: Text(
+                            text,
+                            textAlign: TextAlign.center,
+                            style: small,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (pinned.isNotEmpty) ...[
+                    sectionTitle(l.toolbarLayoutPinnedTitle),
+                    ReorderableListView(
+                      key: const Key('pinned-list'),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      buildDefaultDragHandles: false,
+                      onReorder: (oldIndex, newIndex) {
+                        if (newIndex > oldIndex) newIndex--;
+                        final ids = [for (final t in pinned) t.id];
+                        ids.insert(newIndex, ids.removeAt(oldIndex));
+                        actions.setPinnedOrder(ids);
+                      },
+                      children: [
+                        for (var i = 0; i < pinned.length; i++)
+                          KeyedSubtree(
+                            key: ValueKey('pinned-${pinned[i].id}'),
+                            child: row(
+                              pinned[i],
+                              leading: ReorderableDragStartListener(
+                                key: Key('drag-${pinned[i].id}'),
+                                index: i,
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: colors.textMuted,
+                                ),
+                              ),
                             ),
                           ),
-                    title: Text(
-                      editorToolLabel(l, item.id),
-                      style: TextStyle(color: colors.textPrimary),
+                      ],
                     ),
-                  );
-                },
+                  ],
+                  for (final group in editorToolGroupOrder)
+                    ...() {
+                      final tools = [
+                        for (final t in EditorTool.all)
+                          if (t.group == group && !pinnedIds.contains(t.id)) t,
+                      ];
+                      if (tools.isEmpty) return const <Widget>[];
+                      return [
+                        sectionTitle(
+                          '${l.toolbarLayoutOthersTitle} · '
+                          '${editorToolGroupTitle(l, group)}',
+                        ),
+                        for (final t in tools) row(t),
+                      ];
+                    }(),
+                ],
               ),
             ),
           ],

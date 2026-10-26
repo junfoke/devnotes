@@ -60,7 +60,9 @@
 
   "fontSize": "Cỡ chữ",
   "fontPreviewSample": "## Xem trước\nconst answer = 42; // **đậm**",
-  "toolbarLayoutHint": "Bật/tắt nút và kéo để đổi thứ tự.",
+  "toolbarLayoutHint": "Ghim công cụ lên thanh công cụ, ẩn khỏi bảng ⋯, và kéo mục đã ghim để đổi thứ tự. Thay đổi áp dụng ngay cho editor.",
+  "toolbarLayoutPinnedTitle": "Đã ghim trên thanh công cụ",
+  "toolbarLayoutOthersTitle": "Chưa ghim",
   "toolbarItemH1": "Tiêu đề 1",
   "toolbarItemH2": "Tiêu đề 2",
   "toolbarItemH3": "Tiêu đề 3",

@@ -93,7 +93,9 @@
 
   "fontSize": "Size",
   "fontPreviewSample": "## Preview\nconst answer = 42; // **bold**",
-  "toolbarLayoutHint": "Toggle buttons and drag to reorder.",
+  "toolbarLayoutHint": "Pin tools to the toolbar, hide them from the ⋯ sheet, and drag pinned items to reorder. Changes apply to the editor right away.",
+  "toolbarLayoutPinnedTitle": "Pinned to the toolbar",
+  "toolbarLayoutOthersTitle": "Not pinned",
   "toolbarItemH1": "Heading 1",
   "toolbarItemH2": "Heading 2",
   "toolbarItemH3": "Heading 3",

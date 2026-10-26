@@ -12,7 +12,7 @@ import 'package:devnotes/features/settings/domain/editor_preferences.dart';
 
 /// Thứ tự các nhóm trong bảng: Hiển thị ở đầu, "Định dạng" (nút Markdown)
 /// ở cuối.
-const _groupOrder = [
+const editorToolGroupOrder = [
   EditorToolGroup.display,
   EditorToolGroup.edit,
   EditorToolGroup.insert,
@@ -20,7 +20,10 @@ const _groupOrder = [
   EditorToolGroup.format,
 ];
 
-String _groupTitle(AppLocalizations l, EditorToolGroup group) =>
+const _groupOrder = editorToolGroupOrder;
+
+/// Tên nhóm công cụ (dùng chung với Settings → Toolbar Layout).
+String editorToolGroupTitle(AppLocalizations l, EditorToolGroup group) =>
     switch (group) {
       EditorToolGroup.display => l.editorToolGroupDisplay,
       EditorToolGroup.edit => l.editorToolGroupEdit,
@@ -131,7 +134,7 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
     return Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 8),
       child: Text(
-        _groupTitle(context.l10n, group),
+        editorToolGroupTitle(context.l10n, group),
         style: TextStyle(
           color: colors.textMuted,
           fontSize: 13,
@@ -341,7 +344,7 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
               children: [
                 SizedBox(
                   width: 32,
-                  child: _ToolGlyph(tool: t, color: colors.textSecondary),
+                  child: EditorToolGlyph(tool: t, color: colors.textSecondary),
                 ),
                 Expanded(
                   child: Text(
@@ -373,8 +376,8 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
 }
 
 /// Icon (hoặc chữ như `H1`) của một công cụ.
-class _ToolGlyph extends StatelessWidget {
-  const _ToolGlyph({required this.tool, required this.color});
+class EditorToolGlyph extends StatelessWidget {
+  const EditorToolGlyph({super.key, required this.tool, required this.color});
 
   final EditorTool tool;
   final Color color;
@@ -422,7 +425,7 @@ class _SheetToolButton extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ToolGlyph(tool: tool, color: colors.textSecondary),
+              EditorToolGlyph(tool: tool, color: colors.textSecondary),
               const SizedBox(height: 4),
               Text(
                 label,

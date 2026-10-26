@@ -437,8 +437,20 @@ abstract class AppLocalizations {
   /// No description provided for @toolbarLayoutHint.
   ///
   /// In en, this message translates to:
-  /// **'Toggle buttons and drag to reorder.'**
+  /// **'Pin tools to the toolbar, hide them from the ⋯ sheet, and drag pinned items to reorder. Changes apply to the editor right away.'**
   String get toolbarLayoutHint;
+
+  /// No description provided for @toolbarLayoutPinnedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned to the toolbar'**
+  String get toolbarLayoutPinnedTitle;
+
+  /// No description provided for @toolbarLayoutOthersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not pinned'**
+  String get toolbarLayoutOthersTitle;
 
   /// No description provided for @toolbarItemH1.
   ///

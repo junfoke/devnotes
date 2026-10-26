@@ -206,7 +206,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fontPreviewSample => '## Preview\nconst answer = 42; // **bold**';
 
   @override
-  String get toolbarLayoutHint => 'Toggle buttons and drag to reorder.';
+  String get toolbarLayoutHint =>
+      'Pin tools to the toolbar, hide them from the ⋯ sheet, and drag pinned items to reorder. Changes apply to the editor right away.';
+
+  @override
+  String get toolbarLayoutPinnedTitle => 'Pinned to the toolbar';
+
+  @override
+  String get toolbarLayoutOthersTitle => 'Not pinned';
 
   @override
   String get toolbarItemH1 => 'Heading 1';

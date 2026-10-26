@@ -205,7 +205,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get fontPreviewSample => '## Xem trước\nconst answer = 42; // **đậm**';
 
   @override
-  String get toolbarLayoutHint => 'Bật/tắt nút và kéo để đổi thứ tự.';
+  String get toolbarLayoutHint =>
+      'Ghim công cụ lên thanh công cụ, ẩn khỏi bảng ⋯, và kéo mục đã ghim để đổi thứ tự. Thay đổi áp dụng ngay cho editor.';
+
+  @override
+  String get toolbarLayoutPinnedTitle => 'Đã ghim trên thanh công cụ';
+
+  @override
+  String get toolbarLayoutOthersTitle => 'Chưa ghim';
 
   @override
   String get toolbarItemH1 => 'Tiêu đề 1';
