@@ -1043,4 +1043,20 @@ class AppLocalizationsVi extends AppLocalizations {
   String noteLinksUpdateFailed(String files) {
     return 'Đã đổi tên, nhưng không sửa được link trong: $files';
   }
+
+  @override
+  String get outlineTitle => 'Mục lục';
+
+  @override
+  String get outlineEmpty => 'Note chưa có tiêu đề nào';
+
+  @override
+  String editorStatsLine(int words, int chars, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      words,
+      locale: localeName,
+      other: '$words từ',
+    );
+    return '$_temp0 · $chars ký tự · ~$minutes phút đọc';
+  }
 }

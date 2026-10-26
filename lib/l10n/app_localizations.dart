@@ -1777,6 +1777,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Renamed, but couldn\'t update links in: {files}'**
   String noteLinksUpdateFailed(String files);
+
+  /// No description provided for @outlineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get outlineTitle;
+
+  /// No description provided for @outlineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No headings in this note'**
+  String get outlineEmpty;
+
+  /// No description provided for @editorStatsLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{words, plural, =1{1 word} other{{words} words}} · {chars} chars · ~{minutes} min read'**
+  String editorStatsLine(int words, int chars, int minutes);
 }
 
 class _AppLocalizationsDelegate

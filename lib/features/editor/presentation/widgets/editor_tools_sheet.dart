@@ -162,7 +162,7 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
                 runSpacing: 4,
                 children: [
                   for (final t in tools)
-                    if (t.id != 'symbols')
+                    if (t.id != 'symbols' && t.id != 'stats')
                       _SheetToolButton(
                         tool: t,
                         label: editorToolLabel(l, t.id),
@@ -170,6 +170,17 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
                       ),
                 ],
               ),
+            if (tools.any((t) => t.id == 'stats')) ...[
+              const SizedBox(height: 8),
+              Text(
+                widget.runner.statsLine(),
+                key: const Key('tools-stats-line'),
+                style: TextStyle(
+                  color: Theme.of(context).appColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
             if (tools.any((t) => t.id == 'symbols')) ...[
               const SizedBox(height: 8),
               Text(

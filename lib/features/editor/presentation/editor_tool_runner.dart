@@ -26,6 +26,9 @@ class EditorToolRunner {
   /// Hiện thanh tìm & thay thế của editor (`find_replace`).
   final VoidCallback? onFindReplace;
 
+  /// Đặt con trỏ tại `offset` và cuộn tới đó (`outline`).
+  final void Function(int offset)? onJumpTo;
+
   /// Note đang mở — không hiện trong bộ chọn `note_link`.
   final String? currentFilePath;
 
@@ -35,6 +38,7 @@ class EditorToolRunner {
     required this.context,
     required this.ref,
     this.onFindReplace,
+    this.onJumpTo,
     this.currentFilePath,
   });
 
@@ -74,6 +78,10 @@ class EditorToolRunner {
         await _insertNoteLink();
       case 'template':
         await _insertTemplate();
+      case 'outline':
+        await _showOutline();
+      case 'stats':
+        _showStats();
       // Nhóm Hiển thị khi được ghim lên thanh công cụ (ruling R2).
       case 'font':
         await display.cycleFont();
@@ -128,6 +136,24 @@ class EditorToolRunner {
     final t = await showTemplatePicker(context, lang);
     if (t == null || !context.mounted) return;
     _insert(t.body, asBlock: true);
+  }
+
+  Future<void> _showOutline() async {
+    final offset = await showOutline(context, headings(text.text));
+    if (offset == null || !context.mounted) return;
+    onJumpTo?.call(offset);
+  }
+
+  /// Dòng thống kê của note hiện tại (bảng công cụ và nút đã ghim dùng chung).
+  String statsLine() {
+    final s = textStats(text.text);
+    return context.l10n.editorStatsLine(s.words, s.chars, s.readMinutes);
+  }
+
+  void _showStats() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(statsLine())));
   }
 
   /// Chèn `[Tiêu đề](ten-file.md)` tới note được chọn — xem DECISIONS.md,

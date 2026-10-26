@@ -293,5 +293,8 @@
   "notePickerTitle": "Chọn note để liên kết",
   "notePickerEmpty": "Chưa có note nào khác",
   "noteNotFound": "Không tìm thấy note: {file}",
-  "noteLinksUpdateFailed": "Đã đổi tên, nhưng không sửa được link trong: {files}"
+  "noteLinksUpdateFailed": "Đã đổi tên, nhưng không sửa được link trong: {files}",
+  "outlineTitle": "Mục lục",
+  "outlineEmpty": "Note chưa có tiêu đề nào",
+  "editorStatsLine": "{words, plural, other{{words} từ}} · {chars} ký tự · ~{minutes} phút đọc"
 }

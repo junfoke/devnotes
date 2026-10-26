@@ -512,5 +512,15 @@
   "noteLinksUpdateFailed": "Renamed, but couldn't update links in: {files}",
   "@noteLinksUpdateFailed": {
     "placeholders": { "files": { "type": "String" } }
+  },
+  "outlineTitle": "Outline",
+  "outlineEmpty": "No headings in this note",
+  "editorStatsLine": "{words, plural, =1{1 word} other{{words} words}} · {chars} chars · ~{minutes} min read",
+  "@editorStatsLine": {
+    "placeholders": {
+      "words": { "type": "int" },
+      "chars": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
   }
 }

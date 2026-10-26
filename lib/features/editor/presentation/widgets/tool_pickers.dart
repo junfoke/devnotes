@@ -283,3 +283,59 @@ Future<String?> showNotePicker(BuildContext context, List<NoteFile> notes) {
     ),
   );
 }
+
+/// Mục lục: tiêu đề thụt theo cấp. Trả về `offset` của tiêu đề được chọn;
+/// hủy trả về null.
+Future<int?> showOutline(
+  BuildContext context,
+  List<({int level, String title, int offset})> items,
+) {
+  return showModalBottomSheet<int>(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        key: const Key('outline-picker'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Text(
+              ctx.l10n.outlineTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (items.isEmpty)
+            Padding(
+              key: const Key('outline-empty'),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Text(ctx.l10n.outlineEmpty),
+            )
+          else
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    ListTile(
+                      key: Key('outline-$i'),
+                      contentPadding: EdgeInsetsDirectional.only(
+                        start: 20.0 + (items[i].level - 1) * 16,
+                        end: 20,
+                      ),
+                      title: Text(
+                        items[i].title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () => Navigator.pop(ctx, items[i].offset),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}

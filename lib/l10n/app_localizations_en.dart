@@ -1054,4 +1054,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String noteLinksUpdateFailed(String files) {
     return 'Renamed, but couldn\'t update links in: $files';
   }
+
+  @override
+  String get outlineTitle => 'Outline';
+
+  @override
+  String get outlineEmpty => 'No headings in this note';
+
+  @override
+  String editorStatsLine(int words, int chars, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      words,
+      locale: localeName,
+      other: '$words words',
+      one: '1 word',
+    );
+    return '$_temp0 · $chars chars · ~$minutes min read';
+  }
 }

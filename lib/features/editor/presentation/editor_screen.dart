@@ -209,10 +209,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     } catch (e) {
       if (mounted) {
         ref.read(saveStatusProvider.notifier).state = SaveStatus.unsaved;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-            SnackBar(content: Text(context.l10n.noteSaveFailed('$e'))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.noteSaveFailed('$e'))),
+        );
       }
       return false;
     }
@@ -266,9 +265,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         );
         await repo.saveNote(copy.copyWith(content: mine));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l.savedAsCopy(copy.title))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.savedAsCopy(copy.title))));
         }
       } catch (e) {
         if (mounted) {
@@ -323,8 +322,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: Text(l.commonDelete,
-                  style: const TextStyle(color: Colors.red)),
+              title: Text(
+                l.commonDelete,
+                style: const TextStyle(color: Colors.red),
+              ),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _deleteNote();
@@ -388,9 +389,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       ], subject: title);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.shareFailed('$e'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.shareFailed('$e'))));
       }
     }
   }
@@ -403,9 +404,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
         ? 0
         : text.trim().split(RegExp(r'\s+')).length;
     final l = context.l10n;
-    final dateFormat =
-        DateFormat.yMd(Localizations.localeOf(context).toLanguageTag())
-            .add_Hm();
+    final dateFormat = DateFormat.yMd(
+      Localizations.localeOf(context).toLanguageTag(),
+    ).add_Hm();
     String fmt(DateTime t) => dateFormat.format(t.toLocal());
 
     showDialog<void>(
@@ -417,12 +418,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l.noteInfoFile(p.basename(note.filePath))),
-            Text(l.noteInfoTags(
-                note.tags.isEmpty ? '—' : note.tags.join(', '))),
+            Text(
+              l.noteInfoTags(note.tags.isEmpty ? '—' : note.tags.join(', ')),
+            ),
             Text(l.noteInfoCreated(fmt(note.createdAt))),
             Text(l.noteInfoUpdated(fmt(note.updatedAt))),
-            Text('${l.noteInfoWords(words)} · '
-                '${l.noteInfoChars(text.length)}'),
+            Text(
+              '${l.noteInfoWords(words)} · '
+              '${l.noteInfoChars(text.length)}',
+            ),
           ],
         ),
         actions: [
@@ -452,8 +456,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(l.commonDelete,
-                style: const TextStyle(color: Colors.red)),
+            child: Text(
+              l.commonDelete,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -476,8 +482,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(
-            SnackBar(content: Text(l.noteDeleteFailed('$e'))));
+        ).showSnackBar(SnackBar(content: Text(l.noteDeleteFailed('$e'))));
       }
       return;
     }
@@ -504,8 +509,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
     onFindReplace: () {
       if (mounted) setState(() => _showFind = true);
     },
+    onJumpTo: _jumpTo,
     currentFilePath: widget.filePath,
   );
+
+  /// Mục lục: về trang soạn, đặt con trỏ tại [offset] rồi cuộn tới đó.
+  Future<void> _jumpTo(int offset) async {
+    final at = offset.clamp(0, _textController.text.length);
+    _textController.selection = TextSelection.collapsed(offset: at);
+    if (_pageController.hasClients && (_pageController.page ?? 0) > 0.5) {
+      await _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _revealInEditor(TextRange(start: at, end: at));
+    });
+  }
 
   void _runTool(String id) => _toolRunner.run(id);
 
@@ -662,13 +685,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                     noteAsync.when(
                       data: (_) => MarkdownPreview(
                         data: _textController.text,
-                        onToggleChecklist: _loadedNote == null ? null : _toggleChecklist,
+                        onToggleChecklist: _loadedNote == null
+                            ? null
+                            : _toggleChecklist,
                         onOpenNote: _openLinkedNote,
                         // Font hệ thống: khối code trong preview vẫn dùng
                         // font đơn cách mặc định.
                         fontFamily:
                             editorPrefs?.fontFamilyOrNull ?? 'JetBrainsMono',
-                        fontSize: editorPrefs?.fontSize ??
+                        fontSize:
+                            editorPrefs?.fontSize ??
                             EditorPreferences.defaultFontSize,
                       ),
                       loading: () =>
@@ -738,8 +764,9 @@ class _EditTagsDialog extends StatefulWidget {
 }
 
 class _EditTagsDialogState extends State<_EditTagsDialog> {
-  late final _controller =
-      TextEditingController(text: widget.initial.join(', '));
+  late final _controller = TextEditingController(
+    text: widget.initial.join(', '),
+  );
 
   @override
   void dispose() {
