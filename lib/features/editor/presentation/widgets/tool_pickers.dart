@@ -202,7 +202,8 @@ Future<NoteTemplate?> showTemplatePicker(
 class SymbolRow extends StatelessWidget {
   const SymbolRow({super.key, required this.onInsert});
 
-  final ValueChanged<String> onInsert;
+  /// `null` thì các chip bị tắt.
+  final ValueChanged<String>? onInsert;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +216,7 @@ class SymbolRow extends StatelessWidget {
           ActionChip(
             key: Key('symbol-$s'),
             label: Text(s, style: const TextStyle(fontFamily: 'JetBrainsMono')),
-            onPressed: () => onInsert(s),
+            onPressed: onInsert == null ? null : () => onInsert!(s),
           ),
       ],
     );

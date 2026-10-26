@@ -738,8 +738,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen>
                       EditorPreferences.defaultToolbarItems,
                   enabled: _loadedNote != null,
                   onTool: _runTool,
-                  onOpenSheet: () =>
-                      showEditorToolsSheet(context, runner: _toolRunner),
+                  onOpenSheet: () => showEditorToolsSheet(
+                    context,
+                    runner: _toolRunner,
+                    enabled: _loadedNote != null,
+                  ),
                 ),
             ],
           ),

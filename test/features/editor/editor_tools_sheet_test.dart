@@ -10,6 +10,7 @@ import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/core/theme/theme_provider.dart';
 import 'package:devnotes/core/utils/enums.dart';
 import 'package:devnotes/features/editor/presentation/editor_screen.dart';
+import 'package:devnotes/features/editor/presentation/editor_tool_labels.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_app_bar.dart';
 import 'package:devnotes/features/editor/presentation/widgets/editor_toolbar.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
@@ -450,5 +451,43 @@ void main() {
     expect(field(tester).controller!.text, 'noi dung');
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
+  });
+
+  // Note chưa tải xong hoặc tải lỗi thì ô soạn chỉ đọc — công cụ trong bảng
+  // cũng không được sửa chữ (ghi vào một note chưa có bản gốc để so).
+  testWidgets('note tải lỗi: công cụ sửa chữ trong bảng bị tắt, nhóm Hiển '
+      'thị vẫn dùng được', (tester) async {
+    repo.failOnRead = true;
+    await pumpEditor(tester);
+    await openSheet(tester);
+
+    final sheet = find.byKey(const Key('editor-tools-sheet'));
+    final list = find.descendant(of: sheet, matching: find.byType(Scrollable));
+    Finder inSheet(String tooltip) =>
+        find.descendant(of: sheet, matching: find.byTooltip(tooltip));
+
+    // Nhóm Hiển thị (đầu bảng) vẫn đổi cài đặt được.
+    await tester.tap(inSheet(l.editorToolSizeUp));
+    await tester.pumpAndSettle();
+    expect(prefs.getDouble('editor_font_size'), 15.0);
+
+    for (final id in ['undo', 'date_time', 'outline', 'bold', 'table']) {
+      final button = inSheet(editorToolLabel(l, id));
+      await tester.scrollUntilVisible(button, 100, scrollable: list);
+      final ink = tester.widget<InkWell>(
+        find.descendant(of: button, matching: find.byType(InkWell)),
+      );
+      expect(ink.onTap, isNull, reason: id);
+    }
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('symbol-row')),
+      100,
+      scrollable: list,
+    );
+    expect(
+      tester.widget<ActionChip>(find.byKey(const Key('symbol-{'))).onPressed,
+      isNull,
+    );
+
   });
 }

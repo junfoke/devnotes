@@ -37,22 +37,34 @@ String editorToolGroupTitle(AppLocalizations l, EditorToolGroup group) =>
 /// Bàn phím được ẩn khi mở. Mục trong `hiddenTools` không hiện; mục đang
 /// ghim vẫn hiện (bảng là nơi đầy đủ). Nhóm Hiển thị đổi cài đặt ngay và
 /// giữ bảng mở; các nhóm khác đóng bảng rồi chạy công cụ qua [runner].
+///
+/// [enabled] sai (note chưa tải xong hoặc tải lỗi — ô soạn đang chỉ đọc) thì
+/// mọi công cụ đụng tới chữ bị tắt; nhóm Hiển thị và chế độ Tùy chỉnh vẫn
+/// dùng được vì chỉ đổi cài đặt.
 Future<void> showEditorToolsSheet(
   BuildContext context, {
   required EditorToolRunner runner,
+  bool enabled = true,
 }) {
   FocusScope.of(context).unfocus();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => EditorToolsSheet(runner: runner),
+    builder: (_) => EditorToolsSheet(runner: runner, enabled: enabled),
   );
 }
 
 class EditorToolsSheet extends ConsumerStatefulWidget {
-  const EditorToolsSheet({super.key, required this.runner});
+  const EditorToolsSheet({
+    super.key,
+    required this.runner,
+    this.enabled = true,
+  });
 
   final EditorToolRunner runner;
+
+  /// Note đã tải xong — sai thì các công cụ sửa chữ bị tắt.
+  final bool enabled;
 
   @override
   ConsumerState<EditorToolsSheet> createState() => _EditorToolsSheetState();
@@ -169,7 +181,7 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
                       _SheetToolButton(
                         tool: t,
                         label: editorToolLabel(l, t.id),
-                        onTap: () => _runTool(t.id),
+                        onTap: widget.enabled ? () => _runTool(t.id) : null,
                       ),
                 ],
               ),
@@ -194,7 +206,9 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
                 ),
               ),
               const SizedBox(height: 4),
-              SymbolRow(onInsert: widget.runner.insertSymbol),
+              SymbolRow(
+                onInsert: widget.enabled ? widget.runner.insertSymbol : null,
+              ),
             ],
           ];
         }(),
@@ -409,11 +423,14 @@ class _SheetToolButton extends StatelessWidget {
 
   final EditorTool tool;
   final String label;
-  final VoidCallback onTap;
+
+  /// `null` thì nút bị tắt (mờ đi, bấm không làm gì).
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final color = onTap == null ? colors.textMuted : colors.textSecondary;
     return Tooltip(
       message: label,
       child: InkWell(
@@ -425,14 +442,14 @@ class _SheetToolButton extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              EditorToolGlyph(tool: tool, color: colors.textSecondary),
+              EditorToolGlyph(tool: tool, color: color),
               const SizedBox(height: 4),
               Text(
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: colors.textSecondary, fontSize: 11),
+                style: TextStyle(color: color, fontSize: 11),
               ),
             ],
           ),
