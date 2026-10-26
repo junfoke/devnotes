@@ -943,7 +943,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get editorToolTemplate => 'Mẫu';
 
   @override
-  String get editorToolOutline => 'Dàn ý';
+  String get editorToolOutline => 'Mục lục';
 
   @override
   String get editorToolStats => 'Thống kê';

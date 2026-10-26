@@ -36,4 +36,15 @@ void main() {
     expect(markdownItemFor('bold')?.insertBefore, '**');
     expect(markdownItemFor('indent'), isNull);
   });
+
+  // Nút trong bảng và tiêu đề bộ chọn phải cùng một tên — user bấm "Mục lục"
+  // thì thấy bảng "Mục lục", không phải "Dàn ý".
+  test('nhãn công cụ outline trùng tiêu đề bộ chọn mục lục', () async {
+    for (final locale in const [Locale('vi'), Locale('en')]) {
+      final l = await AppLocalizations.delegate.load(locale);
+      expect(editorToolLabel(l, 'outline'), l.outlineTitle, reason: '$locale');
+    }
+    final vi = await AppLocalizations.delegate.load(const Locale('vi'));
+    expect(vi.outlineTitle, 'Mục lục');
+  });
 }
