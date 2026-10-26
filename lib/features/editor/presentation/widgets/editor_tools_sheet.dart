@@ -164,7 +164,13 @@ class _EditorToolsSheetState extends ConsumerState<EditorToolsSheet> {
         ...() {
           final tools = [
             for (final t in EditorTool.all)
-              if (t.group == group && !hidden.contains(t.id)) t,
+              if (t.group == group &&
+                  (!hidden.contains(t.id) ||
+                      // Đang ở chế độ tập trung (không còn thanh tiêu đề):
+                      // công tắc tắt nó luôn hiện, kể cả khi đã ẩn — không
+                      // thì user bị kẹt.
+                      (t.id == 'focus_mode' && prefs.focusMode)))
+                t,
           ];
           if (tools.isEmpty) return const <Widget>[];
           return [

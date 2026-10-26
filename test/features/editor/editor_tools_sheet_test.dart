@@ -490,4 +490,36 @@ void main() {
     );
 
   });
+
+  // Đã ẩn "Chế độ tập trung" khỏi bảng rồi bật nó (từ nút ghim): thanh tiêu
+  // đề biến mất, bảng ⋯ là lối thoát duy nhất — công tắc phải luôn còn đó.
+  testWidgets('đang bật chế độ tập trung thì công tắc luôn hiện dù đã ẩn', (
+    tester,
+  ) async {
+    await setUpWith({
+      'editor_font_size': 14.0,
+      'editor_focus_mode': true,
+      'editor_hidden_tools': [
+        'font',
+        'size_down',
+        'size_up',
+        'line_height',
+        'word_wrap',
+        'focus_mode',
+        'theme',
+      ],
+    });
+    await pumpEditor(tester);
+    expect(find.byType(EditorAppBar), findsNothing);
+
+    await openSheet(tester);
+    final focusSwitch = find.widgetWithText(
+      SwitchListTile,
+      l.editorToolFocusMode,
+    );
+    expect(focusSwitch, findsOneWidget);
+    await tester.tap(focusSwitch);
+    await tester.pumpAndSettle();
+    expect(find.byType(EditorAppBar), findsOneWidget);
+  });
 }
