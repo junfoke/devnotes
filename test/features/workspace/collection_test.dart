@@ -35,9 +35,18 @@ void main() {
 
       expect(restored.id, collection.id);
       expect(restored.name, collection.name);
-      expect(restored.icon.codePoint, collection.icon.codePoint);
+      expect(restored.icon, Icons.folder);
       expect(restored.color.toARGB32(), collection.color.toARGB32());
       expect(restored.sortOrder, collection.sortOrder);
+    });
+
+    // Bản release tree-shake font icon: chỉ giữ icon dùng dưới dạng hằng số.
+    // fromJson không được dựng IconData từ số đọc lên (build release lỗi
+    // "Avoid non-constant invocations of IconData") — phải tra trong danh
+    // sách hằng số, số lạ thì về icon mặc định.
+    test('fromJson với icon lạ trả về icon mặc định', () {
+      final json = collection.toJson()..['icon'] = 0x1;
+      expect(Collection.fromJson(json).icon, Icons.folder);
     });
 
     test('toJson serialises IconData as codePoint int', () {
