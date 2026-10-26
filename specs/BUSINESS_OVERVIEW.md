@@ -24,6 +24,11 @@
 - Hai trang vuốt ngang: **soạn** (TextField thô) và **xem trước** (render Markdown). Thanh công cụ chỉ hiện ở trang soạn.
 - **Autosave** debounce 3 giây sau lần gõ cuối; nhấn Back mà chưa lưu thì ép lưu trước khi thoát.
 - Thanh công cụ Markdown chèn cú pháp quanh vùng chọn; mục dạng block tự thêm `\n` phía trước nếu đang ở giữa dòng. Nút hiện ra **theo đúng thứ tự** của `editorPreferences.toolbarItems` (sắp trong Settings → Toolbar Layout).
+- **Bảng công cụ `⋯`** (nút cố định ở mép phải thanh công cụ, mở bottom sheet, ẩn bàn phím): 38 công cụ chia 5 nhóm — Hiển thị (font, cỡ chữ, giãn dòng, tự xuống dòng, chế độ tập trung, sáng/tối; đổi ngay, bảng giữ mở), Chỉnh sửa (hoàn tác/làm lại, thụt/lùi lề, tìm & thay…), Chèn (ngày giờ, bảng, khối code, ký tự, mẫu ghi chú, link tới note khác), Xem (mục lục, thống kê từ/ký tự) và Định dạng (nút Markdown không ghim). Cài đặt hiển thị áp dụng cho **mọi note**.
+- **Ghim / ẩn:** mỗi công cụ có hai công tắc — *Ghim* (nằm trên thanh công cụ, có thứ tự) và *Hiện trong bảng*. Mặc định ghim các nút Markdown cũ + Hoàn tác, Làm lại, Thụt lề, Lùi lề. Người dùng cũ được thêm 4 nút chỉnh sửa lên đầu **một lần** rồi tôn trọng mọi chỉnh sửa. Cấu hình lưu trong `EditorPreferences` (`toolbarItems` = ghim có thứ tự, `hiddenTools` = ẩn khỏi bảng); chỉnh được ngay trong bảng (nút Tùy chỉnh) hoặc ở Settings → Toolbar Layout — hai nơi dùng chung một cấu hình nên đổi bên này thấy ngay bên kia. Mục vừa không ghim vừa ẩn vẫn được liệt kê ở Settings để bật lại.
+- **Tìm & thay thế** trong note, **mục lục** (nhảy tới tiêu đề) và **thống kê** (số từ, ký tự, thời gian đọc) mở từ bảng công cụ.
+- **Link giữa các note:** chèn `[Tiêu đề](ten-file.md)`; bấm trong preview thì mở note đích ngay trong app. Khi **đổi tên** note, mọi link trỏ tới nó trong các note khác được tự sửa (ghi nguyên văn từng byte, bỏ qua khối code). Đây là ngoại lệ duy nhất cho quy tắc "không đổi định dạng file `.md`" (ghi `DECISIONS.md`).
+- **Mẫu ghi chú** chèn cấu trúc dựng sẵn vào vị trí con trỏ.
 - Preview tô màu cú pháp khối code, mở được link, bấm được ô checklist (đổi đúng dòng trong văn bản), theo font/cỡ chữ đã chọn.
 - Menu ⋮: Chia sẻ / Sửa tag / Thông tin / Xóa.
 - Autosave bắt **mọi** thay đổi nội dung (cả gõ phím lẫn chèn từ toolbar); chỉ dời con trỏ thì không tính.
@@ -54,10 +59,10 @@ Code: `sync_service.dart`, `sync_runner.dart`, `sync_controller.dart`, `auto_syn
 ## Settings
 
 - **Theme**: light / dark / system (mặc định system), lưu `SharedPreferences` khóa `theme_preference`, giá trị lạ → fallback system.
-- **Editor preferences**: fontSize (double), fontFamily (string, mặc định `JetBrainsMono`), toolbarItems (StringList). Lưu `SharedPreferences`, editor áp dụng khi mở note kế tiếp.
+- **Editor preferences**: fontSize (double), fontFamily (string, mặc định `JetBrainsMono`), toolbarItems (StringList, nút đang ghim theo thứ tự), hiddenTools (StringList, công cụ ẩn khỏi bảng ⋯), lineHeight, wordWrap, focusMode. Lưu `SharedPreferences`, editor áp dụng khi mở note kế tiếp.
 - **Export ZIP**: chỉ file `.md`, giữ cấu trúc thư mục, đường dẫn chuẩn hóa dấu `/`; xong mở share sheet.
 - **Import ZIP**: không bao giờ ghi đè — trùng tên giống hệt thì bỏ qua, khác nội dung thì tạo `ten-1.md`; chặn `../` (DECISIONS 2026-10-24).
-- Font & Size, Toolbar Layout, Sync Frequency, Rebuild Search Index, Manage Collections đều đã có hành vi.
+- Font & Size, Toolbar Layout (liệt kê mọi công cụ theo nhóm, mục ghim ở trên cùng và kéo thả được), Sync Frequency, Rebuild Search Index, Manage Collections đều đã có hành vi.
 
 ## Onboarding
 

@@ -10,7 +10,11 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 - Edit/Preview swipe between raw Markdown and rendered preview
 - Auto-save with 3-second debounce after each keystroke
 - Save status indicator (green = saved, yellow = saving, gray = unsaved)
-- Scrollable toolbar with 16 Markdown syntax actions (headings, bold, italic, strikethrough, links, images, inline/block code, checklists, lists, quotes, tables, horizontal rules)
+- Scrollable toolbar with Markdown syntax actions (headings, bold, italic, strikethrough, links, images, inline/block code, checklists, lists, quotes, tables, horizontal rules) plus undo/redo and indent/outdent
+- A `⋯` tools sheet with 38 tools in 5 groups: display (font, size, line spacing, word wrap, focus mode, theme), edit, insert (date/time, tables, code blocks, symbols, note templates, links to other notes), view (outline, word/character stats) and format
+- Find & replace inside a note
+- Links between notes (`[Title](file.md)`) that open in the app and are rewritten automatically when the target note is renamed
+- Pin any tool to the toolbar or hide it from the sheet — configurable from the sheet or from Settings
 - Monospace font (JetBrains Mono or Fira Code) with configurable size
 - Preview with syntax-highlighted code blocks, tappable links and checklists
 - Edit tags, share, view info or delete a note from the editor menu
@@ -52,7 +56,7 @@ Your notes live on your device as plain `.md` files. Sync to your own private Gi
 ### Settings
 - Theme picker (Dark / Light / System)
 - Git repository setup with connection status
-- Font & size, toolbar layout (show/hide/reorder), sync frequency
+- Font & size, toolbar layout (pin/hide every tool, drag to reorder; shared with the `⋯` sheet), sync frequency
 - Language: System / Tiếng Việt / English
 - Export notes as ZIP archive via the share sheet
 - Import notes from ZIP — never overwrites: identical files are skipped, different ones are saved as copies

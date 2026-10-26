@@ -255,6 +255,12 @@ Hai agent rà toàn bộ thay đổi và toàn app; mọi mục dưới đây đ
 - ✅ Bấm ô checklist trong preview; kéo thả sắp xếp collection.
 - ✅ Kiểm thử trên emulator: back hệ thống lưu, preview tô màu + mở link, sửa tag, xóa, checklist, đổi ngôn ngữ, sync.
 
+**Bảng công cụ soạn thảo (2026-10-25/26)**
+- ✅ Nút `⋯` mở bảng 38 công cụ (hiển thị, chỉnh sửa, chèn, xem, định dạng); hoàn tác/làm lại, thụt/lùi lề ghim sẵn.
+- ✅ Tìm & thay thế, mục lục, thống kê, chèn ngày giờ/bảng/khối code/ký tự/mẫu ghi chú.
+- ✅ Link giữa các note, mở trong app; đổi tên note tự sửa link trỏ tới nó.
+- ✅ Ghim/ẩn từng công cụ; Settings → Toolbar Layout thống nhất với bảng (cùng `EditorPreferences`, mục ẩn vẫn liệt kê để bật lại, mục ghim kéo thả đổi thứ tự).
+
 ## Việc tiếp theo
 
 Backlog không còn mục mở. Gợi ý cho đợt sau (chưa ai yêu cầu):
