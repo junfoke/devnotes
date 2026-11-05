@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class RenameNoteDialog extends StatefulWidget {
@@ -12,6 +13,9 @@ class RenameNoteDialog extends StatefulWidget {
 
 class _RenameNoteDialogState extends State<RenameNoteDialog> {
   late final TextEditingController _controller;
+
+  /// Validation message shown under the field, null when valid.
+  String? _error;
 
   @override
   void initState() {
@@ -28,31 +32,46 @@ class _RenameNoteDialogState extends State<RenameNoteDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return AlertDialog(
       backgroundColor: colors.bgSecondary,
-      title: Text('Rename Note', style: TextStyle(color: colors.textPrimary)),
+      title: Text(l.renameNoteTitle,
+          style: TextStyle(color: colors.textPrimary)),
       content: TextField(
         controller: _controller,
         autofocus: true,
         style: TextStyle(color: colors.textPrimary),
+        onChanged: (_) {
+          if (_error != null) setState(() => _error = null);
+        },
         decoration: InputDecoration(
-          hintText: 'New title',
+          hintText: l.newTitleHint,
           hintStyle: TextStyle(color: colors.textMuted),
+          errorText: _error,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+          child: Text(l.commonCancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: () {
             final newTitle = _controller.text.trim();
-            if (newTitle.isEmpty || newTitle == widget.currentTitle) return;
+            // Từ chối phải kèm lý do, không im lặng.
+            if (newTitle.isEmpty) {
+              setState(() => _error = l.titleRequired);
+              return;
+            }
+            if (newTitle == widget.currentTitle) {
+              setState(() => _error = l.titleMustDiffer);
+              return;
+            }
             Navigator.pop(context, newTitle);
           },
-          child: Text('Rename', style: TextStyle(color: colors.accent)),
+          child: Text(l.commonRename, style: TextStyle(color: colors.accent)),
         ),
       ],
     );

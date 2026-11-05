@@ -2,46 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
+import 'package:devnotes/features/onboarding/domain/sample_note.dart';
 import 'package:devnotes/features/workspace/data/note_repository_provider.dart';
 
-class OnboardingFirstNoteScreen extends ConsumerWidget {
+class OnboardingFirstNoteScreen extends ConsumerStatefulWidget {
   const OnboardingFirstNoteScreen({super.key});
 
-  static const _sampleContent = '''# Welcome to DevNotes!
-
-This is your first note. Here's a quick Markdown guide:
-
-## Text Formatting
-- **Bold** text with `**double asterisks**`
-- _Italic_ text with `_underscores_`
-- ~~Strikethrough~~ with `~~tildes~~`
-
-## Code
-Inline code with backticks: `print('Hello')`
-
-Code blocks with triple backticks:
-```dart
-void main() {
-  print('Hello, DevNotes!');
+  @override
+  ConsumerState<OnboardingFirstNoteScreen> createState() =>
+      _OnboardingFirstNoteScreenState();
 }
-```
 
-## Lists
-- Unordered items with `-`
-1. Ordered items with numbers
+class _OnboardingFirstNoteScreenState
+    extends ConsumerState<OnboardingFirstNoteScreen> {
+  /// Đang tạo — chặn bấm lần hai (từng sinh thêm welcome-to-devnotes-1.md).
+  bool _creating = false;
 
-## Task Lists
-- [x] Install DevNotes
-- [ ] Write your first note
-- [ ] Set up Git sync
-
-Happy note-taking!
-''';
+  Future<void> _createAndStart() async {
+    if (_creating) return;
+    setState(() => _creating = true);
+    // Note mẫu viết bằng đúng ngôn ngữ giao diện đang dùng.
+    final sample =
+        SampleNote.forLanguage(Localizations.localeOf(context).languageCode);
+    final l = context.l10n;
+    try {
+      final repo = await ref.read(noteFileRepositoryProvider.future);
+      final note = await repo.createNote(
+        title: sample.title,
+        tags: SampleNote.tags,
+      );
+      await repo.saveNote(note.copyWith(content: sample.content));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_complete', true);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _creating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.noteCreateFailed('$e'))));
+      }
+      return;
+    }
+    if (mounted) context.go('/');
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
 
     return Scaffold(
       backgroundColor: colors.bgPrimary,
@@ -55,7 +64,7 @@ Happy note-taking!
                 Icon(Icons.edit_note, size: 60, color: colors.accent),
                 const SizedBox(height: 24),
                 Text(
-                  'Your First Note',
+                  l.firstNoteTitle,
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: 24,
@@ -64,7 +73,7 @@ Happy note-taking!
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'We\'ll create a sample note with a Markdown guide to get you started.',
+                  l.firstNoteBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textSecondary,
@@ -77,23 +86,7 @@ Happy note-taking!
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      final repo = await ref
-                          .read(noteFileRepositoryProvider.future);
-                      final note = await repo.createNote(
-                        title: 'Welcome to DevNotes',
-                        tags: ['getting-started'],
-                      );
-                      final updated =
-                          note.copyWith(content: _sampleContent);
-                      await repo.saveNote(updated);
-
-                      final prefs =
-                          await SharedPreferences.getInstance();
-                      await prefs.setBool('onboarding_complete', true);
-
-                      if (context.mounted) context.go('/');
-                    },
+                    onPressed: _creating ? null : _createAndStart,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.accent,
                       shape: RoundedRectangleBorder(
@@ -101,7 +94,7 @@ Happy note-taking!
                       ),
                     ),
                     child: Text(
-                      'Create & Start',
+                      l.firstNoteButton,
                       style: TextStyle(
                         color: colors.textOnAccent,
                         fontSize: 16,

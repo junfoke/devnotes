@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:git2dart/git2dart.dart';
 
 import 'app/app.dart';
+import 'core/git_client/git_network_timeouts.dart';
 import 'core/theme/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isAndroid) {
     await PlatformSpecific.androidInitialize();
+    GitNetworkTimeouts.apply();
   }
   final prefs = await SharedPreferences.getInstance();
   runApp(

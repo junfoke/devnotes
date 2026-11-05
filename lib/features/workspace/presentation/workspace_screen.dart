@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/workspace/application/workspace_providers.dart';
 import 'package:devnotes/features/workspace/domain/note_file.dart';
@@ -16,6 +18,11 @@ import 'package:devnotes/features/workspace/application/search_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/search_results_list.dart';
 import 'package:devnotes/features/workspace/application/collections_providers.dart';
 import 'package:devnotes/features/workspace/presentation/widgets/create_collection_dialog.dart';
+import 'package:devnotes/features/workspace/presentation/widgets/collection_actions.dart';
+import 'package:devnotes/features/git_sync/application/sync_controller.dart';
+import 'package:devnotes/features/git_sync/application/sync_runner.dart';
+import 'package:devnotes/features/git_sync/presentation/conflict_screen.dart';
+import 'package:devnotes/features/git_sync/presentation/git_messages.dart';
 import 'package:devnotes/features/workspace/domain/collection.dart';
 import 'package:uuid/uuid.dart';
 import 'package:devnotes/core/utils/enums.dart';
@@ -42,24 +49,25 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final l = context.l10n;
       TooltipService.showTooltips(
         context: context,
         tooltipKey: 'workspace',
         targets: [
           TooltipService.createTarget(
             key: _searchKey,
-            title: 'Search',
-            description: 'Search through all your notes with full-text search.',
+            title: l.tooltipSearchTitle,
+            description: l.tooltipSearchDesc,
           ),
           TooltipService.createTarget(
             key: _syncKey,
-            title: 'Sync',
-            description: 'Tap to sync your notes with your Git repository.',
+            title: l.tooltipSyncTitle,
+            description: l.tooltipSyncDesc,
           ),
           TooltipService.createTarget(
             key: _fabKey,
-            title: 'New Note',
-            description: 'Create a new Markdown note.',
+            title: l.newNote,
+            description: l.tooltipNewNoteDesc,
             align: ContentAlign.top,
           ),
         ],
@@ -75,24 +83,55 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     super.dispose();
   }
 
+  void _showSyncSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  /// Chạy một thao tác; lỗi thì báo bằng snackbar thay vì im lặng.
+  /// [failMessage] dựng câu báo đã dịch từ chi tiết lỗi.
+  Future<T?> _guard<T>(
+    String Function(AppLocalizations l, String error) failMessage,
+    Future<T> Function() op,
+  ) async {
+    try {
+      return await op();
+    } catch (e) {
+      if (mounted) {
+        // Lỗi do app ném ra (vd. đang sync nên đổi tên báo bận) được dịch.
+        final l = context.l10n;
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(failMessage(l, describeError(l, e)))));
+      }
+      return null;
+    }
+  }
+
+  Future<void> _deleteNote(NoteFile note) =>
+      _guard((l, e) => l.noteDeleteFailed(e),
+          () => ref.read(noteActionsProvider).delete(note.filePath));
+
   void _createCollection() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => const CreateCollectionDialog(),
     );
     if (result == null) return;
-    final existing = await ref.read(collectionsProvider.future);
-    final repo = await ref.read(collectionsRepositoryProvider.future);
-    final newCol = Collection(
-      id: const Uuid().v4(),
-      name: result['name'] as String,
-      filterTags: result['tags'] as List<String>,
-      icon: Icons.folder,
-      color: Colors.blue,
-      sortOrder: existing.length,
-    );
-    await repo.saveCollections([...existing, newCol]);
-    ref.invalidate(collectionsProvider);
+    await _guard((l, e) => l.collectionCreateFailed(e), () async {
+      final existing = await ref.read(collectionsProvider.future);
+      final repo = await ref.read(collectionsRepositoryProvider.future);
+      final newCol = Collection(
+        id: const Uuid().v4(),
+        name: result['name'] as String,
+        filterTags: result['tags'] as List<String>,
+        icon: Icons.folder,
+        color: Colors.blue,
+        sortOrder: existing.length,
+      );
+      await repo.saveCollections([...existing, newCol]);
+      ref.invalidate(collectionsProvider);
+    });
   }
 
   void _createNote() async {
@@ -101,15 +140,20 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       builder: (_) => const CreateNoteDialog(),
     );
     if (result == null) return;
-    final note = await ref.read(createNoteProvider(
-      (title: result['title'] as String, tags: result['tags'] as List<String>),
-    ).future);
-    if (mounted) {
+    final note = await _guard(
+      (l, e) => l.noteCreateFailed(e),
+      () => ref.read(noteActionsProvider).create(
+            title: result['title'] as String,
+            tags: result['tags'] as List<String>,
+          ),
+    );
+    if (note != null && mounted) {
       context.push('/editor/${Uri.encodeComponent(note.filePath)}');
     }
   }
 
   void _showNoteContextMenu(NoteFile note) {
+    final l = context.l10n;
     showModalBottomSheet(
       context: context,
       builder: (_) => SafeArea(
@@ -118,7 +162,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Rename'),
+              title: Text(l.commonRename),
               onTap: () async {
                 Navigator.pop(context);
                 final newTitle = await showDialog<String>(
@@ -127,43 +171,49 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       RenameNoteDialog(currentTitle: note.title),
                 );
                 if (newTitle != null) {
-                  await ref.read(renameNoteProvider(
-                    (filePath: note.filePath, newTitle: newTitle),
-                  ).future);
+                  final result = await _guard(
+                    (l, e) => l.noteRenameFailed(e),
+                    () => ref
+                        .read(noteActionsProvider)
+                        .rename(note.filePath, newTitle),
+                  );
+                  // Note không sửa được link (đọc/ghi lỗi) phải báo, không
+                  // để link gãy lặng lẽ.
+                  final failed = result?.failedFiles ?? const <String>[];
+                  if (failed.isNotEmpty && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(context.l10n.noteLinksUpdateFailed(
+                          failed.map(p.basename).join(', '))),
+                    ));
+                  }
                 }
               },
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete',
-                  style: TextStyle(color: Colors.red)),
+              title: Text(l.commonDelete,
+                  style: const TextStyle(color: Colors.red)),
               onTap: () async {
                 Navigator.pop(context);
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text('Delete Note'),
-                    content: Text(
-                      'Delete "${note.title}"? This cannot be undone.',
-                    ),
+                    title: Text(l.deleteNoteTitle),
+                    content: Text(l.deleteNoteConfirm(note.title)),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(l.commonCancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete',
-                            style: TextStyle(color: Colors.red)),
+                        child: Text(l.commonDelete,
+                            style: const TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
                 );
-                if (confirm == true) {
-                  await ref.read(
-                    deleteNoteProvider(note.filePath).future,
-                  );
-                }
+                if (confirm == true) await _deleteNote(note);
               },
             ),
           ],
@@ -175,6 +225,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
     ref.watch(searchIndexInitProvider);
     final notesAsync = ref.watch(noteListProvider);
 
@@ -194,61 +245,43 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   return;
                 }
 
-                ref.read(syncStateProvider.notifier).setSyncing();
+                final outcome = await ref.read(syncControllerProvider).sync();
+                if (!context.mounted) return;
 
-                try {
-                  final gitClient = await ref.read(gitClientProvider.future);
-                  await gitClient.initializeRepo(
-                    remoteUrl: config.remoteUrl,
-                    username: config.username,
-                    password: config.pat,
-                  );
-
-                  final syncService = await ref.read(syncServiceProvider.future);
-                  final result = await syncService.sync(config);
-
-                  if (!context.mounted) return;
-
-                  if (result.conflicts.isNotEmpty) {
-                    ref.read(syncStateProvider.notifier).setError();
-                    context.push('/conflict/${Uri.encodeComponent(result.conflicts.first)}');
-                  } else if (result.success) {
-                    ref.read(syncStateProvider.notifier).setSynced();
-                    ref.invalidate(noteListProvider);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Synced — ${result.filesChanged} file(s) changed'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  } else {
-                    ref.read(syncStateProvider.notifier).setError();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Sync failed: ${result.error ?? "Unknown error"}'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ref.read(syncStateProvider.notifier).setError();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Sync error: $e'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                final result = outcome.result;
+                if (outcome.skipped == SyncSkipReason.alreadyRunning) {
+                  _showSyncSnack(l.syncAlreadyRunning);
+                } else if (outcome.error case final error?) {
+                  _showSyncSnack(l.syncError(describeError(l, error)));
+                } else if (result == null) {
+                  // Bỏ qua vì lý do khác — không có gì để báo.
+                } else if (result.conflicts.isNotEmpty) {
+                  context.push(ConflictScreen.location(result.conflicts.first));
+                } else if (result.success) {
+                  _showSyncSnack(l.syncDone(result.filesChanged));
+                } else {
+                  _showSyncSnack(l.syncFailed(result.error ?? l.unknownError));
                 }
               },
-              onGitStatusTap: () {
-                final syncState = ref.read(syncStateProvider);
+              onGitStatusTap: () async {
+                // Lịch sử và thời điểm sync gần nhất đọc từ SQLite nên vẫn
+                // đúng sau khi khởi động lại app.
+                final loaded = await _guard(
+                  (l, e) => l.syncHistoryLoadFailed(e),
+                  () async => (
+                    await ref.read(syncHistoryProvider.future),
+                    await ref.read(lastSuccessfulSyncProvider.future),
+                    await ref.read(currentBranchProvider.future),
+                  ),
+                );
+                if (loaded == null || !context.mounted) return;
+                final (entries, lastSyncAt, branch) = loaded;
                 showModalBottomSheet(
                   context: context,
                   builder: (_) => SyncHistorySheet(
-                    branchName: syncState.branchName,
-                    lastSyncAt: syncState.lastSyncAt,
-                    entries: syncState.history,
+                    branchName: branch,
+                    lastSyncAt: lastSyncAt,
+                    entries: entries,
                   ),
                 );
               },
@@ -290,6 +323,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               onSelect: (id) =>
                   ref.read(selectedCollectionProvider.notifier).state = id,
               onAdd: _createCollection,
+              onLongPress: (col) =>
+                  CollectionActions.showMenu(context, ref, col),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -301,7 +336,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     data: (results) => results.isEmpty
                         ? Center(
                             child: Text(
-                              'No results found',
+                              l.searchNoResults,
                               style: TextStyle(color: colors.textMuted),
                             ),
                           )
@@ -313,7 +348,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) =>
-                        Center(child: Text('Search error: $e')),
+                        Center(child: Text(l.searchError('$e'))),
                   );
                 }
                 return notesAsync.when(
@@ -329,8 +364,27 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         ).toList();
                       }
                     }
-                    if (displayNotes.isEmpty) {
+                    if (notes.isEmpty) {
                       return EmptyState(onCreateFirst: _createNote);
+                    }
+                    if (displayNotes.isEmpty) {
+                      // Có note nhưng collection đang chọn không khớp note
+                      // nào — đừng nói "chưa có ghi chú" như workspace trống.
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(l.collectionNoNotes,
+                                style: TextStyle(color: colors.textMuted)),
+                            TextButton(
+                              onPressed: () => ref
+                                  .read(selectedCollectionProvider.notifier)
+                                  .state = null,
+                              child: Text(l.collectionShowAll),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                     return RefreshIndicator(
                       onRefresh: () async {
@@ -355,32 +409,27 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  title: const Text('Delete Note'),
-                                  content: Text(
-                                    'Delete "${note.title}"? This cannot be undone.',
-                                  ),
+                                  title: Text(l.deleteNoteTitle),
+                                  content: Text(l.deleteNoteConfirm(note.title)),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
+                                      child: Text(l.commonCancel),
                                     ),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
-                                      child: const Text(
-                                        'Delete',
-                                        style: TextStyle(color: Colors.red),
+                                      child: Text(
+                                        l.commonDelete,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                       ),
                                     ),
                                   ],
                                 ),
                               );
-                              if (confirm == true) {
-                                await ref.read(
-                                  deleteNoteProvider(note.filePath).future,
-                                );
-                              }
+                              if (confirm == true) await _deleteNote(note);
                             },
                             onLongPress: () {
                               _showNoteContextMenu(note);
@@ -392,7 +441,20 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(l.noteListLoadFailed('$e'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: colors.error)),
+                        TextButton(
+                          onPressed: () => ref.invalidate(noteListProvider),
+                          child: Text(l.commonRetry),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               }(),
             ),

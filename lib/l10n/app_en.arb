@@ -1,0 +1,528 @@
+{
+  "@@locale": "en",
+
+  "commonCancel": "Cancel",
+  "commonDelete": "Delete",
+  "commonSave": "Save",
+  "commonCreate": "Create",
+  "commonEdit": "Edit",
+  "commonRename": "Rename",
+  "commonOk": "OK",
+  "commonRetry": "Retry",
+  "commonSkip": "Skip",
+  "untitled": "Untitled",
+  "unknownError": "Unknown error",
+  "errorWithDetail": "Error: {error}",
+  "@errorWithDetail": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "gitBusy": "A sync is in progress — try again when it's done.",
+  "unresolvedConflictsBeforeSwitch": "There are unresolved conflicts — resolve them before switching branch.",
+
+  "settingsTitle": "Settings",
+  "settingsSectionGit": "Git",
+  "settingsGitRepository": "Git repository",
+  "settingsSectionSync": "Sync",
+  "settingsSyncFrequency": "Sync frequency",
+  "settingsSectionEditor": "Editor",
+  "settingsFontAndSize": "Font & size",
+  "settingsToolbarLayout": "Toolbar layout",
+  "settingsSectionAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeTooltip": "Choose theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "settingsLanguage": "Language",
+  "settingsLanguageTooltip": "Choose language",
+  "languageSystem": "System",
+  "languageVietnamese": "Tiếng Việt",
+  "languageEnglish": "English",
+  "settingsSectionData": "Data",
+  "settingsExportNotes": "Export notes",
+  "settingsExportSubject": "DevNotes export",
+  "settingsExportFailed": "Export failed: {error}",
+  "@settingsExportFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsImportNotes": "Import notes",
+  "settingsRebuildIndex": "Rebuild search index",
+  "settingsSectionCollections": "Collections",
+  "settingsManageCollections": "Manage collections",
+  "settingsSectionAbout": "About",
+  "settingsAboutTagline": "Local-first Markdown notes for devs",
+  "settingsSaveFailed": "Couldn't save settings: {error}",
+  "@settingsSaveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "importFailed": "Import failed: {error}",
+  "@importFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "importInvalidZip": "Not a valid ZIP file: {error}",
+  "@importInvalidZip": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "importDoneTitle": "Notes imported",
+  "importAdded": "Added: {count}",
+  "@importAdded": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importSkippedIdentical": "Skipped (identical copy exists): {count}",
+  "@importSkippedIdentical": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importCopied": "Name already taken, saved as a copy: {count}",
+  "@importCopied": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importRejected": "Rejected (unsafe path): {count}",
+  "@importRejected": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "rebuildIndexInProgress": "Rebuilding search index...",
+  "rebuildIndexDone": "{count, plural, =1{Rebuilt the index for 1 note} other{Rebuilt the index for {count} notes}}",
+  "@rebuildIndexDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "rebuildIndexFailed": "Rebuilding the index failed: {error}",
+  "@rebuildIndexFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "fontSize": "Size",
+  "fontPreviewSample": "## Preview\nconst answer = 42; // **bold**",
+  "toolbarLayoutHint": "Pin tools to the toolbar, hide them from the ⋯ sheet, and drag pinned items to reorder. Changes apply to the editor right away.",
+  "toolbarLayoutPinnedTitle": "Pinned to the toolbar",
+  "toolbarLayoutOthersTitle": "Not pinned",
+  "toolbarItemH1": "Heading 1",
+  "toolbarItemH2": "Heading 2",
+  "toolbarItemH3": "Heading 3",
+  "toolbarItemBold": "Bold",
+  "toolbarItemItalic": "Italic",
+  "toolbarItemStrikethrough": "Strikethrough",
+  "toolbarItemLink": "Link",
+  "toolbarItemImage": "Image",
+  "toolbarItemCodeInline": "Inline code",
+  "toolbarItemCodeBlock": "Code block",
+  "toolbarItemChecklist": "Checklist",
+  "toolbarItemListUnordered": "Bulleted list",
+  "toolbarItemListOrdered": "Numbered list",
+  "toolbarItemQuote": "Quote",
+  "toolbarItemTable": "Table",
+  "toolbarItemHr": "Horizontal rule",
+
+  "syncFrequencyManual": "Manual",
+  "syncFrequencyManualDesc": "Only sync when you tap Sync.",
+  "syncFrequencyOnOpen": "When the app opens",
+  "syncFrequencyOnOpenDesc": "Sync when the app opens and when you return to it (at least 5 minutes apart).",
+  "syncFrequencyPeriodic": "Periodic",
+  "syncFrequencyPeriodicDesc": "Like \"When the app opens\", plus periodic sync while the app is open.",
+  "syncFrequencyMinutes": "{minutes} min",
+  "@syncFrequencyMinutes": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "syncFrequencyFootnote": "The app doesn't sync in the background once closed. Auto-sync errors and conflicts show on the status dot next to the Sync button.",
+
+  "tooltipSearchTitle": "Search",
+  "tooltipSearchDesc": "Search through all your notes with full-text search.",
+  "tooltipSyncTitle": "Sync",
+  "tooltipSyncDesc": "Tap to sync your notes with your Git repository.",
+  "tooltipNewNoteDesc": "Create a new Markdown note.",
+  "tooltipToolbarTitle": "Markdown toolbar",
+  "tooltipToolbarDesc": "Quick-insert Markdown syntax — headings, bold, code blocks, and more.",
+  "tooltipPreviewTitle": "Swipe to preview",
+  "tooltipPreviewDesc": "Swipe left to see a rendered preview of your Markdown.",
+
+  "newNote": "New note",
+  "noteDeleteFailed": "Couldn't delete note: {error}",
+  "@noteDeleteFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "noteCreateFailed": "Couldn't create note: {error}",
+  "@noteCreateFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "noteRenameFailed": "Couldn't rename note: {error}",
+  "@noteRenameFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "collectionCreateFailed": "Couldn't create collection: {error}",
+  "@collectionCreateFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "collectionEditFailed": "Couldn't update collection: {error}",
+  "@collectionEditFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "collectionDeleteFailed": "Couldn't delete collection: {error}",
+  "@collectionDeleteFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "syncHistoryLoadFailed": "Couldn't load sync history: {error}",
+  "@syncHistoryLoadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "deleteNoteTitle": "Delete note",
+  "deleteNoteConfirm": "Delete \"{title}\"? This can't be undone.",
+  "@deleteNoteConfirm": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "syncAlreadyRunning": "A sync is already running — wait for it to finish.",
+  "syncError": "Sync error: {error}",
+  "@syncError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "syncDone": "{count, plural, =1{Synced — 1 file changed} other{Synced — {count} files changed}}",
+  "@syncDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "syncFailed": "Sync failed: {error}",
+  "@syncFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "searchNoResults": "No results found",
+  "searchError": "Search error: {error}",
+  "@searchError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "collectionNoNotes": "No notes in this collection",
+  "collectionShowAll": "Show all notes",
+  "noteListLoadFailed": "Couldn't load notes: {error}",
+  "@noteListLoadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "syncNow": "Sync now",
+  "searchHint": "Search notes...",
+  "searchClearTooltip": "Clear search",
+  "emptyNotesTitle": "No notes yet",
+  "emptyNotesSubtitle": "Create your first note to get started",
+  "emptyNotesButton": "Create your first note",
+  "timeJustNow": "just now",
+  "timeMinutesAgo": "{count}m ago",
+  "@timeMinutesAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeHoursAgo": "{count}h ago",
+  "@timeHoursAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeDaysAgo": "{count}d ago",
+  "@timeDaysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "allNotes": "All notes",
+
+  "noteTitleHint": "Note title",
+  "tagsHint": "Tags (comma separated)",
+  "titleRequired": "Please enter a title",
+  "titleMustDiffer": "The new title must be different from the current one",
+  "renameNoteTitle": "Rename note",
+  "newTitleHint": "New title",
+  "newCollectionTitle": "New collection",
+  "editCollectionTitle": "Edit collection",
+  "collectionNameHint": "Collection name",
+  "filterTagsHint": "Filter tags (comma separated)",
+  "deleteCollectionTitle": "Delete collection \"{name}\"?",
+  "@deleteCollectionTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "deleteCollectionBody": "Only the group is removed. Its notes stay in All notes.",
+  "collectionsEmpty": "No collections yet.\nCreate one with the + button on the home screen.",
+
+  "noteSaveFailed": "Couldn't save note: {error}",
+  "@noteSaveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "noteOpenFailed": "Couldn't open note: {error}",
+  "@noteOpenFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "externalChangeTitle": "Note changed elsewhere",
+  "externalChangeBody": "While you were editing, this note was changed somewhere else (for example by a sync). To avoid overwriting that version, choose:",
+  "externalChangeReload": "Load the new version",
+  "externalChangeKeepMine": "Save my version as a new note",
+  "editedCopyTitle": "{title} (edited)",
+  "@editedCopyTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "savedAsCopy": "Saved your version as \"{title}\".",
+  "@savedAsCopy": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "copySaveFailed": "Couldn't save the copy: {error}",
+  "@copySaveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "editorMenuShare": "Share",
+  "editorMenuEditTags": "Edit tags",
+  "editorMenuInfo": "Info",
+  "shareFailed": "Couldn't share: {error}",
+  "@shareFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "noteInfoFile": "File: {name}",
+  "@noteInfoFile": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "noteInfoTags": "Tags: {tags}",
+  "@noteInfoTags": {
+    "placeholders": { "tags": { "type": "String" } }
+  },
+  "noteInfoCreated": "Created: {date}",
+  "@noteInfoCreated": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "noteInfoUpdated": "Modified: {date}",
+  "@noteInfoUpdated": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "noteInfoWords": "{count, plural, =1{1 word} other{{count} words}}",
+  "@noteInfoWords": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "noteInfoChars": "{count, plural, =1{1 character} other{{count} characters}}",
+  "@noteInfoChars": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "editorHint": "Start writing...",
+  "editTagsHint": "Tags, separated by commas",
+  "linkOpenFailed": "Couldn't open link: {url}",
+  "@linkOpenFailed": {
+    "placeholders": { "url": { "type": "String" } }
+  },
+
+  "gitSetupTitle": "Git setup",
+  "gitConfigLoadFailed": "Couldn't read Git settings: {error}",
+  "@gitConfigLoadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "gitConfigSaveFailed": "Couldn't save Git settings: {error}",
+  "@gitConfigSaveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "gitConfigDeleteFailed": "Couldn't remove Git settings: {error}",
+  "@gitConfigDeleteFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "gitMissingFieldsCheck": "Enter the URL, username and PAT before checking.",
+  "gitMissingFieldsSave": "Enter the URL, username and PAT to save.",
+  "gitMissingFieldsConnect": "Enter the URL, username and PAT to connect.",
+  "gitCredentialsSaved": "Git credentials saved",
+  "gitCredentialsRemoved": "Git credentials removed",
+  "disconnectRepository": "Disconnect repository",
+  "disconnectBody": "This removes your saved Git credentials. Your local notes won't be affected.",
+  "disconnectButton": "Disconnect",
+  "branchMismatchTitle": "Branch doesn't match settings",
+  "branchMismatchBody": "Notes on this device are on branch \"{local}\", but the configured branch is \"{configured}\". Sync is currently pushing to \"{local}\".",
+  "@branchMismatchBody": {
+    "placeholders": {
+      "local": { "type": "String" },
+      "configured": { "type": "String" }
+    }
+  },
+  "switchToBranch": "Switch to \"{branch}\"",
+  "@switchToBranch": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "switchBranchConfirmTitle": "Switch to \"{branch}\"?",
+  "@switchBranchConfirmTitle": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "switchBranchConfirmBody": "Notes from \"{from}\" will be merged into \"{to}\" and pushed to the remote. No note is deleted; branch \"{from}\" is kept as a backup.\n\nIf the same note was edited differently on the two branches, you'll be taken to the conflict resolution screen.",
+  "@switchBranchConfirmBody": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "switchBranchButton": "Switch",
+  "switchedWithConflicts": "{count, plural, =1{Switched to \"{branch}\"; 1 note has a conflict. Resolve it, then tap Sync.} other{Switched to \"{branch}\"; {count} notes have conflicts. Resolve them, then tap Sync.}}",
+  "@switchedWithConflicts": {
+    "placeholders": {
+      "branch": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "switchedAndPushed": "Switched to \"{branch}\" and pushed to the remote.",
+  "@switchedAndPushed": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "switchedNotPushed": "Switched to \"{branch}\" but couldn't push yet ({error}). The next sync will push it.",
+  "@switchedNotPushed": {
+    "placeholders": {
+      "branch": { "type": "String" },
+      "error": { "type": "String" }
+    }
+  },
+  "switchBranchFailed": "Switching branch failed: {error}",
+  "@switchBranchFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "repoConfigured": "Repository configured",
+  "gitSetupIntro": "Connect your private Git repository to sync notes across devices. Your data stays in your control.",
+  "gitFieldRemoteUrl": "Git remote URL",
+  "gitFieldUsername": "Username",
+  "gitFieldPat": "Personal access token (PAT)",
+  "gitFieldBranch": "Branch",
+  "securityTitle": "Your data is secure",
+  "securityBody": "Credentials are stored locally on your device using encrypted storage.",
+  "checkingConnection": "Checking…",
+  "checkConnection": "Check connection",
+  "updateCredentials": "Update credentials",
+  "saveCredentials": "Save credentials",
+
+  "remoteCheckOkEmpty": "Connected. The remote is empty — the first sync will push your notes to branch \"{branch}\".",
+  "@remoteCheckOkEmpty": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "remoteCheckOkFound": "Connected. Found branch \"{branch}\" on the remote.",
+  "@remoteCheckOkFound": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "remoteCheckInvalidCredentials": "Wrong credentials. Check your username and PAT — the PAT may have expired or be missing the \"repo\" scope.",
+  "remoteCheckRepoNotFound": "Repository not found. Check the URL. If the repo is private, the PAT must also have access to that repo.",
+  "remoteCheckNetworkUnreachable": "Couldn't reach the remote. Check your network connection and try again.",
+  "remoteCheckBranchNotFound": "Connected, but the remote has no branch \"{branch}\". Existing branches: {found}.",
+  "@remoteCheckBranchNotFound": {
+    "placeholders": {
+      "branch": { "type": "String" },
+      "found": { "type": "String" }
+    }
+  },
+  "remoteCheckUnknown": "Check failed: {detail}",
+  "@remoteCheckUnknown": {
+    "placeholders": { "detail": { "type": "String" } }
+  },
+
+  "onboardingGitIntro": "Connect your private Git repository to sync notes across devices. You can always set this up later in Settings.",
+  "connectRepository": "Connect repository",
+  "skipGitSetup": "Skip for now — set up later in Settings",
+  "onboardingLocalFirstTitle": "Local-first",
+  "onboardingLocalFirstDesc": "Your notes live on your device as plain .md files. No cloud lock-in, no subscriptions.",
+  "onboardingGitSyncTitle": "Git sync",
+  "onboardingGitSyncDesc": "Sync via your own GitHub or GitLab repo. You own the data, always.",
+  "onboardingDevTitle": "Built for developers",
+  "onboardingDevDesc": "Markdown editing with syntax highlighting, code blocks, and a customizable toolbar.",
+  "onboardingNext": "Next",
+  "onboardingGetStarted": "Get started",
+  "firstNoteTitle": "Your first note",
+  "firstNoteBody": "We'll create a sample note with a Markdown guide to get you started.",
+  "firstNoteButton": "Create & start",
+
+  "conflictTitle": "Resolve conflicts",
+  "conflictThisDevice": "this device",
+  "conflictRemote": "remote",
+  "conflictVersionOn": "{side} VERSION",
+  "@conflictVersionOn": {
+    "placeholders": { "side": { "type": "String" } }
+  },
+  "conflictKeep": "Keep {side} version",
+  "@conflictKeep": {
+    "placeholders": { "side": { "type": "String" } }
+  },
+  "conflictKeepBoth": "Keep both",
+  "conflictResolveFailed": "Couldn't resolve the conflict: {error}",
+  "@conflictResolveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "conflictRemaining": "{count, plural, =1{1 conflicting note left.} other{{count} conflicting notes left.}}",
+  "@conflictRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "conflictAllResolved": "All conflicts resolved — tap Sync to finish.",
+  "conflictReadFailed": "Couldn't read the file: {error}",
+  "@conflictReadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "conflictNoMarkers": "This file no longer has conflict markers — it looks like it was fixed by hand.",
+  "conflictMarkResolved": "Mark as resolved",
+
+  "syncHistoryTitle": "Sync history",
+  "syncHistoryLastSync": "Last sync: {date}",
+  "@syncHistoryLastSync": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "syncHistoryEmpty": "No sync history yet",
+  "syncHistoryEntry": "{count, plural, =1{{action} — 1 file} other{{action} — {count} files}}",
+  "@syncHistoryEntry": {
+    "placeholders": {
+      "action": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "editorToolFont": "Font",
+  "editorToolSizeDown": "Smaller text",
+  "editorToolSizeUp": "Larger text",
+  "editorToolLineHeight": "Line spacing",
+  "editorToolWordWrap": "Word wrap",
+  "editorToolFocusMode": "Focus mode",
+  "editorToolTheme": "Theme",
+  "editorToolUndo": "Undo",
+  "editorToolRedo": "Redo",
+  "editorToolIndent": "Indent",
+  "editorToolOutdent": "Outdent",
+  "editorToolMoveUp": "Move line up",
+  "editorToolMoveDown": "Move line down",
+  "editorToolDuplicateLine": "Duplicate line",
+  "editorToolDeleteLine": "Delete line",
+  "editorToolFindReplace": "Find & replace",
+  "editorToolDateTime": "Insert date & time",
+  "editorToolSymbols": "Symbols",
+  "editorToolNoteLink": "Note link",
+  "editorToolTemplate": "Template",
+  "editorToolOutline": "Outline",
+  "editorToolStats": "Statistics",
+  "editorToolsButton": "Editor tools",
+  "editorToolGroupDisplay": "Display",
+  "editorToolGroupEdit": "Edit",
+  "editorToolGroupInsert": "Insert",
+  "editorToolGroupView": "View",
+  "editorToolGroupFormat": "Format",
+  "editorFontSystem": "System font",
+  "lineHeightCompact": "Compact",
+  "lineHeightNormal": "Normal",
+  "lineHeightRelaxed": "Relaxed",
+  "editorToolsCustomize": "Customize",
+  "editorToolsDone": "Done",
+  "editorToolsPin": "Pin",
+  "editorToolsShowInSheet": "Show in sheet",
+  "editorToolsCustomizeHint": "Pin a tool to the toolbar, or hide it from this sheet. Hidden tools stay listed here so you can bring them back.",
+  "findQueryHint": "Find",
+  "findReplacementHint": "Replace with",
+  "findPrevious": "Previous match",
+  "findNext": "Next match",
+  "findReplaceOne": "Replace",
+  "findReplaceAll": "Replace all",
+  "findClose": "Close find",
+  "tablePickerColumns": "Columns",
+  "tablePickerRows": "Rows",
+  "tablePickerInsert": "Insert",
+  "tableColumnHeader": "Column {n}",
+  "@tableColumnHeader": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "codeLanguageTitle": "Code block language",
+  "templatePickerTitle": "Note templates",
+  "notePickerTitle": "Choose a note to link",
+  "notePickerEmpty": "No other notes yet",
+  "noteNotFound": "Note not found: {file}",
+  "@noteNotFound": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "noteLinksUpdateFailed": "Renamed, but couldn't update links in: {files}",
+  "@noteLinksUpdateFailed": {
+    "placeholders": { "files": { "type": "String" } }
+  },
+  "outlineTitle": "Outline",
+  "outlineEmpty": "No headings in this note",
+  "editorStatsLine": "{words, plural, =1{1 word} other{{words} words}} · {chars, plural, =1{1 char} other{{chars} chars}}{minutes, plural, =0{} other{ · ~{minutes} min read}}",
+  "@editorStatsLine": {
+    "placeholders": {
+      "words": { "type": "int" },
+      "chars": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  }
+}

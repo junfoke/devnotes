@@ -3,6 +3,8 @@ import 'package:devnotes/core/theme/app_theme.dart';
 import 'package:devnotes/features/editor/application/editor_providers.dart';
 
 class EditorAppBar extends StatelessWidget {
+  /// Title of the note being edited; null while it is still loading.
+  final String? title;
   final SaveStatus saveStatus;
   final int currentPage;
   final Future<void> Function() onBack;
@@ -10,6 +12,7 @@ class EditorAppBar extends StatelessWidget {
 
   const EditorAppBar({
     super.key,
+    this.title,
     required this.saveStatus,
     required this.currentPage,
     required this.onBack,
@@ -30,7 +33,23 @@ class EditorAppBar extends StatelessWidget {
               icon: Icon(Icons.arrow_back, color: colors.textPrimary),
               onPressed: onBack,
             ),
-            const Spacer(),
+            // Note title so the user can tell which file they are editing.
+            // Absent until the note has loaded.
+            Expanded(
+              child: title == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      title!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
             // Save status dot
             Container(
               width: 10,
@@ -71,7 +90,6 @@ class EditorAppBar extends StatelessWidget {
                 ),
               ],
             ),
-            const Spacer(),
             IconButton(
               icon: Icon(Icons.more_vert, color: colors.textSecondary),
               onPressed: onMore,

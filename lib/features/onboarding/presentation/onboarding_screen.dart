@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -13,26 +14,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   int _currentPage = 0;
 
-  final _pages = const [
-    _OnboardingPage(
-      icon: Icons.smartphone,
-      title: 'Local-First',
-      description:
-          'Your notes live on your device as plain .md files. No cloud lock-in, no subscriptions.',
-    ),
-    _OnboardingPage(
-      icon: Icons.sync,
-      title: 'Git Sync',
-      description:
-          'Sync via your own GitHub or GitLab repo. You own the data, always.',
-    ),
-    _OnboardingPage(
-      icon: Icons.code,
-      title: 'Built for Developers',
-      description:
-          'Markdown editing with syntax highlighting, code blocks, and a customizable toolbar.',
-    ),
-  ];
+  List<_OnboardingPage> _pages(AppLocalizations l) => [
+        _OnboardingPage(
+          icon: Icons.smartphone,
+          title: l.onboardingLocalFirstTitle,
+          description: l.onboardingLocalFirstDesc,
+        ),
+        _OnboardingPage(
+          icon: Icons.sync,
+          title: l.onboardingGitSyncTitle,
+          description: l.onboardingGitSyncDesc,
+        ),
+        _OnboardingPage(
+          icon: Icons.code,
+          title: l.onboardingDevTitle,
+          description: l.onboardingDevDesc,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -43,19 +41,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).appColors;
+    final l = context.l10n;
+    final pages = _pages(l);
+    final isLastPage = _currentPage == pages.length - 1;
 
     return Scaffold(
       backgroundColor: colors.bgPrimary,
       body: SafeArea(
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.go('/onboarding/git'),
+                child: Text(l.commonSkip,
+                    style: TextStyle(color: colors.textMuted)),
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _pages.length,
+                itemCount: pages.length,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 itemBuilder: (_, i) {
-                  final page = _pages[i];
+                  final page = pages[i];
                   return Padding(
                     padding: const EdgeInsets.all(40),
                     child: Column(
@@ -90,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                _pages.length,
+                pages.length,
                 (i) => Container(
                   width: 10,
                   height: 10,
@@ -111,7 +120,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/onboarding/git'),
+                  onPressed: isLastPage
+                      ? () => context.go('/onboarding/git')
+                      : () => _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.accent,
                     shape: RoundedRectangleBorder(
@@ -119,7 +133,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   child: Text(
-                    'Get Started',
+                    isLastPage ? l.onboardingGetStarted : l.onboardingNext,
                     style: TextStyle(
                       color: colors.textOnAccent,
                       fontSize: 16,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:devnotes/core/l10n/l10n.dart';
 import 'package:devnotes/core/theme/app_theme.dart';
 
 class WorkspaceAppBar extends StatelessWidget {
@@ -81,7 +82,7 @@ class WorkspaceAppBar extends StatelessWidget {
                               Icon(Icons.sync, size: 16, color: colors.textOnAccent),
                               const SizedBox(width: 6),
                               Text(
-                                'Sync Now',
+                                context.l10n.syncNow,
                                 style: TextStyle(
                                   color: colors.textOnAccent,
                                   fontSize: 13,
